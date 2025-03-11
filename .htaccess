@@ -1,0 +1,98 @@
+RewriteEngine on
+
+RewriteRule ^login/?$ login.php [NC,L]
+RewriteRule ^logout/?$ logout.php [NC,L]
+
+RewriteRule ^/?$ index.php?menu=dashboard [NC,L]
+RewriteRule ^dashboard/?$ index.php?menu=dashboard [NC,L]
+
+RewriteRule ^org/?$ index.php?menu=org [NC,L]
+RewriteRule ^org/show?$ index.php?menu=org&action=show [NC,L]
+RewriteRule ^departments/?$ index.php?menu=org&tab=branches [NC,L]
+RewriteRule ^branches/?$ index.php?menu=org&tab=branches [NC,L]
+RewriteRule ^offices/?$ index.php?menu=org&tab=branches [NC,L]
+RewriteRule ^warehouses/?$ index.php?menu=org&tab=branches [NC,L]
+
+RewriteRule ^chart/?$ index.php?menu=org&tab=chart [NC,L]
+
+RewriteRule ^locations/?$ index.php?menu=org&tab=locations [NC,L]
+RewriteRule ^currency/?$ index.php?menu=org&tab=currency [NC,L]
+RewriteRule ^banks/?$ index.php?menu=org&tab=banks [NC,L]
+RewriteRule ^misc/?$ index.php?menu=org&tab=misc [NC,L]
+
+
+RewriteRule ^employees/?$ index.php?menu=hrm&tab=employees [NC,L]
+RewriteRule ^employees/add/?$ index.php?menu=hrm&tab=employees&action=add [NC,L]
+RewriteRule ^employees/edit/([0-9-]+)$ index.php?menu=hrm&tab=employees&action=edit&employee_id=$1 [NC,L]
+RewriteRule ^employees/show/([0-9-]+)$ index.php?menu=hrm&tab=employees&action=show&employee_id=$1 [NC,L]
+
+RewriteRule ^designations/?$ index.php?menu=hrm&tab=designations [NC,L]
+
+
+
+
+RewriteRule ^payroll/?$ index.php?menu=payroll&tab=payroll [NC,L]
+RewriteRule ^transactions/?$ index.php?menu=payroll&tab=transactions [NC,L]
+RewriteRule ^payroll/([0-9-]+)$ index.php?menu=payroll&tab=payroll&action=show&payroll_id=$1 [NC,L]
+
+
+
+
+RewriteRule ^attendance/?$ index.php?menu=attendance&tab=attendance [NC,L]
+RewriteRule ^leave/?$ index.php?menu=attendance&tab=leave [NC,L]
+RewriteRule ^timesheet/?$ index.php?menu=attendance&tab=timesheet [NC,L]
+
+
+
+
+
+RewriteRule ^payments/?$ index.php?menu=payments&tab=payments [NC,L]
+
+
+
+
+
+RewriteRule ^reports/?$ index.php?menu=reports&tab=reports [NC,L]
+
+
+
+
+RewriteRule ^settings/?$ index.php?menu=settings&tab=settings [NC,L]
+
+
+RewriteRule ^user/?$ index.php?menu=users&tab=users [NC,L]
+RewriteRule ^user/add/?$ index.php?menu=users&tab=users&action=add [NC,L]
+RewriteRule ^user/edit/([0-9-]+)$ index.php?menu=users&tab=users&action=edit&user_id=$1 [NC,L]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Rule for matching 'book' or 'book/'
+RewriteRule ^book/?$ index.php?menu=books [NC,L]
+
+# Rule for matching 'book/show/{book_id}'
+RewriteRule ^book/show/([A-Za-z0-9-]+)$ index.php?menu=books&action=show&book_id=$1 [NC,L]
+
+RewriteRule ^customer/?$ index.php?menu=customers [NC,L]
+
+RewriteRule ^report/?$ index.php?menu=reports [NC,L]
+
+
+RewriteRule ^users/?$ index.php?menu=users [NC,L]
+RewriteRule ^categories/?$ index.php?menu=categories [NC,L]
+RewriteRule ^setting/?$ index.php?menu=settings [NC,L]
+
+RewriteRule ^logout/?$ signout.php [NC,L]
+RewriteRule ^login/?$ login.php [NC,L]
+
+
