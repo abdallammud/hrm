@@ -59,6 +59,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 let res = JSON.parse(response)
                 console.log(res)
                 if(res.error) {
+                    $(`div.alert`).hide();
                     toaster.error("Incorrect username/email or password", 'Sorry', { top: '5%', right: '0%', center: true, hide: false });
                     return false;
                 }

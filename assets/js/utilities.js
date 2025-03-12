@@ -165,6 +165,21 @@ function form_loading(form, msg = 'Please wait..') {
     submitButton.html(`<span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>  ${msg}`); 
     $(form).find('button').attr('disabled', true);
 }
+function form_loadingUndo(form) {
+    // Get the submit button from the form
+    let submitButton = $(form).find('button[type="submit"]');
+    // Reset the submit button text to "Save" or "Apply" based on the form type
+    let buttonText = $(form).hasClass('edit-form') ? 'Apply' : 'Save';
+    // Restore the button text and enable all buttons
+    submitButton.html(buttonText);
+    $(form).find('button').attr('disabled', false);
+    // Clear all input fields and textareas
+    $(form).find('input:not([type="hidden"]), textarea').val('');
+    // Reset select elements to their first option
+    $(form).find('select').prop('selectedIndex', 0);
+    // Clear any error messages
+    clearErrors();
+}
 function formatMoney(amount, currencySymbol = '$', decimals = 2) {
     // Ensure the number is a valid value and round to the specified decimals
     amount = parseFloat(amount).toFixed(decimals);

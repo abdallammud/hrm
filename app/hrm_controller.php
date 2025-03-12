@@ -261,7 +261,41 @@ if(isset($_GET['action'])) {
 				}
 
 				echo json_encode($result);
-			}
+			} else if($_GET['endpoint'] == 'folder') {
+				try {
+					$GLOBALS['conn']->begin_transaction();
+					$post = escapePostData($_POST);
+					
+					check_auth('add_employee'); // Same auth as adding employee
+					
+					$data = array(
+						'name' => $post['name'],
+						'created_by' => $_SESSION['user_id'],
+						'created_at' => date('Y-m-d H:i:s')
+					);
+					
+					// Insert into folders table
+					$sql = "INSERT INTO folders (name, created_by, created_at) VALUES (?, ?, ?)";
+					$stmt = $GLOBALS['conn']->prepare($sql);
+					$stmt->bind_param("sis", $data['name'], $data['created_by'], $data['created_at']);
+					
+					if ($stmt->execute()) {
+						$GLOBALS['conn']->commit();
+						$result['msg'] = 'Folder created successfully';
+						$result['error'] = false;
+					} else {
+						throw new Exception("Error creating folder");
+					}
+					
+				} catch (Exception $e) {
+					$GLOBALS['conn']->rollback();
+					$result['msg'] = 'Error: ' . $e->getMessage();
+					$result['error'] = true;
+				}
+				
+				echo json_encode($result);
+				exit();
+			} 
 
 			exit();
 		} 
@@ -459,6 +493,39 @@ if(isset($_GET['action'])) {
 			    $result['msg'] = 'Employee avatar updated successfully';
 			    $result['error'] = false;
 			    echo json_encode($result);
+			} else if($_GET['endpoint'] == 'folder') {
+				try {
+					$GLOBALS['conn']->begin_transaction();
+					$post = escapePostData($_POST);
+					
+					check_auth('add_employee'); // Same auth as adding employee
+					
+					$data = array(
+						'name' => $post['name'],
+						'updated_at' => date('Y-m-d H:i:s')
+					);
+					
+					// Update folder
+					$sql = "UPDATE folders SET name = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL";
+					$stmt = $GLOBALS['conn']->prepare($sql);
+					$stmt->bind_param("ssi", $data['name'], $data['updated_at'], $post['id']);
+					
+					if ($stmt->execute()) {
+						$GLOBALS['conn']->commit();
+						$result['msg'] = 'Folder updated successfully';
+						$result['error'] = false;
+					} else {
+						throw new Exception("Error updating folder");
+					}
+					
+				} catch (Exception $e) {
+					$GLOBALS['conn']->rollback();
+					$result['msg'] = 'Error: ' . $e->getMessage();
+					$result['error'] = true;
+				}
+				
+				echo json_encode($result);
+				exit();
 			}
  
 		}
@@ -558,6 +625,39 @@ if(isset($_GET['action'])) {
 			    } else {
 			        $result['msg'] = "No records found";
 			    }
+			} else if ($_GET['endpoint'] === 'folders') {
+				$result = [];
+				try {
+					check_auth('view_employees');
+					
+					$search = isset($_POST['search']) ? escapeStr($_POST['search']) : '';
+					$where = "";
+					
+					if($search != '') {
+						$where = " AND name LIKE '%$search%'";
+					}
+					
+					$sql = "SELECT * FROM folders  WHERE deleted_at IS NULL $where ORDER BY created_at DESC";
+					
+					$query = $GLOBALS['conn']->query($sql);
+					$folders = array();
+					
+					if($query->num_rows > 0) {
+						while($row = $query->fetch_assoc()) {
+							$folders[] = $row;
+						}
+					}
+					
+					$result['data'] = $folders;
+					$result['error'] = false;
+					
+				} catch(Exception $e) {
+					$result['msg'] = $e->getMessage();
+					$result['error'] = true;
+				}
+				
+				echo json_encode($result);
+				exit();
 			} 
 
 			echo json_encode($result);
@@ -637,6 +737,32 @@ if(isset($_GET['action'])) {
 
 				// Return the result as a JSON response (for example in an API)
 				echo json_encode($result);
+			} else if ($_GET['endpoint'] === 'folder') {
+				try {
+					check_auth('add_employee'); // Same auth as adding employee
+					
+					$post = escapePostData($_POST);
+					$deleted_at = date('Y-m-d H:i:s');
+					
+					// Soft delete the folder
+					$sql = "UPDATE folders SET deleted_at = ? WHERE id = ?";
+					$stmt = $GLOBALS['conn']->prepare($sql);
+					$stmt->bind_param("si", $deleted_at, $post['id']);
+					
+					if ($stmt->execute()) {
+						$result['msg'] = 'Folder deleted successfully';
+						$result['error'] = false;
+					} else {
+						throw new Exception("Error deleting folder");
+					}
+					
+				} catch (Exception $e) {
+					$result['msg'] = 'Error: ' . $e->getMessage();
+					$result['error'] = true;
+				}
+				
+				echo json_encode($result);
+				exit();
 			} 
 
 			exit();

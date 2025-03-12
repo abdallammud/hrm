@@ -18,7 +18,9 @@ if(isset($_GET['action'])) {
 				$nextMonth = date('Y-m', strtotime("+1 month"));
 
 				$total_expenses = 0;
-				$coming_date = date('Y-m-d', strtotime("28th next month"));
+				$nextMonth = new DateTime('first day of next month');
+				$nextMonth->modify('28 days');
+				$coming_date = $nextMonth->format('Y-m-d');
 				$expenses = $GLOBALS['conn']->query("SELECT `id`, `added_date`, (`base_salary` + (`allowance` + `bonus` + `commission`) - (`loan` + `advance` + `deductions`) - `tax`) AS net_salary FROM `payroll_details` WHERE `month` LIKE '$currentMonth%' AND `status` = 'Paid'");
 				// var_dump($expenses);
 				if($expenses) {

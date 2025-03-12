@@ -9,10 +9,15 @@ function get_dashboadCards() {
 		console.log(data)
 		let res = JSON.parse(data);
 
-		$('.company_balance').html(formatMoney(res.company_balance))
-		$('.total_expenses').html(formatMoney(res.total_expenses))
-		$('.upcoming_salary').html(formatMoney(res.upcoming_salary))
-		$('.coming_date').html(res.coming_date)
+        let company_balance = res.company_balance ?? 0;
+        let total_expenses = res.total_expenses ?? 0;
+        let upcoming_salary = res.upcoming_salary ?? 0;
+        let coming_date = res.coming_date ?? '';
+
+		$('.company_balance').html(formatMoney(company_balance))
+		$('.total_expenses').html(formatMoney(total_expenses))
+		$('.upcoming_salary').html(formatMoney(upcoming_salary))
+		$('.coming_date').html(coming_date)
 	});
 
 	let chartData = [0,0,0,0,0,0,0,0,0,0,0,0];

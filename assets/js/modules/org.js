@@ -730,6 +730,7 @@ async function handle_addStateForm(form) {
             	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
             	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+            		form_loadingUndo(form);
             		location.reload();
             		// load_states();
             	});
@@ -787,11 +788,12 @@ async function handle_editStateForm(form) {
         console.log(response)
         if (response) {
             let res = JSON.parse(response)
-            $('#add_state').modal('hide');
+            $('#edit_state').modal('hide');
             if(res.error) {
             	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
             	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+            		form_loadingUndo(form);
             		location.reload();
             		// load_states();
             	});
@@ -970,6 +972,7 @@ async function handle_addLocationForm(form) {
             	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
             	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+            		form_loadingUndo(form);
             		location.reload();
             		// load_states();
             	});
@@ -1015,11 +1018,12 @@ async function handle_editLocationForm(form) {
         console.log(response)
         if (response) {
             let res = JSON.parse(response)
-            $('#add_state').modal('hide');
+            $('#edit_location').modal('hide');
             if(res.error) {
             	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
             	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+            		form_loadingUndo(form);
             		location.reload();
             		// load_states();
             	});
@@ -1173,9 +1177,6 @@ function handleBanks() {
 	        }
 	    });
 	});
-	(function() {
-		// console.log(branch_keyword)
-	})();
 }
 
 async function handle_addBankForm(form) {
@@ -1206,6 +1207,7 @@ async function handle_addBankForm(form) {
             	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
             	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+            		form_loadingUndo(form);
             		location.reload();
             		// load_banks();
             	});
@@ -1249,13 +1251,14 @@ async function handle_editBankForm(form) {
         console.log(response)
         if (response) {
             let res = JSON.parse(response)
-            $('#add_state').modal('hide');
+            $('#edit_bank').modal('hide');
             if(res.error) {
             	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
             	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+            		form_loadingUndo(form);
             		location.reload();
-            		// load_states();
+            		// load_banks();
             	});
             	console.log(res)
             }
@@ -1371,8 +1374,8 @@ function handleDesignations() {
 	                        toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
 	                    } else {
 	                        toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
-	                            location.reload();
-	                            // load_branches();
+								$('#add_designation').modal('hide');
+	                            load_designations();
 	                        });
 	                        console.log(res);
 	                    }
@@ -1412,8 +1415,10 @@ async function handle_addDesignationForm(form) {
             	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
             	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
-            		location.reload();
-            		// load_designations();
+					$('#add_designation').modal('hide');
+					form_loadingUndo(form);
+            		load_designations();
+					form_loadingUndo(form);
             	});
             	console.log(res)
             }
@@ -1451,13 +1456,15 @@ async function handle_editDesignationForm(form) {
         console.log(response)
         if (response) {
             let res = JSON.parse(response)
-            $('#add_state').modal('hide');
+            $('#edit_designation').modal('hide');
             if(res.error) {
             	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
             	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
-            		location.reload();
-            		// load_states();
+					$('#edit_designation').modal('hide');
+					form_loadingUndo(form);
+            		load_designations();
+					form_loadingUndo(form);
             	});
             	console.log(res)
             }
@@ -1580,8 +1587,7 @@ function handleProjects() {
 	                        toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
 	                    } else {
 	                        toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
-	                            location.reload();
-	                            // load_branches();
+	                            load_projects();
 	                        });
 	                        console.log(res);
 	                    }
@@ -1623,8 +1629,9 @@ async function handle_addProjectForm(form) {
             	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
             	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
-            		location.reload();
-            		// load_projects();
+					$('#add_project').modal('hide');
+					form_loadingUndo(form);
+            		load_projects();
             	});
             	console.log(res)
             }
@@ -1664,13 +1671,14 @@ async function handle_editProjectForm(form) {
         console.log(response)
         if (response) {
             let res = JSON.parse(response)
-            $('#add_state').modal('hide');
+            $('#edit_project').modal('hide');
             if(res.error) {
             	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
             	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
-            		location.reload();
-            		// load_states();
+					$('#edit_project').modal('hide');
+					form_loadingUndo(form);
+            		load_projects();
             	});
             	console.log(res)
             }
@@ -1787,8 +1795,7 @@ function handleContractTypes() {
 	                        toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
 	                    } else {
 	                        toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
-	                            location.reload();
-	                            // load_branches();
+	                            load_contractTypes();
 	                        });
 	                        console.log(res);
 	                    }
@@ -1828,8 +1835,9 @@ async function handle_addContractTypeForm(form) {
             	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
             	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
-            		location.reload();
-            		// load_contractTypes();
+					$('#add_contractType').modal('hide');
+					form_loadingUndo(form);
+            		load_contractTypes();
             	});
             	console.log(res)
             }
@@ -1867,13 +1875,14 @@ async function handle_editContractTypeForm(form) {
         console.log(response)
         if (response) {
             let res = JSON.parse(response)
-            $('#add_state').modal('hide');
+            $('#edit_contractType').modal('hide');
             if(res.error) {
             	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
             	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
-            		location.reload();
-            		// load_states();
+					$('#edit_contractType').modal('hide');
+					form_loadingUndo(form);
+            		load_contractTypes();
             	});
             	console.log(res)
             }
@@ -1997,8 +2006,7 @@ function handleBudgetCodes() {
 	                        toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
 	                    } else {
 	                        toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
-	                            location.reload();
-	                            // load_branches();
+	                            load_budgetCodes();
 	                        });
 	                        console.log(res);
 	                    }
@@ -2040,8 +2048,9 @@ async function handle_addBudgetCodeForm(form) {
             	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
             	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
-            		location.reload();
-            		// load_budgetCodes();
+					$('#add_budgetCode').modal('hide');
+					form_loadingUndo(form);
+            		load_budgetCodes();
             	});
             	console.log(res)
             }
@@ -2085,8 +2094,9 @@ async function handle_editBudgetCodeForm(form) {
             	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
             	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
-            		location.reload();
-            		// load_budgetCodes();
+					$('#edit_budgetCode').modal('hide');
+					form_loadingUndo(form);
+            		load_budgetCodes();
             	});
             	console.log(res)
             }
@@ -2105,7 +2115,7 @@ async function get_budgetCode(id) {
 	return response;
 }
 
-// Budget all banks
+// banks
 function load_allBanks() {
 	var datatable = $('#allBanksDT').DataTable({
 		// let datatable = new DataTable('#companyDT', {
@@ -2202,8 +2212,7 @@ function handleAllBanks() {
 	                        toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
 	                    } else {
 	                        toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
-	                            location.reload();
-	                            // load_branches();
+	                            load_allBanks();
 	                        });
 	                        console.log(res);
 	                    }
@@ -2238,13 +2247,14 @@ async function handle_addbankForm(form) {
         console.log(response)
         if (response) {
             let res = JSON.parse(response)
-            $('#add_budgetCode').modal('hide');
+            $('#add_bank').modal('hide');
             if(res.error) {
             	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
             	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
-            		location.reload();
-            		// load_budgetCodes();
+					$('#add_bank').modal('hide');
+					form_loadingUndo(form);
+            		load_allBanks();
             	});
             	console.log(res)
             }
@@ -2281,13 +2291,14 @@ async function handle_editAllBankForm(form) {
         console.log(response)
         if (response) {
             let res = JSON.parse(response)
-            $('#edit_budgetCode').modal('hide');
+            $('#edit_bank').modal('hide');
             if(res.error) {
             	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
             	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
-            		location.reload();
-            		// load_budgetCodes();
+					$('#edit_bank').modal('hide');
+					form_loadingUndo(form);
+            		load_allBanks();
             	});
             	console.log(res)
             }
@@ -2307,7 +2318,7 @@ async function get_bank(id) {
 }
 
 
-// Budget subtypes
+// Transaction subtypes
 function load_transSubTypes() {
 	var datatable = $('#subTypesDT').DataTable({
 		// let datatable = new DataTable('#companyDT', {
@@ -2411,8 +2422,7 @@ function handleSubTypes() {
 	                        toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
 	                    } else {
 	                        toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
-	                            location.reload();
-	                            // load_branches();
+	                            load_transSubTypes();
 	                        });
 	                        console.log(res);
 	                    }
@@ -2449,12 +2459,14 @@ async function handle_addSubtype(form) {
         console.log(response)
         if (response) {
             let res = JSON.parse(response)
+            $('#add_subtype').modal('hide');
             if(res.error) {
             	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
             	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
-            		location.reload();
-            		// load_budgetCodes();
+					$('#add_subtype').modal('hide');
+					form_loadingUndo(form);
+            		load_transSubTypes();
             	});
             	console.log(res)
             }
@@ -2493,13 +2505,14 @@ async function handle_editSubtype(form) {
         console.log(response)
         if (response) {
             let res = JSON.parse(response)
-            $('#edit_budgetCode').modal('hide');
+            $('#edit_subtype').modal('hide');
             if(res.error) {
             	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
             	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
-            		location.reload();
-            		// load_budgetCodes();
+					$('#edit_subtype').modal('hide');
+					form_loadingUndo(form);
+            		load_transSubTypes();
             	});
             	console.log(res)
             }
@@ -2517,7 +2530,6 @@ async function get_subtype(id) {
 	let response = await send_orgPost('get subtype', data);
 	return response;
 }
-
 
 document.addEventListener("DOMContentLoaded", function() {
 	handleOrg();

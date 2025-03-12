@@ -172,6 +172,18 @@ function get_menu_config() {
                         'edit' => ['file' => 'employee_edit', 'auth' => 'edit_employee'],
                     ],
                 ],
+                'documents' => [
+                    'default' => 'documents',
+                    'auth' => 'view_employees',
+                    'route' => 'documents',
+                    'name' => 'Documents',
+                    'js' => ['docs'],
+                    'actions' => [
+                        'add' => ['file' => 'employee_add', 'auth' => 'add_employee'],
+                        'show' => ['file' => 'employee_show', 'auth' => 'view_employees'],
+                        'edit' => ['file' => 'employee_edit', 'auth' => 'edit_employee'],
+                    ],
+                ],
                 
             ],
         ],
@@ -306,5 +318,3 @@ function get_menu_config() {
         // Add more menus here
     ];
 }
-
-

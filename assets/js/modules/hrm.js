@@ -203,7 +203,9 @@ document.addEventListener("DOMContentLoaded", function() {
 	})
 	
 	
-
+	// Documents
+	handleDocs();
+	handleDocTypes();
 });	
 
 function load_employees(department = '', state = '', location = '', status = '') {
@@ -730,4 +732,350 @@ async function handle_upload_employeesForm(form) {
 	
 	ajax.open("POST", `${base_url}/app/hrm_controller.php?action=save&endpoint=upload_employees`);
 	ajax.send(formData);
+}
+
+// Documents
+function handleDocs() {
+	load_folders();
+    $('#addFolderForm').on('submit', (e) => {
+        handle_addFolderForm(e.target);
+        return false;
+    });
+    $('#editFolderForm').on('submit', (e) => {
+        handle_editFolderForm(e.target);
+        return false;
+    });
+
+	// Search
+	$('#searchFolder').on('input', () => {
+		load_folders();
+	});
+}
+
+async function handle_addFolderForm(form) {
+    clearErrors();
+    let error = validateForm(form);
+
+    let name = $(form).find('#folderName').val();
+
+    if (error) return false;
+
+    let formData = {
+        name: name
+    };
+
+    form_loading(form);
+
+    try {
+        let response = await send_hrmPost('save folder', formData);
+        console.log(response);
+        if (response) {
+            let res = JSON.parse(response);
+            if(res.error) {
+                toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            } else {
+                toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+                    form_loadingUndo(form);
+                    $('#add_folder').modal('hide');
+                    load_folders();
+                });
+            }
+        } else {
+            console.log('Failed to save folder.' + response);
+        }
+    } catch (err) {
+        console.error('Error occurred during form submission:', err);
+    }
+}
+
+function editFolder(id, name) {
+    $('#editFolderId').val(id);
+    $('#editFolderName').val(name);
+    $('#edit_folder').modal('show');
+}
+
+function deleteFolder(id) {
+    swal({
+        title: "Are you sure?",
+        text: "Once deleted, you will not be able to recover this folder!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+    })
+    .then((willDelete) => {
+        if (willDelete) {
+            $.post(`${base_url}/app/hrm_controller.php?action=delete&endpoint=folder`, { id })
+                .then(response => {
+                    let res = JSON.parse(response);
+                    if (!res.error) {
+                        toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 });
+                        load_folders();
+                    } else {
+                        toaster.error(res.msg, 'Error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    toaster.error('Failed to delete folder', 'Error');
+                });
+        }
+    });
+}
+
+async function handle_editFolderForm(form) {
+    clearErrors();
+    let error = validateForm(form);
+    
+    if (error) return false;
+    
+    let formData = {
+        id: $(form).find('#editFolderId').val(),
+        name: $(form).find('#editFolderName').val()
+    };
+    
+    form_loading(form);
+    
+    try {
+        let response = await send_hrmPost('update folder', formData);
+		console.log(response)
+        if (response) {
+            let res = JSON.parse(response);
+            if(res.error) {
+                toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            } else {
+                toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+                    form_loadingUndo(form);
+                    $('#edit_folder').modal('hide');
+                    load_folders();
+                });
+            }
+        } else {
+            console.log('Failed to update folder.' + response);
+        }
+    } catch (err) {
+        console.error('Error occurred during form submission:', err);
+    }
+}
+
+async function load_folders() {
+    let search = $('#searchFolder').val() || '';
+    const response = await $.post(`${base_url}/app/hrm_controller.php?action=load&endpoint=folders`, { search });
+	console.log(response)
+    let res = JSON.parse(response)
+    if(!res.error) {
+        let folders = '';
+        res.data.map((folder) => {
+            folders += `<div class="col-sm-6 col-md-4 col-lg-2 mb-4">
+                <div class="card text-center shadow">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Folder</span>
+                        <div class="dropdown">
+                            <button class="btn btn-sm" type="button" id="dropdownMenuButton${folder.id}" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton${folder.id}">
+                                <li><a class="dropdown-item" href="#" onclick="editFolder(${folder.id}, '${folder.name}'); return false;">Edit</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="deleteFolder(${folder.id}); return false;">Delete</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <a href="${base_url}/documents/${folder.id}" class="card-body text-decoration-none">
+                        <i class="bi bi-folder fs-1 text-primary"></i>
+                        <h6 class="card-title mt-2 ">${folder.name}</h6>
+                    </a>
+                </div>
+            </div>`;
+        });
+        
+        // Add the "Add Folder" button
+        folders += `<a href="#" data-bs-toggle="modal" data-bs-target="#add_folder" class="col-sm-6 col-md-4 col-lg-2 mb-4 text-decoration-none">
+            <div class="card text-center shadow">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>New Folder</span>
+                </div>
+                <div class="card-body">
+                    <i class="bi bi-plus-square fs-1 text-primary"></i>
+                    <h6 class="card-title mt-2 ">Add Folder</h6>
+                </div>
+            </div>
+        </a>`;
+        
+        $('#folders').html(folders);
+    }
+    return response;
+}
+
+// Document Types
+function handleDocTypes() {
+    load_docTypes();
+    
+    $('#addDocTypeForm').on('submit', (e) => {
+        handle_addDocTypeForm(e.target);
+        return false;
+    });
+    
+    $('#editDocTypeForm').on('submit', (e) => {
+        handle_editDocTypeForm(e.target);
+        return false;
+    });
+}
+
+function load_docTypes() {
+    var datatable = $('#docTypesDT').DataTable({
+        "processing": true,
+        "serverSide": true,
+        "bDestroy": true,
+        "searching": true,
+        "info": true,
+        "ajax": {
+            "url": `${base_url}/app/hrm_controller.php?action=load&endpoint=doctypes`,
+            "method": "POST"
+        },
+        "columns": [
+            { 
+                "data": "name",
+                "render": function(data, type, row) {
+                    return `<div class="d-flex align-items-center">
+                        <div class="ms-2">
+                            <h6 class="mb-0">${data}</h6>
+                        </div>
+                    </div>`;
+                }
+            },
+            { "data": "description" },
+            { 
+                "data": "created_at",
+                "render": function(data) {
+                    return moment(data).format('MMM DD, YYYY');
+                }
+            },
+            {
+                "data": null,
+                "render": function(data, type, row) {
+                    return `<div class="d-flex align-items-center gap-3">
+                        <a href="#" onclick="editDocType(${row.id}, '${row.name}', '${row.description || ''}'); return false;" class="text-warning" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit">
+                            <i class="bi bi-pencil-fill"></i>
+                        </a>
+                        <a href="#" onclick="deleteDocType(${row.id}); return false;" class="text-danger" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete">
+                            <i class="bi bi-trash-fill"></i>
+                        </a>
+                    </div>`;
+                }
+            }
+        ]
+    });
+}
+
+async function handle_addDocTypeForm(form) {
+    clearErrors();
+    let error = validateForm(form);
+    
+    if (error) return false;
+    
+    let formData = {
+        name: $(form).find('#docTypeName').val(),
+        description: $(form).find('#docTypeDescription').val()
+    };
+    
+    form_loading(form);
+    
+    try {
+        let response = await send_hrmPost('save doctype', formData);
+        if (response) {
+            let res = JSON.parse(response);
+            if(res.error) {
+                toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                form_loadingUndo(form);
+            } else {
+                toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+                    form_loadingUndo(form);
+                    $('#add_docType').modal('hide');
+                    $(form).find('#docTypeName').val('');
+                    $(form).find('#docTypeDescription').val('');
+                    $('#docTypesDT').DataTable().ajax.reload();
+                });
+            }
+        } else {
+            console.log('Failed to save document type.' + response);
+            form_loadingUndo(form);
+        }
+    } catch (err) {
+        console.error('Error occurred during form submission:', err);
+        form_loadingUndo(form);
+        toaster.error('Failed to save document type', 'Error');
+    }
+}
+
+function editDocType(id, name, description) {
+    $('#editDocTypeId').val(id);
+    $('#editDocTypeName').val(name);
+    $('#editDocTypeDescription').val(description);
+    $('#edit_docType').modal('show');
+}
+
+function deleteDocType(id) {
+    swal({
+        title: "Are you sure?",
+        text: "Once deleted, you will not be able to recover this document type!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+    })
+    .then((willDelete) => {
+        if (willDelete) {
+            $.post(`${base_url}/app/hrm_controller.php?action=delete&endpoint=doctype`, { id })
+                .then(response => {
+                    let res = JSON.parse(response);
+                    if (!res.error) {
+                        toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 });
+                        $('#docTypesDT').DataTable().ajax.reload();
+                    } else {
+                        toaster.error(res.msg, 'Error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    toaster.error('Failed to delete document type', 'Error');
+                });
+        }
+    });
+}
+
+async function handle_editDocTypeForm(form) {
+    clearErrors();
+    let error = validateForm(form);
+    
+    if (error) return false;
+    
+    let formData = {
+        id: $(form).find('#editDocTypeId').val(),
+        name: $(form).find('#editDocTypeName').val(),
+        description: $(form).find('#editDocTypeDescription').val()
+    };
+    
+    form_loading(form);
+    
+    try {
+        let response = await send_hrmPost('update doctype', formData);
+        if (response) {
+            let res = JSON.parse(response);
+            if(res.error) {
+                toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                form_loadingUndo(form);
+            } else {
+                toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+                    form_loadingUndo(form);
+                    $('#edit_docType').modal('hide');
+                    $('#docTypesDT').DataTable().ajax.reload();
+                });
+            }
+        } else {
+            console.log('Failed to update document type.' + response);
+            form_loadingUndo(form);
+        }
+    } catch (err) {
+        console.error('Error occurred during form submission:', err);
+        form_loadingUndo(form);
+        toaster.error('Failed to update document type', 'Error');
+    }
 }
