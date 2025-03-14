@@ -295,6 +295,101 @@ if(isset($_GET['action'])) {
 				
 				echo json_encode($result);
 				exit();
+			} else if($_GET['endpoint'] == 'doc_types') {
+				try {
+					$GLOBALS['conn']->begin_transaction();
+					$post = escapePostData($_POST);
+					
+					// Check if type already exists
+					$check_sql = "SELECT * FROM document_types WHERE name = '".$post['name']."'";
+					$check_exists = $GLOBALS['conn']->query($check_sql);
+					if($check_exists->num_rows > 0) {
+						$result['msg'] = 'Document type already exists';
+						$result['error'] = true;
+					} else {
+						$data = array(
+							'name' => $post['name'],
+							'created_by' => $_SESSION['user_id'],
+							'updated_by' => $_SESSION['user_id']
+						);
+						
+						$columns = implode(", ", array_keys($data));
+						$values = "'" . implode("', '", array_values($data)) . "'";
+						$sql = "INSERT INTO document_types ($columns) VALUES ($values)";
+						
+						if($GLOBALS['conn']->query($sql)) {
+							$GLOBALS['conn']->commit();
+							$result['msg'] = 'Document type added successfully';
+							$result['error'] = false;
+						} else {
+							throw new Exception("Error adding document type");
+						}
+					}
+				} catch(Exception $e) {
+					$GLOBALS['conn']->rollback();
+					$result['msg'] = 'Error: Something went wrong';
+					$result['error'] = true;
+				}
+				echo json_encode($result);
+			} else if($_GET['endpoint'] == 'emp_docs') {
+				try {
+					$GLOBALS['conn']->begin_transaction();
+					$post = escapePostData($_POST);
+					
+					// Handle file upload
+					$target_dir = '../assets/docs/employee/';
+					if (!file_exists($target_dir)) {
+						mkdir($target_dir, 0777, true);
+					}
+
+					$file = $_FILES['docFile'];
+					$file_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+					$file_name = uniqid() . '.' . $file_ext;
+					$target_file = $target_dir . $file_name;
+
+					if (move_uploaded_file($file['tmp_name'], $target_file)) {
+						$employeeInfo = get_data('employees', ['employee_id' => $post['employee_id']])[0];
+						if (!$employeeInfo) {
+							throw new Exception("Employee not found");
+						}
+						
+						$data = array(
+							'name' => $post['docName'],
+							'folder_id' => $post['docFolder'],
+							'folder_name' => $post['docFolderName'],
+							'type_id' => $post['docType'],
+							'type_name' => $post['docTypeName'],
+							'emp_id' => $post['employee_id'],
+							'full_name' => $employeeInfo['full_name'],
+							'phone' => '45444',//$employeeInfo['phone'],
+							'email' => $employeeInfo['email'],
+							'expiration_date' => $post['expirationDate'],
+							'document' => $file_name,
+							'created_by' => $_SESSION['user_id'],
+							'updated_by' => $_SESSION['user_id']
+						);
+						
+						$result['id'] = $empDocClass->create($data);
+						$GLOBALS['conn']->commit();
+						// If the branch is created successfully, return a success message
+						if($result['id']) {
+							$result['msg'] = 'Document added successfully';
+							$result['error'] = false;
+						} else {
+							$result['msg'] = 'Something went wrong, please try again';
+							$result['error'] = true;
+						}
+					} else {
+						throw new Exception("Error uploading file");
+					}
+					
+				} catch(Exception $e) {
+					$GLOBALS['conn']->rollback();
+					$result['msg'] = 'Error: ' . $e->getMessage();
+					$result['error'] = true;
+				}
+				echo json_encode($result);
+				exit();
 			} 
 
 			exit();
@@ -526,10 +621,80 @@ if(isset($_GET['action'])) {
 				
 				echo json_encode($result);
 				exit();
-			}
- 
-		}
+			} else if($_GET['endpoint'] == 'doc_types') {
+				try {
+					$GLOBALS['conn']->begin_transaction();
+					$post = escapePostData($_POST);
+					
+					// Check if type already exists
+					$check_sql = "SELECT * FROM document_types WHERE name = '".$post['name']."' AND id != '".$post['id']."'";
+					$check_exists = $GLOBALS['conn']->query($check_sql);
+					if($check_exists->num_rows > 0) {
+						$result['msg'] = 'Document type already exists';
+						$result['error'] = true;
+					} else {
+						$data = array(
+							'name' => $post['name'],
+							'updated_by' => $_SESSION['user_id']
+						);
+						
+						$updates = array();
+						foreach($data as $key => $value) {
+							$updates[] = "$key = '$value'";
+						}
+						$sql = "UPDATE document_types SET " . implode(", ", $updates) . " WHERE id = '".$post['id']."'";
+						
+						if($GLOBALS['conn']->query($sql)) {
+							$GLOBALS['conn']->commit();
+							$result['msg'] = 'Document type updated successfully';
+							$result['error'] = false;
+						} else {
+							throw new Exception("Error updating document type");
+						}
+					}
+				} catch(Exception $e) {
+					$GLOBALS['conn']->rollback();
+					$result['msg'] = 'Error: Something went wrong';
+					$result['error'] = true;
+				}
+				echo json_encode($result);
+			} else if($_GET['endpoint'] == 'folder_docs') {
+				try {
+					$GLOBALS['conn']->begin_transaction();
+					$post = escapePostData($_POST);
+					
+					$data = array(
+						'name' => $post['docName4Edit'],
+						'doc_type_id' => $post['docType4Edit'],
+						'employee_id' => $post['employee4Edit'],
+						'expiration_date' => $post['expirationDate4Edit'],
+						'updated_by' => $_SESSION['user_id']
+					);
+					
+					$updates = array();
+					foreach($data as $key => $value) {
+						$updates[] = "$key = '$value'";
+					}
+					$sql = "UPDATE documents SET " . implode(", ", $updates) . " WHERE id = '".$post['id']."'";
+					
+					if($GLOBALS['conn']->query($sql)) {
+						$GLOBALS['conn']->commit();
+						$result['msg'] = 'Document updated successfully';
+						$result['error'] = false;
+					} else {
+						throw new Exception("Error updating document");
+					}
+				} catch(Exception $e) {
+					$GLOBALS['conn']->rollback();
+					$result['msg'] = 'Error: Something went wrong';
+					$result['error'] = true;
+				}
+				echo json_encode($result);
+				exit();
+			} 
 
+			exit();
+		} 
 
 
 		// Load data
@@ -658,6 +823,102 @@ if(isset($_GET['action'])) {
 				
 				echo json_encode($result);
 				exit();
+			} else if ($_GET['endpoint'] === 'doc_types') {
+				if (isset($_POST['order']) && isset($_POST['order'][0])) {
+				    $orderColumnMap = ['name'];
+				    $orderByIndex = (int)$_POST['order'][0]['column'];
+				    $orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
+				    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+				}
+			    // Base query
+			    $query = "SELECT * FROM `document_types` WHERE `id` IS NOT NULL";
+
+			    // Add search functionality
+			    if ($searchParam) {
+			        $query .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%')";
+			    }
+
+			    // Add ordering
+			    $query .= " ORDER BY `$orderBy` $order LIMIT $start, $length";
+
+			    // Execute query
+			    $document_types = $GLOBALS['conn']->query($query);
+
+			    // Count total records for pagination
+			    $countQuery = "SELECT COUNT(*) as total FROM `document_types` WHERE `id` IS NOT NULL";
+			    if ($searchParam) {
+			        $query .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%')";
+			    }
+
+			    // Execute count query
+			    $totalRecordsResult = $GLOBALS['conn']->query($countQuery);
+			    $totalRecords = $totalRecordsResult->fetch_assoc()['total'];
+
+			    if ($document_types->num_rows > 0) {
+			        while ($row = $document_types->fetch_assoc()) {
+			            $result['data'][] = $row;
+			        }
+			        $result['iTotalRecords'] = $totalRecords;
+			        $result['iTotalDisplayRecords'] = $totalRecords;
+			        $result['msg'] = $document_types->num_rows . " records were found.";
+			    } else {
+			        $result['msg'] = "No records found";
+			    }
+			} else if ($_GET['endpoint'] === 'documents') {
+				$folder_id = isset($_POST['folder_id']) ? escapeStr($_POST['folder_id']) : '';
+				$employee_id = isset($_POST['employee_id']) ? escapeStr($_POST['employee_id']) : '';
+				if (isset($_POST['order']) && isset($_POST['order'][0])) {
+				    $orderColumnMap = ['name', 'full_name', 'phone','type_name', 'expiration_date', 'created_at'];
+				    $orderByIndex = (int)$_POST['order'][0]['column'];
+				    $orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
+				    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+				}
+			    // Base query
+			    $query = "SELECT * FROM `employee_docs` WHERE `id` IS NOT NULL";
+
+			    // Add search functionality
+			    if ($searchParam) {
+			        $query .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%' OR `full_name` LIKE '%" . escapeStr($searchParam) . "%' OR `phone` LIKE '%" . escapeStr($searchParam) . "%' )";
+			    }
+
+				if($folder_id) {
+					$query .= " AND `folder_id` = '$folder_id'";
+				}
+
+				if($employee_id) {
+					$query .= " AND `emp_id` = '$employee_id'";
+				}
+
+			    // Add ordering
+			    $query .= " ORDER BY `$orderBy` $order LIMIT $start, $length";
+
+			    // Execute query
+			    $empDocs = $GLOBALS['conn']->query($query);
+
+			    // Count total records for pagination
+			    $countQuery = "SELECT COUNT(*) as total FROM `employee_docs` WHERE `id` IS NOT NULL";
+			    if ($searchParam) {
+			        $countQuery .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%' OR `full_name` LIKE '%" . escapeStr($searchParam) . "%' OR `phone` LIKE '%" . escapeStr($searchParam) . "%' )";
+			    }
+
+			    if($folder_id) {
+			        $countQuery .= " AND `folder_id` = '$folder_id'";
+			    }
+
+			    // Execute count query
+			    $totalRecordsResult = $GLOBALS['conn']->query($countQuery);
+			    $totalRecords = $totalRecordsResult->fetch_assoc()['total'];
+
+			    if ($empDocs->num_rows > 0) {
+			        while ($row = $empDocs->fetch_assoc()) {
+			            $result['data'][] = $row;
+			        }
+			        $result['iTotalRecords'] = $totalRecords;
+			        $result['iTotalDisplayRecords'] = $totalRecords;
+			        $result['msg'] = $empDocs->num_rows . " records were found.";
+			    } else {
+			        $result['msg'] = "No records found";
+			    }
 			} 
 
 			echo json_encode($result);
@@ -673,10 +934,66 @@ if(isset($_GET['action'])) {
 				json(get_data('company', array('id' => $_POST['id'])));
 			} else if ($_GET['endpoint'] === 'branch') {
 				json(get_data('branches', array('id' => $_POST['id'])));
+			} else if ($_GET['endpoint'] === 'doc_types') {
+				$id = $_POST['id'];
+				$sql = "SELECT * FROM document_types WHERE id = '$id'";
+				$result = $GLOBALS['conn']->query($sql);
+				$data = array();
+				while($row = $result->fetch_assoc()) {
+					$data[] = $row;
+				}
+				echo json_encode($data);
+			} else if ($_GET['endpoint'] === 'folder_docs') {
+				$id = $_POST['id'];
+				$sql = "SELECT * FROM documents WHERE id = '$id'";
+				$result = $GLOBALS['conn']->query($sql);
+				$data = array();
+				while($row = $result->fetch_assoc()) {
+					$data[] = $row;
+				}
+				echo json_encode($data);
+				exit();
+			} else if($_GET['endpoint'] == 'doc_types_list') {
+				$sql = "SELECT id, name FROM document_types ORDER BY name ASC";
+				$result = $GLOBALS['conn']->query($sql);
+				$data = array();
+				while($row = $result->fetch_assoc()) {
+					$data[] = $row;
+				}
+				echo json_encode($data);
+				exit();
+			} else if($_GET['endpoint'] == 'employees_list') {
+				$sql = "SELECT id, full_name FROM employees ORDER BY full_name ASC";
+				$result = $GLOBALS['conn']->query($sql);
+				$data = array();
+				while($row = $result->fetch_assoc()) {
+					$data[] = $row;
+				}
+				echo json_encode($data);
+				exit();
 			}
 
 			exit();
 		}
+
+		// Search data
+		else if($_GET['action'] == 'search') {
+			if($_GET['endpoint'] == 'employees') {
+				$search = $_POST['search'];
+				$sql = "SELECT id, full_name, phone_number FROM employees 
+					   WHERE status = 'active' AND 
+					   (full_name LIKE '%$search%' OR phone_number LIKE '%$search%' OR employee_id LIKE '%$search%')
+					   ORDER BY full_name ASC LIMIT 10";
+				$result = $GLOBALS['conn']->query($sql);
+				$data = array();
+				while($row = $result->fetch_assoc()) {
+					$data[] = $row;
+				}
+				echo json_encode($data);
+				exit();
+			}
+		} 
+
 
 		// Delete data
 		else if($_GET['action'] == 'delete') {
@@ -763,11 +1080,105 @@ if(isset($_GET['action'])) {
 				
 				echo json_encode($result);
 				exit();
+			} else if ($_GET['endpoint'] === 'doc_types') {
+				try {
+					$GLOBALS['conn']->begin_transaction();
+					$id = $_POST['id'];
+					
+					$sql = "DELETE FROM document_types WHERE id = '$id'";
+					if($GLOBALS['conn']->query($sql)) {
+						$GLOBALS['conn']->commit();
+						$result['msg'] = 'Document type deleted successfully';
+						$result['error'] = false;
+					} else {
+						throw new Exception("Error deleting document type");
+					}
+				} catch(Exception $e) {
+					$GLOBALS['conn']->rollback();
+					$result['msg'] = 'Error: Something went wrong';
+					$result['error'] = true;
+				}
+				echo json_encode($result);
+			} else if ($_GET['endpoint'] === 'document') {
+				try {
+				    // Delete branchClass
+				    $post = escapePostData($_POST);
+				    check_auth('delete_employee');
+				    $deleted = $empDocClass->delete($post['id']);
+
+				    // Company deleted
+				    if($deleted) {
+				        $result['msg'] = 'Document has been  deleted successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+
+				} catch (Exception $e) {
+				    // Catch any exceptions from the create method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
 			} 
 
 			exit();
+		} else if($_GET['action'] == 'download') {
+			if($_GET['endpoint'] == 'folder_docs') {
+				$id = $_GET['id'];
+				$sql = "SELECT * FROM documents WHERE id = '$id'";
+				$result = $GLOBALS['conn']->query($sql);
+				$doc = $result->fetch_assoc();
+				
+				if($doc && file_exists($doc['file_path'])) {
+					$file_name = basename($doc['file_path']);
+					header('Content-Type: application/octet-stream');
+					header('Content-Disposition: attachment; filename="'.$doc['name'].'"');
+					header('Content-Length: ' . filesize($doc['file_path']));
+					readfile($doc['file_path']);
+					exit();
+				}
+				
+				header('HTTP/1.0 404 Not Found');
+				echo "File not found.";
+				exit();
+			}
+		} else if($_GET['action'] == 'view') {
+			if($_GET['endpoint'] == 'folder_docs') {
+				$id = $_GET['id'];
+				$sql = "SELECT * FROM documents WHERE id = '$id'";
+				$result = $GLOBALS['conn']->query($sql);
+				$doc = $result->fetch_assoc();
+				
+				if($doc && file_exists($doc['file_path'])) {
+					$file_ext = strtolower(pathinfo($doc['file_path'], PATHINFO_EXTENSION));
+					switch($file_ext) {
+						case 'pdf':
+							header('Content-Type: application/pdf');
+							break;
+						case 'jpg':
+						case 'jpeg':
+							header('Content-Type: image/jpeg');
+							break;
+						case 'png':
+							header('Content-Type: image/png');
+							break;
+						default:
+							header('Content-Type: application/octet-stream');
+					}
+					readfile($doc['file_path']);
+					exit();
+				}
+				
+				header('HTTP/1.0 404 Not Found');
+				echo "File not found.";
+				exit();
+			}
 		}
-
 
 	}
 }

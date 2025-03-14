@@ -3,12 +3,12 @@
 $servername = "localhost";
 $username   = "root";
 $password   = "";
-$db = "edurdur_t";
+$db = "asheeri";
 
-/*$servername = "localhost";
-$username   = "u138037914_gamaas";
-$password   = ";9lZgpiFqxOA";
-$db = "u138037914_gamaas";*/
+$servername = "localhost";
+$username   = "u138037914_hrm";
+$password   = "Hrm_password#3";
+$db = "u138037914_hrm";
 
 $GLOBALS['conn'] = $conn = new mysqli($servername, $username, $password, $db);
 

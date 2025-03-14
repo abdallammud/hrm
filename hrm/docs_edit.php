@@ -34,23 +34,24 @@
                 <h5 class="modal-title" id="editDocTypeModalLabel">Edit Document Type</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editDocTypeForm">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="editDocTypeName" class="form-label">Document Type Name</label>
-                        <input type="text" class="form-control" id="editDocTypeName" name="name" required>
-                        <input type="hidden" id="editDocTypeId" name="id">
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDocTypeDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="editDocTypeDescription" name="description" rows="3"></textarea>
-                    </div>
+            <div class="card">
+                <div class="card-body">
+                    <form id="editDocTypeForm">
+                        <input type="hidden" id="docType_id">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="typeName4Edit">Type Name</label>
+                                    <input type="text" class="form-control" id="typeName4Edit" name="typeName4Edit" placeholder="Enter document type name">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">Update</button>
+                        </div>
+                    </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>

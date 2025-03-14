@@ -28,21 +28,21 @@
                             <div class="form-group attenForDiv">
                                 <label class="label required" for="searchEmployee">Employee</label>
                                 <select class="my-select searchEmployee" name="searchEmployee" id="searchEmployee" data-live-search="true" title="Search and select empoyee">
-                                <?php 
-                                $query = "SELECT * FROM `employees` WHERE `status` = 'active' ORDER BY `full_name` ASC LIMIT 10";
-                                $empSet = $GLOBALS['conn']->query($query);
-                                if($empSet->num_rows > 0) {
-                                	while($row = $empSet->fetch_assoc()) {
-                                		$employee_id = $row['employee_id'];
-                                		$full_name = $row['full_name'];
-                                		$phone_number = $row['phone_number'];
+                                    <?php 
+                                    $query = "SELECT * FROM `employees` WHERE `status` = 'active' ORDER BY `full_name` ASC LIMIT 10";
+                                    $empSet = $GLOBALS['conn']->query($query);
+                                    if($empSet->num_rows > 0) {
+                                        while($row = $empSet->fetch_assoc()) {
+                                            $employee_id = $row['employee_id'];
+                                            $full_name = $row['full_name'];
+                                            $phone_number = $row['phone_number'];
 
-                                		echo '<option value="'.$employee_id.'">'.$full_name.', '.$phone_number.'</option>';
-                                	}
-                                } 
+                                            echo '<option value="'.$employee_id.'">'.$full_name.', '.$phone_number.'</option>';
+                                        }
+                                    } 
 
-                                ?>
-					        </select>
+                                    ?>
+                                </select>
                             </div>
                         </div>
                     </div>

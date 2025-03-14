@@ -206,6 +206,10 @@ document.addEventListener("DOMContentLoaded", function() {
 	// Documents
 	handleDocs();
 	handleDocTypes();
+	handleEmpDocs();
+    $('.my-select').selectpicker({
+	    noneResultsText: "No results found"
+	});
 });	
 
 function load_employees(department = '', state = '', location = '', status = '') {
@@ -860,7 +864,7 @@ async function handle_editFolderForm(form) {
 async function load_folders() {
     let search = $('#searchFolder').val() || '';
     const response = await $.post(`${base_url}/app/hrm_controller.php?action=load&endpoint=folders`, { search });
-	console.log(response)
+	//console.log(response)
     let res = JSON.parse(response)
     if(!res.error) {
         let folders = '';
@@ -906,176 +910,513 @@ async function load_folders() {
 }
 
 // Document Types
-function handleDocTypes() {
-    load_docTypes();
-    
-    $('#addDocTypeForm').on('submit', (e) => {
-        handle_addDocTypeForm(e.target);
-        return false;
-    });
-    
-    $('#editDocTypeForm').on('submit', (e) => {
-        handle_editDocTypeForm(e.target);
-        return false;
-    });
-}
-
 function load_docTypes() {
     var datatable = $('#docTypesDT').DataTable({
         "processing": true,
         "serverSide": true,
         "bDestroy": true,
-        "searching": true,
-        "info": true,
+        "columnDefs": [
+            { "orderable": false, "searchable": false, "targets": [2] }
+        ],
+        "serverMethod": 'post',
         "ajax": {
-            "url": `${base_url}/app/hrm_controller.php?action=load&endpoint=doctypes`,
-            "method": "POST"
+            "url": "./app/hrm_controller.php?action=load&endpoint=doc_types",
+            "method": "POST",
+		    // dataFilter: function(data) {
+			// 	console.log(data)
+			// }
         },
-        "columns": [
-            { 
-                "data": "name",
-                "render": function(data, type, row) {
-                    return `<div class="d-flex align-items-center">
-                        <div class="ms-2">
-                            <h6 class="mb-0">${data}</h6>
-                        </div>
-                    </div>`;
-                }
-            },
-            { "data": "description" },
-            { 
-                "data": "created_at",
-                "render": function(data) {
-                    return moment(data).format('MMM DD, YYYY');
-                }
-            },
-            {
-                "data": null,
-                "render": function(data, type, row) {
-                    return `<div class="d-flex align-items-center gap-3">
-                        <a href="#" onclick="editDocType(${row.id}, '${row.name}', '${row.description || ''}'); return false;" class="text-warning" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Edit">
-                            <i class="bi bi-pencil-fill"></i>
-                        </a>
-                        <a href="#" onclick="deleteDocType(${row.id}); return false;" class="text-danger" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete">
-                            <i class="bi bi-trash-fill"></i>
-                        </a>
-                    </div>`;
+        columns: [
+	        { title: `Document Type Name`, data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.name}</span>
+	                </div>`;
+	        }},
+
+            { title: `Created At`, data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.created_at}</span>
+	                </div>`;
+	        }},
+
+	        { title: "Action", data: null, render: function(data, type, row) {
+	            return `<div class="sflex scenter-items">
+            		<span data-recid="${row.id}" class="fa edit_docType smt-5 cursor smr-10 fa-pencil"></span>
+            		<span data-recid="${row.id}" class="fa delete_docType smt-5 cursor fa-trash"></span>
+                </div>`;
+	        }},
+	    ]
+    });
+    return false;
+}
+
+function handleDocTypes() {
+    $('#addDocTypeForm').on('submit', (e) => {
+        handle_addDocTypeForm(e.target);
+        return false;
+    });
+
+    load_docTypes();
+
+    $(document).on('click', '.edit_docType', async (e) => {
+        let id = $(e.currentTarget).data('recid');
+        let modal = $('#edit_docType');
+        let data = await get_docType(id);
+        
+        if(data) {
+            let res = JSON.parse(data)[0];
+            $(modal).find('#docType_id').val(id);
+            $(modal).find('#typeName4Edit').val(res.name);
+        }
+        $(modal).modal('show');
+    });
+
+    $('#editDocTypeForm').on('submit', (e) => {
+        handle_editDocTypeForm(e.target);
+        return false;
+    });
+
+    $(document).on('click', '.delete_docType', async (e) => {
+        let id = $(e.currentTarget).data('recid');
+        swal({
+            title: "Are you sure?",
+            text: "You are going to delete this document type.",
+            icon: "warning",
+            className: 'warning-swal',
+            buttons: ["Cancel", "Yes, delete"],
+        }).then(async (confirm) => {
+            if (confirm) {
+                let data = { id: id };
+                try {
+                    let response = await send_hrmPost('delete doc_types', data);
+                    if (response) {
+                        let res = JSON.parse(response);
+                        if (res.error) {
+                            toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                        } else {
+                            toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 2000 }).then(() => {
+                                load_docTypes();
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error occurred:', err);
                 }
             }
-        ]
+        });
     });
 }
 
 async function handle_addDocTypeForm(form) {
     clearErrors();
-    let error = validateForm(form);
+    let name = $(form).find('#typeName').val();
     
+    let error = false;
+    error = !validateField(name, "Type name is required", 'typeName') || error;
+
     if (error) return false;
-    
+
     let formData = {
-        name: $(form).find('#docTypeName').val(),
-        description: $(form).find('#docTypeDescription').val()
+        name: name
     };
-    
+
     form_loading(form);
-    
+
     try {
-        let response = await send_hrmPost('save doctype', formData);
+        let response = await send_hrmPost('save doc_types', formData);
         if (response) {
             let res = JSON.parse(response);
+            $('#add_docType').modal('hide');
             if(res.error) {
                 toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
-                form_loadingUndo(form);
             } else {
-                toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+                toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 2000 }).then(() => {
+                    load_docTypes();
                     form_loadingUndo(form);
-                    $('#add_docType').modal('hide');
-                    $(form).find('#docTypeName').val('');
-                    $(form).find('#docTypeDescription').val('');
-                    $('#docTypesDT').DataTable().ajax.reload();
                 });
             }
-        } else {
-            console.log('Failed to save document type.' + response);
-            form_loadingUndo(form);
         }
     } catch (err) {
-        console.error('Error occurred during form submission:', err);
-        form_loadingUndo(form);
-        toaster.error('Failed to save document type', 'Error');
+        console.error('Error occurred:', err);
     }
-}
-
-function editDocType(id, name, description) {
-    $('#editDocTypeId').val(id);
-    $('#editDocTypeName').val(name);
-    $('#editDocTypeDescription').val(description);
-    $('#edit_docType').modal('show');
-}
-
-function deleteDocType(id) {
-    swal({
-        title: "Are you sure?",
-        text: "Once deleted, you will not be able to recover this document type!",
-        icon: "warning",
-        buttons: true,
-        dangerMode: true,
-    })
-    .then((willDelete) => {
-        if (willDelete) {
-            $.post(`${base_url}/app/hrm_controller.php?action=delete&endpoint=doctype`, { id })
-                .then(response => {
-                    let res = JSON.parse(response);
-                    if (!res.error) {
-                        toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 });
-                        $('#docTypesDT').DataTable().ajax.reload();
-                    } else {
-                        toaster.error(res.msg, 'Error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    toaster.error('Failed to delete document type', 'Error');
-                });
-        }
-    });
 }
 
 async function handle_editDocTypeForm(form) {
     clearErrors();
-    let error = validateForm(form);
+    let id = $(form).find('#docType_id').val();
+    let name = $(form).find('#typeName4Edit').val();
     
+    let error = false;
+    error = !validateField(name, "Type name is required", 'typeName4Edit') || error;
+
     if (error) return false;
-    
+
     let formData = {
-        id: $(form).find('#editDocTypeId').val(),
-        name: $(form).find('#editDocTypeName').val(),
-        description: $(form).find('#editDocTypeDescription').val()
+        id: id,
+        name: name
     };
-    
+
     form_loading(form);
-    
+
     try {
-        let response = await send_hrmPost('update doctype', formData);
+        let response = await send_hrmPost('update doc_types', formData);
         if (response) {
             let res = JSON.parse(response);
+            $('#edit_docType').modal('hide');
             if(res.error) {
                 toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
-                form_loadingUndo(form);
             } else {
-                toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
-                    form_loadingUndo(form);
-                    $('#edit_docType').modal('hide');
-                    $('#docTypesDT').DataTable().ajax.reload();
+                toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 2000 }).then(() => {
+                    load_docTypes();
                 });
             }
-        } else {
-            console.log('Failed to update document type.' + response);
-            form_loadingUndo(form);
         }
     } catch (err) {
-        console.error('Error occurred during form submission:', err);
-        form_loadingUndo(form);
-        toaster.error('Failed to update document type', 'Error');
+        console.error('Error occurred:', err);
     }
 }
+
+async function get_docType(id) {
+    try {
+        return await send_hrmPost('get doc_types', { id: id });
+    } catch (error) {
+        console.error('Error:', error);
+        return null;
+    }
+}
+
+// Documents in folder
+function load_folderDocs() {
+    let folder_id = $('#folder_id').val();
+    let employee_id = $('#employee_id').val();
+    var datatable = $('#empDocumentsDT').DataTable({
+		// let datatable = new DataTable('#companyDT', {
+	    "processing": true,
+	    "serverSide": true,
+	    "bDestroy": true,
+	    "searching": true,  
+	    "info": true,
+	    "columnDefs": [
+	        { "orderable": false, "searchable": false, "targets": [3] }  // Disable search on first and last columns
+	    ],
+	    "serverMethod": 'post',
+	    "ajax": {
+	        "url": `${base_url}/app/hrm_controller.php?action=load&endpoint=documents`,
+	        "method": "POST",
+	        "data": {
+	            "folder_id": folder_id,
+	            "employee_id": employee_id
+	        },
+		    // dataFilter: function(data) {
+			// 	console.log(data)
+			// }
+	    },
+	    
+	    columns: [
+	    	{ title: `Document Name`, className: "document_name", data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.name}</span>
+	                </div>`;
+	        }},
+
+	        { title: `Employee`, className: "full_name", data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.full_name}</span>
+	                </div>`;
+	        }},
+
+	        { title: `Phone Number`, className: "phone_number", data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.phone}</span>
+	                </div>`;
+	        }},
+
+	        { title: `Document type`, className: "type_name", data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.type_name}</span>
+	                </div>`;
+	        }},
+
+	        { title: `Folder`, className: "folder_name", data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.folder_name}</span>
+	                </div>`;
+	        }},
+
+	        { title: `Expiration date`, className: "expiration_date", data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${formatDate(row.expiration_date)}</span>
+	                </div>`;
+	        }},
+
+	        { title: `Created at`, className: "created_at", data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${formatDate(row.created_at)}</span>
+	                </div>`;
+	        }},
+
+	        { title: "Action", className: "action", data: null, render: function(data, type, row) {
+	            return `<div class="sflex scenter-items">
+	            	<a href="${base_url}/assets/docs/employee/${row.document}" download="${row.document}" class="fa smt-5 cursor smr-10 fa-download"></a>
+	            	<span onclick="handleDeleteDocument(${row.id})" class="fa delete_document smt-5 cursor fa-trash"></span>
+                </div>`;
+	        }},
+	    ]
+	});
+
+	return false;
+}
+
+function handleFolderDocs() {
+    // Load document types for select
+    $.get('./app/hrm_controller.php?action=get&endpoint=doc_types_list', function(response) {
+        let types = JSON.parse(response);
+        let options = '<option value="">Select Document Type</option>';
+        types.forEach(type => {
+            options += `<option value="${type.id}">${type.name}</option>`;
+        });
+        $('#docType, #docType4Edit').html(options);
+    });
+
+    // Load employees for select
+    $.get('./app/hrm_controller.php?action=get&endpoint=employees_list', function(response) {
+        let employees = JSON.parse(response);
+        let options = '<option value="">Select Employee</option>';
+        employees.forEach(emp => {
+            options += `<option value="${emp.id}" data-phone="${emp.phone}" data-email="${emp.email}">${emp.full_name}</option>`;
+        });
+        $('#employee, #employee4Edit').html(options);
+    });
+
+    $('#addDocumentForm').on('submit', (e) => {
+        handle_addDocumentForm(e.target);
+        return false;
+    });
+
+    load_folderDocs();
+
+    $(document).on('click', '.edit_document', async function() {
+        let id = $(this).data('recid');
+        let response = await get_document(id);
+        
+        if(data) {
+            let res = JSON.parse(data)[0];
+            $(modal).find('#document_id').val(id);
+            $(modal).find('#docName4Edit').val(res.name);
+            $(modal).find('#docType4Edit').val(res.type_id);
+            $(modal).find('#employee4Edit').val(res.emp_id);
+            $(modal).find('#tags4Edit').val(res.tags);
+            $(modal).find('#expirationDate4Edit').val(res.expiration_date);
+            $('.my-select').selectpicker('refresh');
+            $('#edit_emp_document').modal('show');
+        }
+    });
+
+    $('#editDocumentForm').on('submit', (e) => {
+        handle_editDocumentForm(e.target);
+        return false;
+    });
+
+    $(document).on('click', '.delete_document', async function() {
+        let id = $(this).data('recid');
+        swal({
+            title: "Are you sure?",
+            text: "You are going to delete this document.",
+            icon: "warning",
+            className: 'warning-swal',
+            buttons: ["Cancel", "Yes, delete"],
+        }).then(async (confirm) => {
+            if (confirm) {
+                let data = { id: id };
+                try {
+                    let response = await send_hrmPost('delete folder_docs', data);
+                    if (response) {
+                        let res = JSON.parse(response);
+                        if (res.error) {
+                            toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                        } else {
+                            toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 2000 }).then(() => {
+                                load_folderDocs();
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error occurred:', err);
+                }
+            }
+        });
+    });
+
+    $(document).on('click', '.download_document', function() {
+        let id = $(this).data('recid');
+        window.location.href = `./app/hrm_controller.php?action=download&endpoint=folder_docs&id=${id}`;
+    });
+
+    $(document).on('click', '.view_document', function() {
+        let id = $(this).data('recid');
+        window.open(`./app/hrm_controller.php?action=view&endpoint=folder_docs&id=${id}`, '_blank');
+    });
+}
+
+function handleEmpDocs() {
+    load_folderDocs();
+    console.log('handleEmpDocs');
+
+    // Handle document form submission
+    $('#addEmpDocumentForm').on('submit', async function(e) {
+        e.preventDefault();
+        clearErrors();
+        handle_addEmpDocumentForm(this);
+    });
+}
+
+async function handle_addEmpDocumentForm(form) {
+    clearErrors();
+    let error = validateForm(form);
+    let employee_id = $(form).find('#employee').val();
+    let docName = $(form).find('#docName').val();
+    let docType = $(form).find('#docType').val();
+    let docTypeName = $(form).find('#docType option:selected').text();
+    let docFolder = $(form).find('#docFolder').val();
+    let docFolderName = $(form).find('#docFolder option:selected').text();
+    let expirationDate = $(form).find('#expirationDate').val();
+    let employee_name = $(form).find('#employee option:selected').text();
+
+    console.log(employee_id, employee_name);
+
+    if (!employee_id) { 
+        error = true;
+        swal('Sorry', 'Please select an employee', 'error');
+        return false;
+    }
+
+    let fileInput = $(form).find('#docFile');
+    let file = fileInput[0].files[0];
+    let allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'txt'];
+
+    // Validate file type
+    if (!file) {
+        swal('Sorry', 'Please select a document file', 'error');
+        return;
+    }
+
+    let fileName = file.name;
+    let fileExtension = fileName.split('.').pop().toLowerCase();
+    if (!allowedExtensions.includes(fileExtension)) {
+        swal('Sorry', 'Invalid file type. Only PDF, DOC, DOCX, JPG, JPEG, PNG, GIF, BMP, WEBP, SVG, TXT are allowed', 'error');
+        return;
+    }
+
+    form_loading(this);
+
+    let formData = new FormData(form);
+    formData.append('employee_id', employee_id);
+    formData.append('employee_name', employee_name);
+    formData.append('docFile', file);
+    formData.append('docName', docName);
+    formData.append('docType', docType);
+    formData.append('docTypeName', docTypeName);
+    formData.append('docFolder', docFolder);
+    formData.append('docFolderName', docFolderName);
+    formData.append('expirationDate', expirationDate);
+
+    // Log FormData entries for debugging
+    for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+    }
+
+    try {
+        let response = await $.ajax({
+            url: `${base_url}/app/hrm_controller.php?action=save&endpoint=emp_docs`,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            cache: false,
+            timeout: 60000 // Set a timeout for the request
+        });
+
+        console.log(response);
+
+        if (response) {
+            let res = JSON.parse(response);
+            $('#add_emp_document').modal('hide');
+            if (res.error) {
+                toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            } else {
+                toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 2000 }).then(() => {
+                    $('.my-select').selectpicker('refresh');
+                    $('#add_document').modal('hide');
+                    form_loadingUndo(form)
+                    load_folderDocs();
+                    // location.reload();
+                });
+            }
+        }
+    } catch (err) {
+        console.error('Error occurred:', err);
+        toaster.error('An error occurred while saving the document', 'Error');
+    }   
+    return false;
+}
+
+async function editDocument(id) {
+    try {
+        let response = await $.ajax({
+            url: './app/hrm_controller.php?action=get&endpoint=emp_docs',
+            type: 'POST',
+            data: { id: id }
+        });
+
+        if (response) {
+            let data = JSON.parse(response)[0];
+            $('#document_id').val(data.id);
+            $('#docName4Edit').val(data.name);
+            $('#docType4Edit').val(data.type_id);
+            $('#employee4Edit').val(data.emp_id);
+            $('#tags4Edit').val(data.tags);
+            $('#expirationDate4Edit').val(data.expiration_date);
+            $('.my-select').selectpicker('refresh');
+            $('#edit_emp_document').modal('show');
+        }
+    } catch (err) {
+        console.error('Error occurred:', err);
+        toaster.error('An error occurred while loading the document', 'Error');
+    }
+}
+
+async function handleDeleteDocument(id) {
+    swal({
+        title: "Are you sure?",
+        text: `You are going to delete this document.`,
+        icon: "warning",
+        className: 'warning-swal',
+        buttons: ["Cancel", "Yes, delete"],
+    }).then(async (confirm) => {
+        if (confirm) {
+            let data = { id: id };
+            try {
+                let response = await send_hrmPost('delete document', data);
+                console.log(response)
+                if (response) {
+                    let res = JSON.parse(response);
+                    if (res.error) {
+                        toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                    } else {
+                        toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                            load_folderDocs();
+                        });
+                        console.log(res);
+                    }
+                } else {
+                    console.log('Failed to delete document.' + response);
+                }
+
+            } catch (err) {
+                console.error('Error occurred during form submission:', err);
+            }
+        }
+    });
+}
+
+

@@ -32,28 +32,51 @@
 
 <!-- Add Document Type Modal -->
 <div class="modal fade" id="add_docType" tabindex="-1" aria-labelledby="addDocTypeModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
+    <div class="modal-dialog" role="document" style="width:500px;">
+        <form class="modal-content" id="addDocTypeForm" style="border-radius: 14px 14px 0px 0px; margin-top: -15px;">
             <div class="modal-header">
-                <h5 class="modal-title" id="addDocTypeModalLabel">Add Document Type</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">Add Document Type</h5>
+                <button type="button" class="close modal-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
-            <form id="addDocTypeForm">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="docTypeName" class="form-label">Document Type Name</label>
-                        <input type="text" class="form-control" id="docTypeName" name="name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="docTypeDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="docTypeDescription" name="description" rows="3"></textarea>
+            <div class="modal-body">
+                <div>
+                    <div class="row">
+                        <div class="col col-xs-12">
+                            <div class="form-group">
+                                <label class="label required" for="typeName">Type Name</label>
+                                <input type="text" class="form-control validate" data-msg="Type name is required" id="typeName" name="typeName">
+                                <span class="form-error text-danger">This is error</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save</button>
-                </div>
-            </form>
-        </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary cursor" data-bs-dismiss="modal" aria-label="Close" style="min-width: 100px;">Cancel</button>
+                <button type="submit" class="btn btn-primary cursor" style="min-width: 100px;">Save</button>
+            </div>
+        </form>
     </div>
 </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

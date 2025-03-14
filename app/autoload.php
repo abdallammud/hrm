@@ -86,7 +86,7 @@ function get_menu_config() {
         'dashboard' => [
             // 'folder' => 'hrm',
             'default' => 'dashboard',
-            'icon' => 'home',
+            'icon' => 'dashboard',
             'name' => 'Dashboard',
             'route' => 'dashboard',
             'menu' => 'dashboard',
@@ -180,7 +180,7 @@ function get_menu_config() {
                     'js' => ['docs'],
                     'actions' => [
                         'add' => ['file' => 'employee_add', 'auth' => 'add_employee'],
-                        'show' => ['file' => 'employee_show', 'auth' => 'view_employees'],
+                        'show' => ['file' => 'folder_show', 'auth' => 'view_employees'],
                         'edit' => ['file' => 'employee_edit', 'auth' => 'edit_employee'],
                     ],
                 ],

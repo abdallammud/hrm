@@ -17,4 +17,10 @@ class Employee extends Model {
     }
 }
 
+class EmpDoc extends Model {
+    public function __construct() {
+        parent::__construct('employee_docs');
+    }
+}
 $GLOBALS['employeeClass']   = $employeeClass = new Employee();
+$GLOBALS['empDocClass']   = $empDocClass = new EmpDoc();
