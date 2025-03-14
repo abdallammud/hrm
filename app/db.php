@@ -7,7 +7,7 @@ $db = "asheeri";
 
 $servername = "localhost";
 $username   = "u138037914_hrm";
-$password   = "Hrm_password#3";
+$password   = "|8nJaj9eU";
 $db = "u138037914_hrm";
 
 $GLOBALS['conn'] = $conn = new mysqli($servername, $username, $password, $db);
