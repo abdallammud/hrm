@@ -26,6 +26,10 @@ RewriteRule ^employees/add/?$ index.php?menu=hrm&tab=employees&action=add [NC,L]
 RewriteRule ^employees/edit/([0-9-]+)$ index.php?menu=hrm&tab=employees&action=edit&employee_id=$1 [NC,L]
 RewriteRule ^employees/show/([0-9-]+)$ index.php?menu=hrm&tab=employees&action=show&employee_id=$1 [NC,L]
 
+RewriteRule ^documents/?$ index.php?menu=hrm&tab=documents [NC,L]
+RewriteRule ^documents/add/?$ index.php?menu=hrm&tab=documents&action=add [NC,L]
+RewriteRule ^documents/([0-9-]+)$ index.php?menu=hrm&tab=documents&action=show&id=$1 [NC,L]
+
 RewriteRule ^designations/?$ index.php?menu=hrm&tab=designations [NC,L]
 
 
