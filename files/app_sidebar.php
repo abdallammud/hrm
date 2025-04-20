@@ -61,7 +61,7 @@ foreach ($menus as $sideMenu) {
 <aside class="sidebar-wrapper" data-simplebar="true">
 	<div class="sidebar-header">
 		<div class="logo-icon" style="width:100%;">
-			<img style="width:100%; height: 50px;" src="<?=baseUri();?>/assets/images/<?=get_logo_name_from_url();?>" class="logo-img" alt="">
+			<img style="width:45%; height: 70px;" src="<?=baseUri();?>/assets/images/<?=get_logo_name_from_url();?>" class="logo-img" alt="">
 		</div>
 		<div class="logo-name flex-grow-1">
 			<!-- <h5 class="mb-0">Asheeri</h5> -->

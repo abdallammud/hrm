@@ -17,10 +17,8 @@ if($user) {
 	if(ucwords($user[0]['is_logged']) == 'Yes') $border_color = '#80ff83';
 }
 
-
-
-
 ?>
+
 <div class="page content">
 	<div class="row">
 		<div class="col-sm-12 col-md-12 col-lg-12">
@@ -29,13 +27,16 @@ if($user) {
 					<button class="nav-link active" id="empInfo-tab" data-bs-toggle="tab" data-bs-target="#empInfo" type="button" role="tab" aria-controls="empInfo" aria-selected="true">Employee Info</button>
 				</li>
 				<li class="nav-item" role="presentation">
-					<button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab" aria-controls="documents" aria-selected="false">Documents</button>
+					<button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#employeeDocuments" type="button" role="tab" aria-controls="employeeDocuments" aria-selected="false">Documents</button>
+				</li>
+				<li class="nav-item" role="presentation">
+					<button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#educationTab" type="button" role="tab" aria-controls="educationTab" aria-selected="false">Education</button>
 				</li>
 			</ul>
 		</div>
 	</div>
 	<hr>
-	<div class="tab-content" id="myTabContent">
+	<div class="tab-content" id="employeePage">
 		<div class="tab-pane fade show active" id="empInfo" role="tabpanel" aria-labelledby="home-tab">
 			<div class="page-breadcrumb d-sm-flex align-items-center mb-3">
 				<h5 class="">Employee info </h5>
@@ -231,16 +232,37 @@ if($user) {
 					</div>
 				</div>
 			</div>
+		</div>
 
+		<div class="tab-pane fade " id="employeeDocuments" role="tabpanel" aria-labelledby="home-tab">
+			<div class="page-breadcrumb mt-3 d-sm-flex align-items-center mb-3">
+				<h5 class="">Employee Documents</h5>
+				<div class="ms-auto d-sm-flex">
+					<div class="btn-group smr-10">
+						<button type="button" data-bs-toggle="modal" data-bs-target="#add_document" class="btn btn-primary">Add Document</button>
+					</div>
+				</div>
+			</div>
+			<div class="card">
+				<div class="card-body">
+					<div class="table-responsive">
+						<input type="hidden" id="employee_id" value="<?=$employee_id; ?>">
+						<table id="employeeDocsDT" class="table table-striped table-bordered" style="width:100%">
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="tab-pane fade " id="educationTab" role="tabpanel" aria-labelledby="home-tab">
+			<div class="page-breadcrumb mt-3 d-sm-flex align-items-center mb-3">
+				<h5 class="">Education</h5>
+			</div>
 			<?php 
 			$education = $GLOBALS['employeeClass']->get_education($employee_id);
 			if($education) {
 			?>
-			
 			<div class="card">
-				<div class="card-header bold">
-					Education
-				</div>
 				<div class="card-body">
 					<div class="table-responsive">
 						<table id="" class="table table-striped table-bordered" style="width:100%">
@@ -271,40 +293,18 @@ if($user) {
 					</div>
 				</div>
 			</div>
-		</div>
-
-		<div class="tab-pane fade " id="documents" role="tabpanel" aria-labelledby="home-tab">
-			<div class="page-breadcrumb mt-3 d-sm-flex align-items-center mb-3">
-				<h5 class="">Employee Documents</h5>
-				<div class="ms-auto d-sm-flex">
-					<div class="btn-group smr-10">
-						<button type="button" data-bs-toggle="modal" data-bs-target="#add_document" class="btn btn-primary">Add Document</button>
-					</div>
-				</div>
-			</div>
-			<div class="card">
-				<div class="card-body">
-					<div class="table-responsive">
-						<input type="hidden" id="employee_id" value="<?=$employee_id; ?>">
-						<table id="empDocumentsDT" class="table table-striped table-bordered" style="width:100%">
-						</table>
-					</div>
-				</div>
-			</div>
+			<?php } ?>
 		</div>
 	</div>
-
-<?php } ?>
-    
-
-    
-
-				
 </div>
 
-<?php 
-require('emp_doc.php');
-?>
+
+
+
+
+
+
+
 
 
 <style type="text/css">
@@ -336,8 +336,3 @@ require('emp_doc.php');
    		display: none;
    	}
 </style>
-
-
-<?php 
-// require('org_edit.php');
-?>

@@ -174,7 +174,7 @@
             <div class="card-body" style="height: 343px;">
               <div class="d-flex align-items-start justify-content-between mb-3">
                 <div class="">
-                  <h5 class="mb-0">Sales & Views</h5>
+                  <h5 class="mb-0">Monthly salary</h5>
                 </div>
                 <!-- <div class="dropdown">
                   <a href="javascript:;" class="dropdown-toggle-nocaret options dropdown-toggle"

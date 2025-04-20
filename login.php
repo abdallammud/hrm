@@ -1,7 +1,7 @@
 <?php require('./files/login_header.php');?>
 <?php require('./asset_config.php');?>
 	<div class="mx-3 mx-lg-0">
-		<div class="card my-5 col-xl-3 col-xxl-3 col-lg-4 col-md-6 col-sm-12 mt-9 mx-auto rounded-4 overflow-hidden p-4" style="margin-top: 120px !important;">
+		<div class="card my-5 col-xl-3 col-xxl-3 col-lg-4 col-md-6 col-sm-12 mt-9 mx-auto rounded-4 overflow-hidden p-4" >
 			<div class="row g-4">
 				<div class="col-lg-12 d-flex">
 					<div class="card-body">
@@ -27,13 +27,13 @@
 									<span class="form-error text-danger">This is error</span>
 								</div>
 
-								<div class="col-md-6 mt-4">
+								<div class="col-md-4 mt-4">
 									<!-- <div class="form-check form-switch">
 										<input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked" checked>
 										<label class="form-check-label" for="flexSwitchCheckChecked">Remember Me</label>
 									</div> -->
 								</div>
-								<div class="col-md-6 text-end mt-2">
+								<div class="col-md-8 text-end mt-2">
 									<a href="#">Forgot Password ?</a>
 								</div>
 								<div class="col-12 mt-2">

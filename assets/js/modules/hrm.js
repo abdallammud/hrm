@@ -1167,6 +1167,88 @@ function load_folderDocs() {
 	return false;
 }
 
+function load_employeeDocs() {
+    let folder_id = '';
+    let employee_id = $('#employee_id').val();
+    console.log(folder_id, employee_id)
+    var datatable = $('#employeeDocsDT').DataTable({
+		// let datatable = new DataTable('#companyDT', {
+	    "processing": true,
+	    "serverSide": true,
+	    "bDestroy": true,
+	    "searching": true,  
+	    "info": true,
+	    "columnDefs": [
+	        { "orderable": false, "searchable": false, "targets": [3] }  // Disable search on first and last columns
+	    ],
+	    "serverMethod": 'post',
+	    "ajax": {
+	        "url": `${base_url}/app/hrm_controller.php?action=load&endpoint=documents`,
+	        "method": "POST",
+	        "data": {
+	            "folder_id": folder_id,
+	            "employee_id": employee_id
+	        },
+		    /*dataFilter: function(data) {
+				console.log(data)
+			}*/
+	    },
+	    
+	    columns: [
+	    	{ title: `Document Name`, className: "document_name", data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.name}</span>
+	                </div>`;
+	        }},
+
+	        { title: `Employee`, className: "full_name", data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.full_name}</span>
+	                </div>`;
+	        }},
+
+	        { title: `Phone Number`, className: "phone_number", data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.phone}</span>
+	                </div>`;
+	        }},
+
+	        { title: `Document type`, className: "type_name", data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.type_name}</span>
+	                </div>`;
+	        }},
+
+	        { title: `Folder`, className: "folder_name", data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.folder_name}</span>
+	                </div>`;
+	        }},
+
+	        { title: `Expiration date`, className: "expiration_date", data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${formatDate(row.expiration_date)}</span>
+	                </div>`;
+	        }},
+
+	        { title: `Created at`, className: "created_at", data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${formatDate(row.created_at)}</span>
+	                </div>`;
+	        }},
+
+	        { title: "Action", className: "action", data: null, render: function(data, type, row) {
+	            return `<div class="sflex scenter-items">
+	            	<a href="${base_url}/assets/docs/employee/${row.document}" download="${row.document}" class="fa smt-5 cursor smr-10 fa-download"></a>
+	            	<span onclick="handleDeleteDocument(${row.id})" class="fa delete_document smt-5 cursor fa-trash"></span>
+                </div>`;
+	        }},
+	    ]
+	});
+
+	return false;
+}
+
 function handleFolderDocs() {
     // Load document types for select
     $.get('./app/hrm_controller.php?action=get&endpoint=doc_types_list', function(response) {
@@ -1260,7 +1342,8 @@ function handleFolderDocs() {
 
 function handleEmpDocs() {
     load_folderDocs();
-    console.log('handleEmpDocs');
+    load_employeeDocs();
+    // console.log('handleEmpDocs');
 
     // Handle document form submission
     $('#addEmpDocumentForm').on('submit', async function(e) {

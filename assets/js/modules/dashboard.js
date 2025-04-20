@@ -29,7 +29,7 @@ function get_dashboadCards() {
 
 		var options = {
         series: [{
-            name: "Sales",
+            name: "Salary",
             data: chartData
         }],
         chart: {
