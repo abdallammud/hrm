@@ -303,7 +303,9 @@ if($user) {
 
 
 
-
+<?php 
+require('emp_doc.php');
+?>
 
 
 
