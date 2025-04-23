@@ -446,7 +446,7 @@ async function handle_addEmployeeForm(form) {
     let dob 		= $(form).find('#dob').val();
     let address 	= $(form).find('#address').val();
     let state 		= $(form).find('#state').val();
-    let stateName 	= $(form).find('#state option:selected').text();
+    let stateName = state ? $(form).find('#state option:selected').text() : '';
     let city 		= $(form).find('#city').val();
     let bankName 	= $(form).find('#bankName').val();
     let accountNo 	= $(form).find('#accountNo').val();
@@ -455,7 +455,7 @@ async function handle_addEmployeeForm(form) {
     let project_id 	= $(form).find('#project').val();
     let project 	= $(form).find('#project option:selected').val();
     let dep 		= $(form).find('#dep').val();
-    let depName 	= $(form).find('#dep option:selected').text();
+    let depName  = dep ? $(form).find('#dep option:selected').text() : ''; 
     let dutyStation = $(form).find('#dutyStation').val();
     let dutyStationName = $(form).find('#dutyStation option:selected').val();
     let designation = $(form).find('#designation').val();
@@ -577,7 +577,7 @@ async function handle_editEmployeeForm(form) {
     let dob 		= $(form).find('#dob').val();
     let address 	= $(form).find('#address').val();
     let state 		= $(form).find('#state').val();
-    let stateName 	= $(form).find('#state option:selected').text();
+    // let stateName = state ? $(form).find('#state option:selected').text() : ''; // Removed duplicate declaration
     let city 		= $(form).find('#city').val();
     let bankName 	= $(form).find('#bankName').val();
     let accountNo 	= $(form).find('#accountNo').val();
@@ -586,7 +586,7 @@ async function handle_editEmployeeForm(form) {
     let project_id 	= $(form).find('#project').val();
     let project 	= $(form).find('#project option:selected').val();
     let dep 		= $(form).find('#dep').val();
-    let depName 	= $(form).find('#dep option:selected').text();
+    let depName 	= dep ? $(form).find('#dep option:selected').text() : '';
     let dutyStation = $(form).find('#dutyStation').val();
     let dutyStationName = $(form).find('#dutyStation option:selected').val();
     let designation = $(form).find('#designation').val();
@@ -1432,6 +1432,7 @@ async function handle_addEmpDocumentForm(form) {
                     $('#add_document').modal('hide');
                     form_loadingUndo(form)
                     load_folderDocs();
+                    load_employeeDocs();
                     // location.reload();
                 });
             }
