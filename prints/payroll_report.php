@@ -76,7 +76,7 @@ $primary_color = explode(",", hexToRgb($primary_color));
 $secondary_color =explode(",", hexToRgb($secondary_color));
 
 $logo = get_logo_name_from_url();
-$pdf->Image('./assets/images/'.$logo, 10, 10, 50);
+$pdf->Image('./assets/images/'.$logo, 10, 10, 30);
 
 $pdf->SetFont('helvetica', 'B', 16);
 $y = 10;
@@ -110,7 +110,7 @@ $pdf->SetDrawColor($primary_color[0], $primary_color[1], $primary_color[2]);
 $pdf->Rect(10, 45, 278, 0.2);
 $pdf->setY(50);
 
-
+$pdf->SetDrawColor(000, 000, 000);
 
 $pdf->SetFont('helvetica', 'B', 10);
 // Column Width Calculation

@@ -13,24 +13,19 @@ if(isset($_GET['print'])) {
 		require('prints/payslip.php');
 	} else if($_GET['print'] == 'employees') {
 		require('prints/allEmployees.php');
-	} else if($_GET['print'] == 'attendance') {
-		require('prints/attendance.php');
+	} else if($_GET['print'] == 'absence') {
+		require('prints/absence.php');
 	} else if($_GET['print'] == 'payroll') {
 		require('prints/payroll_report.php');
+	} else if($_GET['print'] == 'componsation') {
+		require('prints/componsation.php');
+	} else if($_GET['print'] == 'deductions') {
+		require('prints/deductions.php');
 	} 
 
 
 
 
-
-
-	else if($_GET['print'] == 'booksCheckedout') {
-		require('prints/books_checked_out.php');
-	} else if($_GET['print'] == 'overdueBooks') {
-		require('prints/overdue_books.php');
-	} else if($_GET['print'] == 'returnedBooks') {
-		require('prints/returned_books.php');
-	}
 } else {header("Location: /");}
 
 ?>

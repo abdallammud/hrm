@@ -153,8 +153,7 @@ async function show_report(e) {
 
 		let printHref = `${base_url}/pdf.php?print=employees`;
 		$('#printTag').attr('href', printHref)
-	} 
-	else if(report == 'attendance') {
+	} else if(report == 'attendance') {
 		var datatable = $('#reportDataTable').DataTable({
 			"processing": true,
 			"serverSide": true,
@@ -217,4 +216,248 @@ async function show_report(e) {
 	
 
 	return false;
+}
+
+function display_report(filter = false) {
+	let reportPage = $('.page.reportShow');
+	let report = reportPage.find('#report').val();
+
+	console.log(report);
+	
+	// Filters
+	let gender = reportPage.find('#slcGender').val();
+	let state = reportPage.find('#slcState').val();
+	let department = reportPage.find('#slcDepartment').val();
+	let location = reportPage.find('#slcLocation').val();
+	let salary = reportPage.find('#salary_range_start').val() || 0;
+	let salary_up = reportPage.find('#salary_range_end').val() || 0;
+	let age = reportPage.find('#slcAge').val();
+
+	let date_start = reportPage.find('#date_range_start').val();
+	let date_end = reportPage.find('#date_range_end').val();
+	let month = reportPage.find('#month').val();
+
+	if(report == 'employees') report = 'allEmployees';
+	if(report == 'employees') report = 'allEmployees';
+
+	let filterData = {
+		gender,
+		state,
+		department,
+		location,
+		salary,
+		salary_up,
+		age,
+		date_start,
+		date_end,
+		month,
+		report
+	}
+
+	if(!filter) {
+		filterData = {report}
+	}
+
+	if(report == 'allEmployees') {
+		var datatable = $('#reportDataTable').DataTable({
+			"processing": true,
+			"serverSide": true,
+			"bDestroy": true,
+			// "paging": false,
+			"serverMethod": 'post',
+			"ajax": {
+				"url": `${base_url}/app/report_controller.php?action=report&report=allEmployees`,
+				"method":"POST",
+				"data": filterData,
+				// dataFilter: function(data) {
+				// 	console.log(data)
+				// }
+			}, 
+			
+			columns: [
+				{title: "Staff No.", data: null, render: function(data, type, row) {
+		            return `<div class="flex center-items">
+			            	<span>${row.staff_no}</span>
+			            </div>`;
+		        }},
+
+		        {title: "Full name", data: null, render: function(data, type, row) {
+		            return `<div>${row.full_name}</div>`;
+		        }},
+
+		        {title: "Phone number", data: null, render: function(data, type, row) {
+		            return `<div>${row.phone_number}</div>`;
+		        }},
+
+		       	{title: "Email", data: null, render: function(data, type, row) {
+		            return `<div>
+		            		${row.email}
+		            	</div>`;
+		        }},
+
+		        {title: "Department", data: null, render: function(data, type, row) {
+		            return `<div>${row.branch}</div>`;
+		        }},
+
+		        {title: "Location", data: null, render: function(data, type, row) {
+		            return `<div>${row.location_name}</div>`;
+		        }},
+
+			]
+		})
+
+		let printHref = `${base_url}/pdf.php?print=employees&gender=${gender}&state=${state}&department=${department}&location=${location}&salary=${salary}&salary_up=${salary_up}`;
+		if(!filter) {
+			printHref = `${base_url}/pdf.php?print=employees`;
+		}
+		$('#printTag').attr('href', printHref)
+	} else if(report == 'absence') {
+		var datatable = $('#reportDataTable').DataTable({
+			"processing": true,
+			"serverSide": true,
+			"bDestroy": true,
+			// "paging": false,
+			"serverMethod": 'post',
+			"ajax": {
+				"url": `${base_url}/app/report_controller.php?action=report&report=absence`,
+				"method":"POST",
+				"data": filterData,
+				// dataFilter: function(data) {
+				// 	console.log(data)
+				// }
+			}, 
+			
+			columns: [
+				{title: "Staff No.", data: null, render: function(data, type, row) {
+		            return `<div class="flex center-items">
+			            	<span>${row.staff_no}</span>
+			            </div>`;
+		        }},
+
+		        {title: "Full name", data: null, render: function(data, type, row) {
+		            return `<div>${row.full_name}</div>`;
+		        }},
+
+		        {title: "Paid leave", data: null, render: function(data, type, row) {
+		            return `<div>${row.paid_leave_count}</div>`;
+		        }},
+
+		       	{title: "Un-paid leave", data: null, render: function(data, type, row) {
+		            return `<div>
+		            		${row.unpaid_leave_count}
+		            	</div>`;
+		        }},
+
+		        {title: "Not hired days", data: null, render: function(data, type, row) {
+		            return `<div>${row.not_hired_count}</div>`;
+		        }},
+
+		        {title: "Absent days", data: null, render: function(data, type, row) {
+		            return `<div>${row.no_show_count}</div>`;
+		        }},
+
+
+				{title: "Total absence", data: null, render: function(data, type, row) {
+		            return `<div>${row.total_absence}</div>`;
+		        }},
+
+			]
+		})
+
+		let printHref = `${base_url}/pdf.php?print=absence&month=${month}`;
+		if(!filter) {
+			printHref = `${base_url}/pdf.php?print=absence`;
+		}
+		$('#printTag').attr('href', printHref)
+	} else if(report == 'componsation') {
+		var datatable = $('#reportDataTable').DataTable({
+			"processing": true,
+			"serverSide": true,
+			"bDestroy": true,
+			// "paging": false,
+			"serverMethod": 'post',
+			"ajax": {
+				"url": `${base_url}/app/report_controller.php?action=report&report=componsation`,
+				"method":"POST",
+				"data": filterData,
+				// dataFilter: function(data) {
+				// 	console.log(data)
+				// }
+			}, 
+			
+			columns: [
+				{title: "Staff No.", data: null, render: function(data, type, row) {
+		            return `<div class="flex center-items">
+			            	<span>${row.staff_no}</span>
+			            </div>`;
+		        }},
+
+		        {title: "Full name", data: null, render: function(data, type, row) {
+		            return `<div>${row.full_name}</div>`;
+		        }},
+
+		        {title: "Base salary", data: null, render: function(data, type, row) {
+		            return `<div>${row.base_salary}</div>`;
+		        }},
+
+		       	{title: "Allowance", data: null, render: function(data, type, row) {
+		            return `<div>${row.allowance}</div>`;
+		        }},
+
+		        {title: "Bonuses", data: null, render: function(data, type, row) {
+		            return `<div>${row.bonus}</div>`;
+		        }},
+
+		        {title: "Deductions", data: null, render: function(data, type, row) {
+		            return `<div>${row.deduction}</div>`;
+		        }},
+
+
+				{title: "Net compensation", data: null, render: function(data, type, row) {
+		            return `<div>${row.net_salary}</div>`;
+		        }},
+
+			]
+		})
+
+		let printHref = `${base_url}/pdf.php?print=componsation&month=${month}`;
+		if(!filter) {
+			printHref = `${base_url}/pdf.php?print=componsation`;
+		}
+		$('#printTag').attr('href', printHref)
+	} else if(report == 'deductions') {
+		var datatable = $('#reportDataTable').DataTable({
+			"processing": true,
+			"serverSide": true,
+			"bDestroy": true,
+			"serverMethod": 'post',
+			"ajax": {
+				"url": `${base_url}/app/report_controller.php?action=report&report=deductions`,
+				"method":"POST",
+				"data": {
+					"report": report,
+					"month": month,
+				},
+			},
+			columns: [
+				{title: "Staff No.", data: null, render: function(data, type, row) {
+					return `<div class='flex center-items'><span>${row.staff_no}</span></div>`;
+				}},
+				{title: "Full name", data: null, render: function(data, type, row) {
+					return `<div>${row.full_name}</div>`;
+				}},
+				{title: "Earnings", data: null, render: function(data, type, row) {
+					return `<div>${row.earnings}</div>`;
+				}},
+				{title: "Deductions", data: null, render: function(data, type, row) {
+					return `<div>${row.total_deductions}</div>`;
+				}},
+				{title: "Net Pay", data: null, render: function(data, type, row) {
+					return `<div>${row.net_salary}</div>`;
+				}},
+			]
+		});
+		let printHref = `${base_url}/pdf.php?print=deductions&month=${month}`;
+		$('#printTag').attr('href', printHref)
+	}
 }

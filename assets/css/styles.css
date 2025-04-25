@@ -221,3 +221,48 @@ table.dataTable a {
     outline: none;
     box-shadow: 0 0 0 1px #fff, 0 0 0 3px rgb(255 113 126 / 29%);
 }
+
+.all_reports {
+	padding: 1px 15px;
+}
+a.report {
+	display: flex;
+	align-items: center;
+	transition-duration: 400ms;
+}
+a.report .report-inner {
+	border: 1px solid #eff1f3;
+	display: flex;
+	align-items: center;
+	border-radius: 3px;;
+	flex-basis: 100%;
+	padding-right: 10px;;
+	box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+}
+a.report p {
+	margin: 0px;
+	padding: 0px;;
+	color: var(--bs-heading-color);
+	display: flex;
+	justify-content: space-between;
+	flex-basis: 90%;
+	align-items: center;
+	transition-duration: 400ms;
+}
+[data-bs-theme=dark] body a.report p {
+	color: #dde0e4;
+}
+a.report:hover p, [data-bs-theme=dark] body a.report:hover p {
+	color: #0c5bd1;
+}
+a.report i.icon {
+	flex-basis: 10%;
+	border-right: 1px solid #eff1f3;
+	padding: 10px;;
+	font-size: 30px;;
+}
+
+body.toggled .logo-img{
+	width :100% !important;
+	height: auto !important;
+}

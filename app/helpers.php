@@ -320,6 +320,35 @@ function select_active($table, $array = array('value' => 'id', 'text' => 'name')
     echo $options;
 }
 
+function select_all($table, $array = array('value' => 'id', 'text' => 'name'), $current = '') {
+    $options = '';
+    $sql = "SELECT * FROM `$table`";
+    
+
+    // Execute the query
+    $rows = $GLOBALS['branchClass']->query($sql);
+
+    // Check if any rows are returned
+    if (count($rows) > 0) {
+        // Loop through active rows and build the options
+        if(!isset($array['text'])) $array['text'] = 'name';
+        if(!isset($array['value'])) $array['value'] = 'id';
+        foreach ($rows as $row) {
+            $options .= '<option value="'.$row[$array['value']].'" ';
+            if($current) {
+                if($row[$array['value']] == $current) $options .=' selected="selected"';
+            }
+            $options .= '>'.$row[$array['text']].'</option>';
+        }
+    } else {
+        // If no active rows are found, display a "No records found" option
+        $options .= '<option value="" disabled>No records found</option>';
+    }
+
+    // Echo the generated options
+    echo $options;
+}
+
 function calculateEmployeeEarnings($employeeId, $payrollMonth) {
     $conn = $GLOBALS['conn'];
 

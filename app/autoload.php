@@ -294,7 +294,7 @@ function get_menu_config() {
             'actions' => [
                 // 'add' => ['file' => 'user_add', 'auth' => 'add_user'],
                 // 'edit' => ['file' => 'user_edit', 'auth' => 'edit_user'],
-                // 'show' => ['file' => 'user_show', 'auth' => 'manage_users'],
+                'show' => ['file' => 'report_show', 'auth' => 'view_reports'],
             ],
             
         ],

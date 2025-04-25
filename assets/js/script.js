@@ -7,6 +7,15 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 
+    $('.monthPicker').each(function(index, element) {
+        new Pikaday({
+            field: element,
+            position: 'bottom left',
+            reposition: false,
+            format: 'YYYY-MM'
+        });
+    });
+
     // Customer tooltip
     $(document).on('click', '.info-tooltip', (e) => {
         $(e.currentTarget).find('.tooltip-div').show(300);

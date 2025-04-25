@@ -577,7 +577,7 @@ async function handle_editEmployeeForm(form) {
     let dob 		= $(form).find('#dob').val();
     let address 	= $(form).find('#address').val();
     let state 		= $(form).find('#state').val();
-    // let stateName = state ? $(form).find('#state option:selected').text() : ''; // Removed duplicate declaration
+    let stateName 	= state ? $(form).find('#state option:selected').text() : '';
     let city 		= $(form).find('#city').val();
     let bankName 	= $(form).find('#bankName').val();
     let accountNo 	= $(form).find('#accountNo').val();

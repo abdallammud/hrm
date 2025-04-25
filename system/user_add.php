@@ -29,15 +29,15 @@
                         </div>
                         <div class="col col-xs-12 col-md-6 col-lg-2">
                             <div class="form-group">
-                                <label class="label required" for="phone">Phone number</label>
-                                <input type="text"  class="form-control " id="phone" name="phone" placeholder="Required">
+                                <label class="label " for="phone">Phone number</label>
+                                <input type="text"  class="form-control " id="phone" name="phone" placeholder="">
                                 <span class="form-error text-danger">This is error</span>
                             </div>
                         </div>
                         <div class="col col-xs-12 col-md-6 col-lg-3">
                             <div class="form-group">
-                                <label class="label required" for="email">Email</label>
-                                <input type="text"  class="form-control " id="email" name="email" placeholder="Required">
+                                <label class="label " for="email">Email</label>
+                                <input type="text"  class="form-control " id="email" name="email" placeholder="">
                                 <span class="form-error text-danger">This is error</span>
                             </div>
                         </div>

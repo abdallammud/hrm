@@ -12,6 +12,13 @@ class MYPDF extends TCPDF {
     }
 }
 
+$gender = isset($_GET['gender']) ? $_GET['gender'] : '';
+$state = isset($_GET['state']) ? $_GET['state'] : '';
+$department = isset($_GET['department']) ? $_GET['department'] : '';
+$location = isset($_GET['location']) ? $_GET['location'] : '';
+$salary = isset($_GET['salary']) ? $_GET['salary'] : '';
+$salary_up = isset($_GET['salary_up']) ? $_GET['salary_up'] : '';
+
 // Create new PDF document
 $pdf = new MYPDF('L', 'mm', 'A4', true, 'UTF-8', false);
 
@@ -43,7 +50,7 @@ $primary_color = explode(",", hexToRgb($primary_color));
 $secondary_color =explode(",", hexToRgb($secondary_color));
 
 $logo = get_logo_name_from_url();
-$pdf->Image('./assets/images/'.$logo, 10, 10, 50);
+$pdf->Image('./assets/images/'.$logo, 10, 10, 30);
 
 $pdf->SetFont('helvetica', 'B', 16);
 $y = 10;
@@ -76,6 +83,8 @@ $pdf->SetDrawColor($primary_color[0], $primary_color[1], $primary_color[2]);
 $pdf->Rect(10, 45, 278, 0.2);
 $y = 50;
 
+$pdf->SetDrawColor(000, 000, 000);
+
 // Table Header
 $pdf->SetFont('aefurat', 'B', 10);
 $pdf->SetXY(10, $y);
@@ -86,11 +95,19 @@ $pdf->Cell(60, 8, "Email", 1, 0, 'L', true);
 $pdf->Cell(50, 8, "Department", 1, 0, 'L', true);
 $pdf->Cell(42, 8, "Location", 1, 1, 'L', true);
 
-$y += 7;
+$y += 8;
 
 $get_employees = "SELECT * FROM `employees` WHERE `status` = 'Active'";
+if($gender) $get_employees .= " AND `gender` = '$gender'";
+if($state) $get_employees .= " AND `state_id` = '$state'";
+if($department) $get_employees .= " AND `branch_id` = '$department'";
+if($location) $get_employees .= " AND `location_id` = '$location'";
+if($salary) $get_employees .= " AND `salary` >= '$salary'";
+if($salary_up) $get_employees .= " AND `salary` <= '$salary_up'";
 $employees = $GLOBALS['conn']->query($get_employees);
 $num = 1;
+
+
 
 $pdf->SetFillColor(120, 120, 120);
 $pdf->SetDrawColor(120, 120, 120);

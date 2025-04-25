@@ -1,5 +1,5 @@
 <?php
-$month = $_GET['month'];
+$month = isset($_GET['month']) ? $_GET['month'] : date('Y-m');
 // Extend the TCPDF class to create a custom footer
 class MYPDF extends TCPDF {
     // Page footer
@@ -19,8 +19,14 @@ $pdf = new MYPDF('P', 'mm', 'A4', true, 'UTF-8', false);
 // Set document information
 $pdf->SetCreator(PDF_CREATOR);
 $pdf->SetAuthor('Author Name');
-$pdf->SetTitle('Attendance Report');
-$pdf->SetSubject('Attendance Report');
+$pdf->SetTitle('Absence and Leave Report');
+$pdf->SetSubject('Absence and Leave Report');
+
+$primary_color = return_setting('primary_color');
+$secondary_color = return_setting('secondary_color');
+
+$primary_color = explode(",", hexToRgb($primary_color));
+$secondary_color =explode(",", hexToRgb($secondary_color));
 
 // Disable default header and footer
 $pdf->setPrintHeader(false);
@@ -37,36 +43,60 @@ $pdf->AddPage();
 
 $pdf->SetFont('aefurat', '', 12);
 // $pdf->Image('./assets/images/banner.png', 0, 0, 280, 40); // Adjust size as needed
-$pdf->Image('./assets/images/logo.png', 85, 10, 40);
+$pdf->Image('./assets/images/logo.png', 10, 10, 30);
 // Set header rectangle
-$pdf->SetFillColor(80, 184, 72);
-$pdf->SetDrawColor(80, 184, 72);
-$pdf->Rect(10, 40, 192, 0.2); // Adjusted position and width for landscape
+$pdf->SetFillColor($primary_color[0], $primary_color[1], $primary_color[2]);
+$pdf->SetDrawColor($primary_color[0], $primary_color[1], $primary_color[2]);
 
-$pdf->SetFont('aefurat', 'B', 13);
-$pdf->SetXY(10, 45);
-$pdf->Cell(0, 10, "Attendance Report  ", 0, 1, 'C');
+$y = 10;
+$companyInfo = get_data('company', ['id' => 1])[0];
+$pdf->SetTextColor($primary_color[0], $primary_color[1], $primary_color[2]);
+$pdf->SetXY(70, $y);
+$pdf->SetFont('helvetica', 'B', 16);
+$pdf->Cell(130, 7, strtoupper($companyInfo['name']), 0, 0, 'R');
+$pdf->SetTextColor(000, 000, 000);
 
-$pdf->SetFont('aefurat', '', 10);
-$pdf->SetXY(10, 50);
-$pdf->Cell(0, 10,  date('F Y', strtotime($month)), 0, 1, 'C');
+$pdf->SetFont('helvetica', 'B', 10);
 
-$pdf->SetFont('aefurat', '', 10);
-$pdf->SetXY(10, 55);
-$pdf->Cell(0, 10, "Print date  " . date('F d, Y h:i:s A'), 0, 1, 'C');
+$y += 8;
+$pdf->SetXY(70, $y);
+$pdf->Cell(130, 7, $companyInfo['contact_phone'], 0, 0, 'R');
 
-$y = 65;
+$y += 5;
+$pdf->SetXY(70, $y);
+$pdf->Cell(130, 7, $companyInfo['contact_email'], 0, 0, 'R');
 
+$pdf->SetFont('helvetica', 'B', 12);
+$y += 6;
+$pdf->SetXY(70, $y);
+$pdf->Cell(130, 7, strtoupper("Absence and Leave Report"), 0, 0, 'R');
+
+$pdf->SetFont('helvetica', '', 10);
+$y += 6;
+$pdf->SetXY(70, $y);
+$pdf->Cell(130, 7, date('F Y', strtotime($month)), 0, 0, 'R');
+$y += 6;
+$pdf->SetXY(70, $y);
+$pdf->Cell(130, 7, "Print date " . date("F d Y h:i:s A"), 0, 0, 'R');
+
+$y += 10;
+
+$pdf->Rect(10, $y, 190, 0.2);
+
+$pdf->SetDrawColor(0, 0, 0);
+$y += 5;
 // Table Header
 $pdf->SetFont('aefurat', 'B', 10);
 $pdf->SetXY(10, $y);
 $pdf->Cell(15, 7, "Staff No.", 1, 0, 'L', true);
 $pdf->Cell(60, 7, "Full name", 1, 0, 'L', true);
-$pdf->Cell(23, 7, "Days worked", 1, 0, 'L', true);
 $pdf->Cell(23, 7, "Paid Leave", 1, 0, 'L', true);
 $pdf->Cell(23, 7, "Un-paid Leave", 1, 0, 'L', true);
 $pdf->Cell(23, 7, "Not hired days", 1, 0, 'L', true);
-$pdf->Cell(23, 7, "Holidays", 1, 1, 'L', true);
+$pdf->Cell(23, 7, "Absent days", 1, 1, 'L', true);
+
+$pdf->SetXY(177, $y);
+$pdf->Cell(23, 7, "Total absence", 1, 1, 'L', true);
 
 $y += 7;
 
@@ -83,6 +113,7 @@ if ($employees->num_rows > 0) {
     	$unpaid_leave_count = $row['unpaid_leave_count'];
     	$not_hired_count = $row['not_hired_count'];
     	$holiday_count = $row['holiday_count'];
+        $no_show_count = $row['no_show_count'];
     	$required_days = $worked_days = 0;
     	$employeeInfo = get_data('employees', ['employee_id' => $emp_id]);
     	if($employeeInfo) {
@@ -90,14 +121,16 @@ if ($employees->num_rows > 0) {
     		$work_days = $employeeInfo['work_days'];
     		$required_days = getWorkdaysInMonth($month, $work_days = 0);
     		$required_days -= $not_hired_count + $holiday_count;
-    		$worked_days = $required_days - $paid_leave_count - $unpaid_leave_count;
+    		$worked_days = $required_days - $paid_leave_count - $unpaid_leave_count - $no_show_count;
     	}
+        $total_absence = $paid_leave_count + $unpaid_leave_count + $no_show_count;
     	$row['required_days'] =$required_days;
     	$row['worked_days'] =$worked_days;
+    	$row['total_absence'] =$total_absence;
         $result['data'][] = $row;
 
         // Check if we need to add a new page
-        if ($y + 7 > 180) { // Adjust this value based on your layout
+        if ($y + 7 > 280) { // Adjust this value based on your layout
             $pdf->AddPage();
             $pdf->SetFont('aefurat', '', 10);
             $y = 10; // Reset Y position after adding a new page
@@ -107,11 +140,12 @@ if ($employees->num_rows > 0) {
             $pdf->SetXY(10, $y);
 			$pdf->Cell(15, 7, "Staff No.", 1, 0, 'L', true);
 			$pdf->Cell(60, 7, "Full name", 1, 0, 'L', true);
-			$pdf->Cell(23, 7, "Days worked", 1, 0, 'L', true);
 			$pdf->Cell(23, 7, "Paid Leave", 1, 0, 'L', true);
 			$pdf->Cell(23, 7, "Un-paid Leave", 1, 0, 'L', true);
 			$pdf->Cell(23, 7, "Not hired days", 1, 0, 'L', true);
-			$pdf->Cell(23, 7, "Holidays", 1, 1, 'L', true);
+			$pdf->Cell(23, 7, "Absent days", 1, 1, 'L', true);
+            $pdf->SetXY(177, $y);
+            $pdf->Cell(23, 7, "Total absence", 1, 1, 'L', true);
 
             $y += 7;
         }
@@ -121,11 +155,13 @@ if ($employees->num_rows > 0) {
         $pdf->SetXY(10, $y);
 		$pdf->Cell(15, 7, "$staff_no", 1, 0, 'L', 0);
 		$pdf->Cell(60, 7, "$full_name", 1, 0, 'L', 0);
-		$pdf->Cell(23, 7, $worked_days . "/" . $required_days, 1, 0, 'L', 0);
 		$pdf->Cell(23, 7, $paid_leave_count, 1, 0, 'L', 0);
 		$pdf->Cell(23, 7, $unpaid_leave_count, 1, 0, 'L', 0);
 		$pdf->Cell(23, 7, $not_hired_count, 1, 0, 'L', 0);
-		$pdf->Cell(23, 7, $holiday_count, 1, 1, 'L', 0);
+		$pdf->Cell(23, 7, $no_show_count, 1, 1, 'L', 0);
+
+        $pdf->SetXY(177, $y);
+        $pdf->Cell(23, 7, $total_absence, 1, 0, 'L', 0);
 
 
        
@@ -136,8 +172,11 @@ if ($employees->num_rows > 0) {
 
     // Draw footer line on the last page
     $pdf->Rect(10, $y, 190, 0.1);
+} else {
+    $pdf->SetXY(10, $y+10);
+    $pdf->Cell(190, 7, "No records were found", 0, 0, 'C', 0);
 }
 
 // Output the PDF
-$pdf->Output("Attendance Report" . date('F Y', strtotime($month)) .".pdf", 'I');
+$pdf->Output("Absence and Leave Report" . date('F Y', strtotime($month)) .".pdf", 'I');
 ?>
