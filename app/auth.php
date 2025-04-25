@@ -144,9 +144,6 @@ function set_sessions($user_id) {
 		}
 	}
 
-	// Get company and hold company name in session
-	$company = $GLOBALS['companyClass']->get(1);
-	$_SESSION['company'] = $company['name'];
 	return true;
 }
 

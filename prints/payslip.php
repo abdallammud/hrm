@@ -49,7 +49,7 @@ if($query) {
 
 // Create new PDF document
 $pdf = new MYPDF('P', 'mm', 'A4', true, 'UTF-8', false);
-
+$companyInfo = get_data('company', ['id' => 1])[0];
 // Set document information
 $pdf->SetCreator(PDF_CREATOR);
 $pdf->SetAuthor('Hawlkar it solutions');
@@ -78,7 +78,7 @@ $pdf->Rect(10, $y, 190, 0.8, "F");
 
 $pdf->SetFont('dejavusans', 'B', 20);
 $pdf->SetXY(35, $y-25);
-$company = $_SESSION['company'];
+$company = $companyInfo['name'];
 $pdf->Cell(0, 10, strtoupper($company), 0, 1, 'C');
 
 $pdf->SetFont('dejavusans', 'B', 10);
