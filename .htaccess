@@ -57,7 +57,7 @@ RewriteRule ^payments/?$ index.php?menu=payments&tab=payments [NC,L]
 
 
 RewriteRule ^reports/?$ index.php?menu=reports&tab=reports [NC,L]
-
+RewriteRule ^reports/([a-zA-Z0-9-]+)$ index.php?menu=reports&action=show&report=$1 [NC,L]
 
 
 
