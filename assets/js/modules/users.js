@@ -272,3 +272,94 @@ async function handle_editUserForm(form) {
 
     return false
 }
+
+function simplifyRoles() {
+	$('#selectAll').on('change', function() {
+		var isChecked = $(this).is(':checked');
+		$('.form-check-input').prop('checked', isChecked);
+	});
+
+	$('.module').on('change', function() {
+		var moduleId = $(this).attr('id');
+		var isChecked = $(this).is(':checked');
+		$('.' + moduleId).prop('checked', isChecked);
+	});
+
+	// If action clicked without module, check all actions
+	$('.action').on('change', function() {
+		var moduleId = $(this).data('module');
+		var isChecked = $(this).is(':checked');
+		if(isChecked) {
+			$('#' + moduleId).prop('checked', true);
+		} 
+	});
+
+	// form submit
+	$('#addSystemRoleForm').on('submit', (e) => {
+		handle_addRole(e.target);
+		return false
+	})
+}
+
+async function handle_addRole(form) {
+    var form = $(form);
+	let error = validateForm(form)
+
+	let name 		= $(form).find('#roleName').val();
+    let actions 	= [];
+
+	$('input.action:checked').each((i, el) => {
+		let moduleId = $(el).data('module');
+		let action = $(el).val();
+		actions.push(action);
+	});
+
+	console.log(actions)
+
+	if (error) return false;
+
+	let formData = {
+        name: name,
+        actions: actions
+    };
+
+	form_loading(form);
+
+	try {
+        let response = await send_userPost('save role', formData);
+        console.log(response)
+        if (response) {
+            let res = JSON.parse(response)
+            if(res.error) {
+            	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 3000 }).then(() => {
+            		location.reload();
+            	});;
+            } else {
+            	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+            		location.reload();
+            	});
+            	console.log(res)
+            }
+        } else {
+            console.log('Failed to save state.' + response);
+        }
+
+    } catch (err) {
+        console.error('Error occurred during form submission:', err);
+    }
+
+	return false;
+}
+
+async function editRoleModal(id) {
+	let response = await send_userPost('get role4Edit', {id:id});
+	console.log(response)
+	if (response) {
+		let res = JSON.parse(response)
+		if(!res.error) {
+			$('#editRole').find('.modal-body'.html(res.data))
+		}
+	}
+
+	$('#editRole').modal('show');
+}

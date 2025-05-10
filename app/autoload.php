@@ -21,7 +21,7 @@ function load_files() {
     // var_dump($authKey);
 
     // Handle submenus and their actions
-    // var_dump($menus[$menu]['sub'][$tab]);
+    // var_dump($menus[$menu]['sub']);
     if ($tab && isset($menus[$menu]['sub'][$tab])) {
         handle_sub_menu($menus[$menu]['sub'][$tab], $folder, $action);
     } 
@@ -38,6 +38,7 @@ function load_files() {
         }
     }
 }
+
 
 function handle_sub_menu($subMenu, $folder, $action) {
     if ($action && isset($subMenu['actions'][$action])) {
@@ -267,7 +268,7 @@ function get_menu_config() {
             
         ],*/
 
-        'users' => [
+        /* 'users' => [
             'folder' => 'system',
             'default' => 'users',
             'name' => 'Users',
@@ -281,6 +282,36 @@ function get_menu_config() {
                 'show' => ['file' => 'user_show', 'auth' => 'manage_users'],
             ],
             
+        ], */
+
+        'users' => [
+            'folder' => 'system',
+            'default' => 'users',
+            'name' => 'Users',
+            'icon' => 'engineering',
+            'route' => 'user',
+            'menu' => 'users',
+            'auth' => 'manage_users',
+            'sub' => [
+                'users' => [
+                    'default' => 'users',
+                    'auth' => 'manage_users',
+                    'route' => 'user',
+                    'name' => 'Users',
+                    'actions' => [
+                        'add' => ['file' => 'user_add', 'auth' => 'add_user'],
+                        'edit' => ['file' => 'user_edit', 'auth' => 'edit_user'],
+                        'show' => ['file' => 'user_show', 'auth' => 'manage_users'],
+                    ],
+                ],
+                'roles' => [
+                    'default' => 'roles',
+                    'auth' => 'manage_users',
+                    'route' => 'roles',
+                    'name' => 'Roles',
+                    'menu' => 'users',
+                ],
+            ],
         ],
 
         'reports' => [

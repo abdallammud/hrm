@@ -72,12 +72,6 @@ class UserPermissions extends Model {
     }
 }
 
-
-
-
-
-
-
 $GLOBALS['userClass']  = $userClass = new Users();
-$GLOBALS['permissionsClass']  = $permissionsClass = new Permissios();
+$GLOBALS['permissionsClass']  = $permissionsClass = new Permissios;
 $GLOBALS['userPermissionsClass']  = $userPermissionsClass = new UserPermissions();

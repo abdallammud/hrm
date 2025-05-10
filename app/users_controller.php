@@ -64,6 +64,40 @@ if(isset($_GET['action'])) {
 
 				// Return the result as a JSON response
 				echo json_encode($result);
+			} if($_GET['endpoint'] == 'role') {
+				$result = [];
+				try {
+				    // Begin a transaction
+				    $GLOBALS['conn']->begin_transaction();
+					$post = escapePostData($_POST);
+					$data = array(
+				        'name' => $post['name'], 
+				    );
+
+					$role_id = $sys_roles->create($data);
+					if($role_id) {
+				    	foreach ($post['actions'] as $action) {
+				    		$actions_data = array('role_id' => $role_id, 'permission' => $action);
+				    		$sys_role_permissions->create($actions_data);
+				    	}
+				    }
+
+				    $GLOBALS['conn']->commit();
+			        // Return success response
+			        $result['msg'] = 'Role created successfully';
+			        $result['error'] = false;
+
+				} catch (Exception $e) {
+				    // If any exception occurs, rollback the transaction
+				    $GLOBALS['conn']->rollback();
+
+				    // Return error response
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				echo json_encode($result);
 			}
 			exit();
 		} 
@@ -270,6 +304,87 @@ if(isset($_GET['action'])) {
 			exit();
 		}
 
+
+		// Get data
+		else if($_GET['action'] == 'get') {
+			if($_GET['endpoint'] == 'role4Edit') {
+				$role = $sys_roles->get($_POST['id']);
+				$role_permissions = $sys_role_permissions->get_permissions($_POST['id']);
+
+				$data = '<div>
+                    <div class="row">
+                        <div class="col col-xs-12">
+                            <div class="form-group">
+                                <label class="label  required"  for="roleName">Role  Name</label>
+                                <input type="text"  data-msg="Please provide role name." value="'.$role['name'].'"  class="form-control validate" id="roleName" name="roleName">
+								input type="hidden" name="role_id" id="role_id" value="'.$_POST['id'].'">
+                                <span class="form-error text-danger">This is error</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col col-md-12 col-lg-12 col-xs-12">
+                            <h6 style="margin-top: 10px;;">Assign permission to this role</h6>
+                        </div>
+                        
+                         <div class="table-responsive">
+                            <table class="table assing_roles table-borderless">
+                                <thead style="background-color: #f2f2f2;">
+                                    <tr>
+                                        <th scope="col">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="" id="selectAll">
+                                                <label class="form-check-label" for="selectAll">MODULE</label>
+                                            </div>
+                                        </th>
+                                        <th scope="col">PERMISSIONS</th>
+                                        <th scope="col"></th>
+                                        <th scope="col"></th>
+                                        <th scope="col"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>';
+
+								foreach ($GLOBALS['sys_permissions']->read_all() as $permission) {
+                                    $actions = json_decode($permission['actions']);
+
+                                    // var_dump($actions);
+                                    $permission['actions'] = $actions;
+                                    $permission_name = $permission['module'];
+									$data .= '<tr>
+										<td>
+											<div class="form-check">
+												<input class="form-check-input module" type="checkbox" value="" id="'.strtolower(str_replace(" ", "_",$permission_name)).'">
+												<label class="form-check-label" for="'.strtolower(str_replace(" ", "_",$permission_name)).'">'.ucwords($permission_name).'</label>
+											</div>
+										</td>';
+
+									foreach ($actions as $action_name => $action_code) {
+										$data .= '<td>
+											<div class="form-check form-check-inline">
+												<input class="form-check-input action '.strtolower(str_replace(" ", "_",$permission_name)).'" data-module="'.strtolower(str_replace(" ", "_",$permission_name)).'" type="checkbox" id="'.$action_code->code.'" value="'.$action_code->code.'">
+												<label class="form-check-label" for="'.$action_code->code.'">'.ucwords($action_name).'</label>
+											</div>
+										</td>';
+									}
+									$data .= '</tr>';
+								}
+
+                                $data .='</tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>';
+				$result = array(
+					'error' => false,
+					'data' => $data
+				);
+				echo json_encode($result);
+				exit();
+			} else if ($_GET['endpoint'] === 'branch') {
+				json(get_data('branches', array('id' => $_GET['id'])));
+			}
+		}
 
 
 		

@@ -228,7 +228,7 @@
       <div class="card">
         <div class="card-body">
           <div class="table-responsive">
-            <p>Pending payroll</p>
+            <p>Lates payroll transaction</p>
             <table id="payrollDT" class="table table-striped table-bordered" style="width:100%">
               <thead>
                 <tr role="row">
