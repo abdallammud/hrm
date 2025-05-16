@@ -5,7 +5,7 @@ class Users extends Model {
         parent::__construct('users', 'user_id');
     }
 
-    public function getPermissions($userId) {
+    /* public function getPermissions($userId) {
         $userPermissions = [];
         $sql = "SELECT `permission_id` FROM `user_permissions` WHERE `user_id` = ?";
         $params = [$userId];
@@ -19,6 +19,12 @@ class Users extends Model {
         }
 
         return $userPermissions;
+    } */
+
+    public function getPermissions($userId) {
+        $userPermissions = [];
+        $role_id = $this->read($userId)['role'];
+        return $role_permissions = $GLOBALS['sys_role_permissions']->get_permissions($role_id);
     }
 
     public function getPermission_ids($userId) {

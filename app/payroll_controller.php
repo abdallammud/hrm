@@ -34,7 +34,7 @@ if(isset($_GET['action'])) {
 					    );
 
 					    check_exists('employee_transactions', ['emp_id' => $post['emp_id'], 'transaction_type' => $post['transaction_type'], 'date' => $post['date']]);
-				    	check_auth('manage_employee_transactions');
+				    	check_auth('create_payroll_transactions');
 
 				    	if($post['status'] == 'Approved') {
 				    		check_auth('approve_employee_transactions');
@@ -70,7 +70,7 @@ if(isset($_GET['action'])) {
 
 				    $result = ['error' => false, 'msg' => '', 'errors' => ''];
 
-				    check_auth('manage_employee_transactions'); // Authorization check
+				    check_auth('create_payroll_transactions'); // Authorization check
 
 				    if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
 				        $fileTmpPath = $_FILES['file']['tmp_name'];
@@ -189,7 +189,7 @@ if(isset($_GET['action'])) {
 				        'added_by' 	=> $_SESSION['user_id']
 				    );
 
-				    check_auth('generate_payroll');
+				    check_auth('create_payroll');
 				    $payroll_id = $payrollClass->create($data);
 
 				    if($payroll_id) {
@@ -374,7 +374,7 @@ if(isset($_GET['action'])) {
 				        'updated_date' => $updated_date
 				    );
 
-			    	check_auth('manage_employee_transactions');
+			    	check_auth('edit_payroll_transactions');
 
 			    	if($post['status'] == 'Approved') {
 			    		check_auth('approve_employee_transactions');
@@ -411,7 +411,7 @@ if(isset($_GET['action'])) {
 				        'updated_date' => $updated_date
 				    );
 
-			    	check_auth('approve_payroll');
+			    	check_auth('manage_payroll');
 
 			    	if(isset($emp_id) && $emp_id) {
 			    		$details = $conn->prepare("UPDATE `payroll_details` SET `status`=? WHERE `payroll_id` = '$payrollId' AND `emp_id` = '$emp_id'");
@@ -465,7 +465,7 @@ if(isset($_GET['action'])) {
 				    $account = $bankInfo[0]['account'];
 				    $balance = $bankInfo[0]['balance'];
 
-				    check_auth('pay_payroll');
+				    check_auth('manage_payroll');
 
 				    $data = array(
 				        'status' => $status, 
@@ -1186,7 +1186,7 @@ if(isset($_GET['action'])) {
 				try {
 				    // Delete branchClass
 				    $post = escapePostData($_POST);
-				    check_auth('manage_employee_transactions');
+				    check_auth('delete_payroll_transactions');
 				    // checkForeignKey($post['id'], 'trans_ref', ['payroll_details']);
 				    $deleted = $employeeTransactionsClass->delete($post['id']);
 
@@ -1213,7 +1213,7 @@ if(isset($_GET['action'])) {
 				    // Delete branchClass
 				    $post = escapePostData($_POST);
 				    $payrollId = $post['id'];
-				    check_auth('generate_payroll');
+				    check_auth('delete_payroll');
 
 				    $payrollClass->update_bankAccount($payrollId);
 
@@ -1257,7 +1257,7 @@ if(isset($_GET['action'])) {
 				    // Delete branchClass
 				    $post = escapePostData($_POST);
 				    $detailId = $post['id'];
-				    check_auth('generate_payroll');
+				    check_auth('delete_payroll');
 
 				    $payroll_id = 0;
 				    $detailInfo = get_data('payroll_details', ['id' => $detailId]);

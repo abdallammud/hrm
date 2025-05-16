@@ -192,9 +192,17 @@ $employee = $GLOBALS['employeeClass']->read($employee_id);
                                     <div class="form-group">
                                         <label class="label " for="project">Project</label>
                                         <input type="hidden" id="designation" value="" name="">
-                                        <select  name="project" class="form-control " id="project">
-                                          <option value="">- Select</option>
-                                          <?php select_active('projects', [], $employee['project_id']); ?>
+                                        <select class="my-select project" name="project" multiple id="project" data-live-search="true" title="Select projects">
+                                            <?php 
+                                            $query = "SELECT * FROM `projects` WHERE `status` = 'Active'";
+                                            $result = $GLOBALS['conn']->query($query);
+                                            $projects = explode(',', $employee['project_id']);
+                                            if($result->num_rows > 0) {
+                                                while($row = $result->fetch_assoc()) { ?>
+                                                    <option <?php if(in_array($row['id'], $projects)) echo 'selected="selected"'; ?> value="<?=$row['id'];?>"><?=$row['name'];?></option>
+                                                <?php }
+                                            } ?>
+                                          <!-- <?php select_active('projects', [], $employee['project_id']); ?> -->
                                         </select>
                                         <span class="form-error text-danger">This is error</span>
                                     </div>
@@ -205,9 +213,16 @@ $employee = $GLOBALS['employeeClass']->read($employee_id);
                                 <div class="col col-xs-12 col-md-6 col-lg-4">
                                     <div class="form-group">
                                         <label class="label " for="budgetCode">Budget code</label>
-                                        <select  name="budgetCode" class="form-control "  id="budgetCode">
-                                          <option value="">- Select </option>
-                                          <?=select_active('budget_codes', ['value' => 'name'], $employee['budget_code']);?>
+                                        <select class="my-select budgetCode" name="budgetCode" multiple id="budgetCode" data-live-search="true" title="Select budget codes">
+                                            <?php 
+                                            $query = "SELECT * FROM `budget_codes` WHERE `status` = 'Active'";
+                                            $result = $GLOBALS['conn']->query($query);
+                                            $budget_codes = explode(',', $employee['budget_code']);
+                                            if($result->num_rows > 0) {
+                                                while($row = $result->fetch_assoc()) { ?>
+                                                    <option <?php if(in_array($row['name'], $budget_codes)) echo 'selected="selected"'; ?> value="<?=$row['name'];?>"><?=$row['name'];?></option>
+                                                <?php }
+                                            } ?>
                                         </select>
                                         <span class="form-error text-danger">This is error</span>
                                     </div>
@@ -430,10 +445,13 @@ $employee = $GLOBALS['employeeClass']->read($employee_id);
 </div>
 
 <style>
-    label.:after {
+    label.required:after {
         content: "*";
         color: red;
         margin-left: 3px;
+    }
+    .dropdown.bootstrap-select{
+        width: 100% !important;
     }
 </style>
 

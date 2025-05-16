@@ -39,7 +39,6 @@ function load_files() {
     }
 }
 
-
 function handle_sub_menu($subMenu, $folder, $action) {
     if ($action && isset($subMenu['actions'][$action])) {
         handle_action($subMenu['actions'][$action], $folder);
@@ -91,7 +90,7 @@ function get_menu_config() {
             'name' => 'Dashboard',
             'route' => 'dashboard',
             'menu' => 'dashboard',
-            'auth' => 'view_dashboard',
+            'auth' => 'manage_dashboard',
         ],
         'org' => [
             'folder' => 'organization',
@@ -100,7 +99,7 @@ function get_menu_config() {
             'icon' => 'home',
             'menu' => 'org',
             'route' => 'org',
-            'auth' => ['manage_company_info', 'manage_departments', 'manage_duty_locations', 'manage_company_banks'],
+            'auth' => ['manage_organization', 'manage_departments', 'manage_duty_locations', 'manage_states', 'manage_bank_accounts', 'manage_designations', 'manage_projects', 'manage_budget_codes', 'manage_contract_types', 'manage_transaction_subtypes', 'manage_gaol_types'],
             'actions' => [
                 'show' => ['file' => 'org_show', 'auth' => 'view_company']
             ],
@@ -109,7 +108,7 @@ function get_menu_config() {
                     'default' => 'org',
                     'name' => 'Set up',
                     'route' => 'org',
-                    'auth' => 'manage_company_info',
+                    'auth' => 'manage_organization',
                     'actions' => [
                         // 'show' => ['file' => 'chart_show', 'auth' => 'view_chart']
                     ],
@@ -137,7 +136,7 @@ function get_menu_config() {
                     'default' => 'banks',
                     'name' => 'Bank accounts',
                     'route' => 'banks',
-                    'auth' => 'manage_company_banks',
+                    'auth' => 'manage_bank_accounts',
                     'actions' => [
                         'show' => 'chart_show'
                     ],
@@ -147,7 +146,7 @@ function get_menu_config() {
                     'default' => 'misc',
                     'name' => 'Miscellaneous',
                     'route' => 'misc',
-                    'auth' => 'manage_departments',
+                    'auth' => ['manage_designations', 'manage_projects', 'manage_budget_codes', 'manage_contract_types', 'manage_transaction_subtypes', 'manage_gaol_types'],
                 ],
                 // Add other submenus here
             ],
@@ -160,30 +159,25 @@ function get_menu_config() {
             'icon' => 'people',
             'route' => 'employees',
             'menu' => 'hrm',
-            'auth' => ['view_employees', 'manage_designations'],
+            'auth' => ['manage_employees', 'manage_employee_docs'],
             'sub' => [
                 'employees' => [
                     'default' => 'employees',
-                    'auth' => 'view_employees',
+                    'auth' => 'manage_employees',
                     'route' => 'employees',
                     'name' => 'Employees',
                     'actions' => [
-                        'add' => ['file' => 'employee_add', 'auth' => 'add_employee'],
-                        'show' => ['file' => 'employee_show', 'auth' => 'view_employees'],
-                        'edit' => ['file' => 'employee_edit', 'auth' => 'edit_employee'],
+                        'add' => ['file' => 'employee_add', 'auth' => 'create_employees'],
+                        'show' => ['file' => 'employee_show', 'auth' => 'manage_employees'],
+                        'edit' => ['file' => 'employee_edit', 'auth' => 'edit_employees'],
                     ],
                 ],
                 'documents' => [
                     'default' => 'documents',
-                    'auth' => 'view_employees',
+                    'auth' => 'manage_employee_docs',
                     'route' => 'documents',
                     'name' => 'Documents',
                     'js' => ['docs'],
-                    'actions' => [
-                        'add' => ['file' => 'employee_add', 'auth' => 'add_employee'],
-                        'show' => ['file' => 'folder_show', 'auth' => 'view_employees'],
-                        'edit' => ['file' => 'employee_edit', 'auth' => 'edit_employee'],
-                    ],
                 ],
                 
             ],
@@ -196,11 +190,11 @@ function get_menu_config() {
             'icon' => 'calculate',
             'menu' => 'payroll',
             'route' => 'payroll',
-            'auth' => ['view_payroll', 'manage_employee_transactions'],
+            'auth' => ['manage_payroll', 'manage_payroll_transactions'],
             'sub' => [
                 'payroll' => [
                     'default' => 'payroll',
-                    'auth' => 'view_payroll',
+                    'auth' => 'manage_payroll',
                     'route' => 'payroll',
                     'name' => 'Payroll',
                     'actions' => [
@@ -210,7 +204,7 @@ function get_menu_config() {
                 ],
                 'transactions' => [
                     'default' => 'transactions',
-                    'auth' => 'manage_employee_transactions',
+                    'auth' => 'manage_payroll_transactions',
                     'route' => 'transactions',
                     'name' => 'Transactions',
                 ],
@@ -224,7 +218,7 @@ function get_menu_config() {
             'icon' => 'list_alt',
             'route' => 'attendance',
             'menu' => 'attendance',
-            'auth' => ['view_attendance', 'manage_timesheets', 'manage_leaves'],
+            'auth' => ['manage_attendance', 'manage_timesheet', 'manage_leave', 'manage_leave_types'],
             'sub' => [
                 'attendance' => [
                     'default' => 'attendance',
@@ -299,14 +293,14 @@ function get_menu_config() {
                     'route' => 'user',
                     'name' => 'Users',
                     'actions' => [
-                        'add' => ['file' => 'user_add', 'auth' => 'add_user'],
-                        'edit' => ['file' => 'user_edit', 'auth' => 'edit_user'],
+                        'add' => ['file' => 'user_add', 'auth' => 'create_users'],
+                        'edit' => ['file' => 'user_edit', 'auth' => 'edit_users'],
                         'show' => ['file' => 'user_show', 'auth' => 'manage_users'],
                     ],
                 ],
                 'roles' => [
                     'default' => 'roles',
-                    'auth' => 'manage_users',
+                    'auth' => 'manage_roles',
                     'route' => 'roles',
                     'name' => 'Roles',
                     'menu' => 'users',
@@ -321,11 +315,11 @@ function get_menu_config() {
             'icon' => 'bar_chart',
             'route' => 'reports',
             'menu' => 'reports',
-            'auth' => 'view_reports',
+            'auth' => 'manage_reports',
             'actions' => [
                 // 'add' => ['file' => 'user_add', 'auth' => 'add_user'],
                 // 'edit' => ['file' => 'user_edit', 'auth' => 'edit_user'],
-                'show' => ['file' => 'report_show', 'auth' => 'view_reports'],
+                'show' => ['file' => 'report_show', 'auth' => 'manage_reports'],
             ],
             
         ],
@@ -334,7 +328,7 @@ function get_menu_config() {
         'settings' => [
             'folder' => 'settings_fol',
             'default' => 'settings',
-            'name' => 'settings',
+            'name' => 'Settings',
             'icon' => 'settings',
             'route' => 'settings',
             'menu' => 'settings',

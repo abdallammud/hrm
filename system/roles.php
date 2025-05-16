@@ -25,14 +25,14 @@
                         foreach ($GLOBALS['sys_roles']->read_all() as $role) {
                             $permissions = $GLOBALS['sys_role_permissions']->get_permissions( $role['id']);
 
-                            var_dump($permissions);
+                            // var_dump($permissions);
                             ?>
                             <tr>
                                 <td><?=ucwords($role['name']);?></td>
                                 <td>
                                     <?php
                                     foreach ($permissions as $permission) {
-                                        echo "<span  class='btn smt-10 btn-success'>".ucwords(str_replace('_',' ',$permission['permission']))."</span> ";
+                                        echo "<span  class='btn smt-10 btn-success'>".ucwords(str_replace('_',' ',$permission))."</span> ";
                                     }
                                     ?>
                                 </td>

@@ -19,14 +19,35 @@ if(isset($_GET['action'])) {
 				    unset($employeeData['startYear']);
 				    unset($employeeData['endYear']);
 
+					// Unset project and budget codes 
+					unset($employeeData['project']);
+					unset($employeeData['project_id']);
+					unset($employeeData['bduget_code']);
+
 				    foreach ($employeeData as $index => $value) {
 				    	$data[$index] = isset($employeeData[$index]) ? $employeeData[$index]: "";
 				    }
 
+					$data['project_id'] = $data['project'] =  $data['budget_code'] = '';
+					foreach ($post['project_id'] as $id) {
+						$data['project_id'] .= $id.', ';;
+						$data['project'] .= get_data('projects', ['id' => $id])[0]['name'].', ';
+				    }
+
+					foreach ($post['budget_code'] as $code) {
+						$data['budget_code'] .= $code .', ';
+					}
+
+
+					$data['project_id'] = rtrim($data['project_id'], ', ');
+					$data['project'] = rtrim($data['project'], ', ');
+					$data['budget_code'] = rtrim($data['budget_code'], ', ');
+
+
 				    $data['added_by'] = $_SESSION['user_id'];
 
 				    check_exists('employees', ['full_name' => $post['full_name'], 'email' => $post['email']]);
-				    check_auth('add_employee');
+				    check_auth('create_employees');
 
 				    // Call the create method for employee
 				    $result['id'] = $employeeClass->create($data);
@@ -112,7 +133,7 @@ if(isset($_GET['action'])) {
 
 				    $result = ['error' => false, 'msg' => '', 'errors' => ''];
 
-				    check_auth('add_employee'); // Authorization check
+				    check_auth('create_employees'); // Authorization check
 
 				    if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
 				        $fileTmpPath = $_FILES['file']['tmp_name'];
@@ -155,7 +176,7 @@ if(isset($_GET['action'])) {
 				                $position = $designation;
 
 				                // Check for missing required fields
-				                if (!$full_name || !$phone_number || !$gender || !$email || !$branch || !$state || !$hire_date) {
+				                if (!$full_name || !$phone_number || !$gender || !$email || !$branch) {
 				                    $result['errors'] .= " Missing required fields at line $row.";
 				                    continue;
 				                }
@@ -178,7 +199,13 @@ if(isset($_GET['action'])) {
 				                $location_id = checkAndCreateEntity('locations', $location, $myUserId, $locationsClass);
 				                $designation_id = checkAndCreateEntity('designations', $designation, $myUserId, $designationsClass);
 				                $contract_type_id = checkAndCreateEntity('contract_types', $contract_type, $myUserId, $contractTypesClass);
-				                $budget_code_id = checkAndCreateEntity('budget_codes', $budget_code, $myUserId, $budgetCodesClass);
+								
+								$bduget_codes = explode(',', $budget_code);
+								$budget_code_id = '';
+								foreach ($bduget_codes as $code) {
+									$budget_code_id .= checkAndCreateEntity('budget_codes', $code, $myUserId, $budgetCodesClass) . ', ';
+								}
+								$budget_code_id = rtrim($budget_code_id, ', ');
 
 				                // Prepare employee data
 				                $employeeData = [
@@ -266,7 +293,7 @@ if(isset($_GET['action'])) {
 					$GLOBALS['conn']->begin_transaction();
 					$post = escapePostData($_POST);
 					
-					check_auth('add_employee'); // Same auth as adding employee
+					check_auth('manage_employee_docs'); // Same auth as adding employee
 					
 					$data = array(
 						'name' => $post['name'],
@@ -299,6 +326,8 @@ if(isset($_GET['action'])) {
 				try {
 					$GLOBALS['conn']->begin_transaction();
 					$post = escapePostData($_POST);
+
+					check_auth('manage_employee_docs');
 					
 					// Check if type already exists
 					$check_sql = "SELECT * FROM document_types WHERE name = '".$post['name']."'";
@@ -341,6 +370,8 @@ if(isset($_GET['action'])) {
 					if (!file_exists($target_dir)) {
 						mkdir($target_dir, 0777, true);
 					}
+
+					check_auth('create_employee_docs');
 
 					$file = $_FILES['docFile'];
 					$file_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
@@ -413,15 +444,34 @@ if(isset($_GET['action'])) {
 				    unset($employeeData['startYear']);
 				    unset($employeeData['endYear']);
 
+					// Unset project and budget codes 
+					unset($employeeData['project']);
+					unset($employeeData['project_id']);
+					unset($employeeData['bduget_code']);
+
 				    foreach ($employeeData as $index => $value) {
 				    	$data[$index] = isset($employeeData[$index]) ? $employeeData[$index]: "";
 				    }
+
+					$data['project_id'] = $data['project'] =  $data['budget_code'] = '';
+					foreach ($post['project_id'] as $id) {
+						$data['project_id'] .= $id.', ';;
+						$data['project'] .= get_data('projects', ['id' => $id])[0]['name'].', ';
+				    }
+
+					foreach ($post['budget_code'] as $code) {
+						$data['budget_code'] .= $code .', ';
+					}
+
+					$data['project_id'] = rtrim($data['project_id'], ', ');
+					$data['project'] = rtrim($data['project'], ', ');
+					$data['budget_code'] = rtrim($data['budget_code'], ', ');
 
 				    $data['updated_by'] = $_SESSION['user_id'];
 				    $data['updated_date'] = $updated_date;
 
 				    check_exists('employees', ['full_name' => $post['full_name'], 'email' => $post['email']], ['employee_id' => $post['employee_id'], 'staff_no' => $post['staff_no']]);
-				    check_auth('edit_employee');
+				    check_auth('edit_employees');
 
 				    // Call the create method for employee
 				    $result['id'] = $employeeClass->update($post['employee_id'], $data);
@@ -512,7 +562,7 @@ if(isset($_GET['action'])) {
 				echo json_encode($result);
 			} else if ($_GET['endpoint'] == 'employee_avatar') {
 			    // Ensure user has the correct permissions
-			    check_auth('edit_employee');
+			    check_auth('edit_employees');
 			    
 			    $image = '';
 			    $uploadOk = false;
@@ -593,7 +643,7 @@ if(isset($_GET['action'])) {
 					$GLOBALS['conn']->begin_transaction();
 					$post = escapePostData($_POST);
 					
-					check_auth('add_employee'); // Same auth as adding employee
+					check_auth('manage_employee_docs'); // Same auth as adding employee
 					
 					$data = array(
 						'name' => $post['name'],
@@ -626,6 +676,7 @@ if(isset($_GET['action'])) {
 					$GLOBALS['conn']->begin_transaction();
 					$post = escapePostData($_POST);
 					
+					check_auth('manage_employee_docs');
 					// Check if type already exists
 					$check_sql = "SELECT * FROM document_types WHERE name = '".$post['name']."' AND id != '".$post['id']."'";
 					$check_exists = $GLOBALS['conn']->query($check_sql);
@@ -662,6 +713,8 @@ if(isset($_GET['action'])) {
 				try {
 					$GLOBALS['conn']->begin_transaction();
 					$post = escapePostData($_POST);
+
+					check_auth('manage_employee_docs');
 					
 					$data = array(
 						'name' => $post['docName4Edit'],
@@ -1000,7 +1053,7 @@ if(isset($_GET['action'])) {
 			if ($_GET['endpoint'] === 'employee') {
 				try {
 				    // Delete company
-				    check_auth('delete_employee');
+				    check_auth('delete_employees');
 				    $post = escapePostData($_POST);
 				    $employeeId = $post['id'];
 
@@ -1056,7 +1109,7 @@ if(isset($_GET['action'])) {
 				echo json_encode($result);
 			} else if ($_GET['endpoint'] === 'folder') {
 				try {
-					check_auth('add_employee'); // Same auth as adding employee
+					check_auth('manage_employee_docs'); // Same auth as adding employee
 					
 					$post = escapePostData($_POST);
 					$deleted_at = date('Y-m-d H:i:s');
@@ -1084,6 +1137,8 @@ if(isset($_GET['action'])) {
 				try {
 					$GLOBALS['conn']->begin_transaction();
 					$id = $_POST['id'];
+
+					check_auth('manage_employee_docs');
 					
 					$sql = "DELETE FROM document_types WHERE id = '$id'";
 					if($GLOBALS['conn']->query($sql)) {
@@ -1103,7 +1158,7 @@ if(isset($_GET['action'])) {
 				try {
 				    // Delete branchClass
 				    $post = escapePostData($_POST);
-				    check_auth('delete_employee');
+				    check_auth('delete_employee_docs');
 				    $deleted = $empDocClass->delete($post['id']);
 
 				    // Company deleted

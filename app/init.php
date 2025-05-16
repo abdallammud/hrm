@@ -21,7 +21,7 @@ require('MiscClass.php');
 require('SettingsClass.php');
 require('AttendanceClass.php');
 require('PayrollClass.php');
-require('sys_permissions.php');
+
 
 
 

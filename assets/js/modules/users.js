@@ -70,14 +70,33 @@ function load_users() {
 
 	        { title: "Action", data: null, render: function(data, type, row) {
 	            return `<div class="sflex scenter-items">
-	            		<a href="${base_url}/user/edit/${row.user_id}" class="fa edit_companyInfo smt-5 cursor smr-10 fa-pencil"></a>
-	            		<span data-recid="${row.id}" class="fa delete_company smt-5 cursor fa-trash"></span>
-	                </div>`;
+					<a href="${base_url}/user/show/${row.user_id}" class="fa edit_companyInfo smt-5 cursor smr-10 fa-eye"></a>
+					<a onclick="return editUserModal(${row.user_id})" class="fa edit_companyInfo smt-5 cursor smr-10 fa-pencil"></a>
+					<span data-recid="${row.user_id}"  class="fa delete_company smt-5 cursor fa-trash"></span>
+				</div>`;
 	        }},
 	    ]
 	});
 
 	return false;
+}
+async function editUserModal(id) {
+	let response = await send_userPost('get user', {id:id});
+	// console.log(response)
+	let modal = $('#editUser');
+	if (response) {
+		let res = JSON.parse(response)[0]
+		// console.log(res)
+		$(modal).find('#full_name4Edit').val(res.full_name)
+		$(modal).find('#phone4Edit').val(res.phone)
+		$(modal).find('#email4Edit').val(res.email)
+		$(modal).find('#sysRole4Edit').val(res.role)
+		$(modal).find('#username4Edit').val(res.username)
+		$(modal).find('#slcStatus').val(res.status)
+		$(modal).find('#userId4Edit').val(res.user_id)
+	}
+
+	$('#editUser').modal('show');
 }
 document.addEventListener("DOMContentLoaded", function() {
 	load_users();
@@ -136,6 +155,10 @@ document.addEventListener("DOMContentLoaded", function() {
 		return false
 	})
 	
+	$('#changePasswordForm').on('submit', async (e) => {
+		handle_changePasswordForm(e.target);
+		return false
+	})
 
 });	
 
@@ -149,28 +172,22 @@ function handleUser4CreateUser(employee_id, full_name) {
 
 async function handle_addUserForm(form) {
 	clearErrors();
-    let full_name 	= $(form).find('#searchEmployee').val();
+    let full_name 	= $(form).find('#full_name').val();
     let phone 		= $(form).find('#phone').val();
     let email 		= $(form).find('#email').val();
+	let sysRole 		= $(form).find('#sysRole').val();
     let username 		= $(form).find('#username').val();
     let password 		= $(form).find('#password').val();
-    let systemRole 		= $(form).find('#systemRole').val();
-    let permissions 	= [];
-
-    $('.user_permission:checked').each((i, el) => {
-    	permissions.push($(el).val());
-    })
-
-    console.log(permissions)
+ 
     // return false;
 
 
     // Input validation
     let error = false;
     error = !validateField(full_name, `Full name is required`, 'full_name') || error;
+	error = !validateField(sysRole, `Please select user role`, 'sysRole') || error;
     error = !validateField(username, `Username is required`, 'username') || error;
     error = !validateField(password, `Password is required`, 'password') || error;
-    error = !validateField(systemRole, `Please select user role`, 'systemRole') || error;
 
     if (error) return false;
 
@@ -180,8 +197,7 @@ async function handle_addUserForm(form) {
         email:email,
         username: username,
         password: password,
-        systemRole: systemRole,
-        permissions: permissions,
+        sysRole: sysRole,
     };
 
     try {
@@ -209,22 +225,17 @@ async function handle_addUserForm(form) {
 
     return false
 }
+
 async function handle_editUserForm(form) {
 	clearErrors();
-	let full_name 	= $(form).find('#searchEmployee').val();
-    let phone 		= $(form).find('#phone').val();
-    let email 		= $(form).find('#email').val();
-    let username 		= $(form).find('#username').val();
-    let systemRole 		= $(form).find('#systemRole').val();
-    let permissions 	= [];
-	let user_id 		= $(form).find('#user_id4Edit').val();
+	let full_name 	= $(form).find('#full_name4Edit').val();
+    let phone 		= $(form).find('#phone4Edit').val();
+    let email 		= $(form).find('#email4Edit').val();
+    let username 		= $(form).find('#username4Edit').val();
+    let sysRole 		= $(form).find('#sysRole4Edit').val();
+	let user_id 		= $(form).find('#userId4Edit').val();
     let slcStatus 		= $(form).find('#slcStatus').val();
 
-    $('.user_permission:checked').each((i, el) => {
-    	permissions.push($(el).val());
-    })
-
-    console.log(permissions)
     // return false;
 
 
@@ -232,6 +243,7 @@ async function handle_editUserForm(form) {
     let error = false;
     error = !validateField(full_name, `Full name is required`, 'full_name') || error;
     error = !validateField(username, `Username is required`, 'username') || error;
+	error = !validateField(sysRole, `Please select user role`, 'sysRole') || error;
     // error = !validateField(systemRole, `Please select user role`, 'systemRole') || error;
 
     if (error) return false;
@@ -241,8 +253,7 @@ async function handle_editUserForm(form) {
         phone:phone,
         email:email,
         username: username,
-        systemRole: systemRole,
-        permissions: permissions,
+        sysRole: sysRole,
         user_id:user_id,
         slcStatus:slcStatus
     };
@@ -273,6 +284,50 @@ async function handle_editUserForm(form) {
     return false
 }
 
+function handle_changePasswordForm(form) {
+	let newPassword =  $(form).find('#newPassword').val();
+	let confirmNewPassword = $(form).find('#confirmNewPassword').val();
+	if(newPassword != confirmNewPassword) {
+		$('#newPassword').addClass('is-invalid')
+		$('#confirmNewPassword').addClass('is-invalid')
+		
+		return false
+	}
+
+	console.log(newPassword, confirmNewPassword)
+
+	return false;
+	
+	let formData = {
+		newPassword: newPassword,
+		user_id: $(form).find('#user_id').val(),
+	};
+
+	try {
+		let response = await send_userPost('update user_password', formData);
+		console.log(response)
+
+		if (response) {
+			let res = JSON.parse(response)
+			if(res.error) {
+				toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
+			} else {
+				toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:2000 }).then(() => {
+				}).then((e) => {
+					window.location = `${base_url}/users`;
+				});
+				console.log(res)
+			}
+		} else {
+			console.log('Failed to save user.' + response);
+		}
+
+	} catch (err) {
+		console.error('Error occurred during form submission:', err);
+	}
+
+	return false
+}
 function simplifyRoles() {
 	$('#selectAll').on('change', function() {
 		var isChecked = $(this).is(':checked');
@@ -297,6 +352,12 @@ function simplifyRoles() {
 	// form submit
 	$('#addSystemRoleForm').on('submit', (e) => {
 		handle_addRole(e.target);
+		return false
+	})
+
+	// Edit role
+	$('#editSystemRoleForm').on('submit', (e) => {
+		handle_editRole(e.target);
 		return false
 	})
 }
@@ -351,15 +412,109 @@ async function handle_addRole(form) {
 	return false;
 }
 
+async function handle_editRole(form) {
+	var form = $(form);
+	let error = validateForm(form)
+
+	let name 		= $(form).find('#roleName4Edit').val();
+	let role_id 	= $(form).find('#role_id').val();
+    let actions 	= [];
+
+	$(form).find('input.action:checked').each((i, el) => {
+		let moduleId = $(el).data('module');
+		let action = $(el).val();
+		actions.push(action);
+	});
+
+	console.log(actions)
+
+	if (error) return false;
+
+	let formData = {
+        name: name,
+		id: role_id,
+        actions: actions
+    };
+
+	form_loading(form);
+
+	try {
+        let response = await send_userPost('update role', formData);
+        console.log(response)
+        if (response) {
+            let res = JSON.parse(response)
+            if(res.error) {
+            	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 3000 }).then(() => {
+            		location.reload();
+            	});;
+            } else {
+            	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+            		location.reload();
+            	});
+            	console.log(res)
+            }
+        } else {
+            console.log('Failed to edit role.' + response);
+        }
+
+    } catch (err) {
+        console.error('Error occurred during form submission:', err);
+    }
+
+	return false;
+}
+
+async function deleteRole(id) {
+	swal({
+        title: "Are you sure?",
+        text: "You are going to delete this role!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+    }).then(async (willDelete) => {
+        if (willDelete) {
+            try {
+				let response = await send_userPost('delete role', {id:id});
+				console.log(response)
+				if (response) {
+					let res = JSON.parse(response)
+					if(res.error) {
+						toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 3000 }).then(() => {
+							location.reload();
+						});;
+					} else {
+						toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+							location.reload();
+						});
+						console.log(res)
+					}
+				} else {
+					console.log('Failed to delete role.' + response);
+				}
+		
+			} catch (err) {
+				console.error('Error occurred during form submission:', err);
+			}		
+        }
+    });
+
+	return false;
+}
+
 async function editRoleModal(id) {
 	let response = await send_userPost('get role4Edit', {id:id});
 	console.log(response)
 	if (response) {
 		let res = JSON.parse(response)
 		if(!res.error) {
-			$('#editRole').find('.modal-body'.html(res.data))
+			$('#editRole').find('.modal-body').html(res.data)
 		}
 	}
 
 	$('#editRole').modal('show');
+}
+function changePasswordModal(id) {
+	let modal = $('.modal#changePassword')
+	$(modal).find('#user_id').val(id)
+	$(modal).modal('show');
 }

@@ -179,8 +179,7 @@
                                     <div class="form-group">
                                         <label class="label " for="project">Project</label>
                                         <input type="hidden" id="designation" value="" name="">
-                                        <select  name="project" class="form-control " id="project">
-                                          <option value="">- Select</option>
+                                        <select class="my-select project" name="project" multiple id="project" data-live-search="true" title="Select projects">
                                           <?php select_active('projects'); ?>
                                         </select>
                                         <span class="form-error text-danger">This is error</span>
@@ -192,8 +191,7 @@
                                 <div class="col col-xs-12 col-md-6 col-lg-4">
                                     <div class="form-group">
                                         <label class="label " for="budgetCode">Budget code</label>
-                                        <select  name="budgetCode" class="form-control "  id="budgetCode">
-                                          <option value="">- Select </option>
+                                        <select class="my-select budgetCode" name="budgetCode" multiple id="budgetCode" data-live-search="true" title="Select budget codes">
                                           <?=select_active('budget_codes', ['value' => 'name']);?>
                                         </select>
                                         <span class="form-error text-danger">This is error</span>
@@ -368,10 +366,14 @@
 </div>
 
 <style>
-    label.:after {
+    label.required:after {
         content: "*";
         color: red;
         margin-left: 3px;
+    }
+
+    .dropdown.bootstrap-select{
+        width: 100% !important;
     }
 </style>
 

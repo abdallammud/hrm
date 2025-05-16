@@ -17,6 +17,7 @@ if($user) {
 	if(ucwords($user[0]['is_logged']) == 'Yes') $border_color = '#80ff83';
 }
 
+
 ?>
 
 <div class="page content">
@@ -95,6 +96,12 @@ if($user) {
 							<div class="sflex smt- swrap">
 								<span class="sflex-basis-100 sflex swrap  ">Office/Duty station</span>
 								<p class="sflex-basis-100 sflex swrap  bold"><?=$employee['location_name'];?> </p>
+								
+							</div>
+
+							<div class="sflex smt- swrap">
+								<span class="sflex-basis-100 sflex swrap  ">Projects</span>
+								<p class="sflex-basis-100 sflex swrap  bold"><?=$employee['project'];?> </p>
 								
 							</div>
 							
@@ -310,31 +317,5 @@ require('emp_doc.php');
 
 
 <style type="text/css">
-	.emp-profile {
-		position: relative;
-	}
-   	img.profile-img {
-	   	width: 190px !important;
-	   	height: 190px !important;
-	   	border-radius: 50%;
-	   	border: 5px solid;
-	   	max-width: 190px !important;
-   	}
-   	.profile-img-edit {
-   		position: absolute;
-   		right: 25%;
-   		bottom: 20px;
-   		width: 30px;
-   		height: 30px;
-   		background: var(--page-bg);
-   		border-radius: 50%;
-   		display: flex;
-   		align-items: center;
-   		justify-content: center;
-   		box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
-   		cursor: pointer;
-   	}
-   	.profile-img-edit input {
-   		display: none;
-   	}
+	
 </style>

@@ -46,25 +46,28 @@ class Payroll extends Model {
 
         $net_salary = 0;
         $salaryStmt = $conn->prepare($query);
-        $salaryStmt->bind_param("i", $payrollId);
+        $salaryStmt->bind_param("i", $payroll_id);
         $salaryStmt->execute();
         $salaryResult = $salaryStmt->get_result();
 
         while ($row = $salaryResult->fetch_assoc()) {
             $net_salary = $row['net_salary'];
-            $bank_id += $row['bank_id'];
+            $bank_id = $row['bank_id'];
 
             $bankInfo = get_data('bank_accounts', ['id' => $bank_id]);
             if ($bankInfo) {
+                $id = $bankInfo[0]['id'];
                 $bank_name = $bankInfo[0]['bank_name'];
                 $account = $bankInfo[0]['account'];
                 $balance = $bankInfo[0]['balance'];
+
+                $paid_by = $_SESSION['user_id'];
 
                 $new_balance = $balance + $net_salary;
                 $updateBankQuery = "UPDATE `bank_accounts` SET `balance` = ?, `updated_by` = ?, `updated_date` = ? WHERE `id` = ?";
                 $bankStmt = $conn->prepare($updateBankQuery);
                 $updated_date = date("Y-m-d H:i:s");
-                $bankStmt->bind_param("dsis", $new_balance, $paid_by, $updated_date, $slcBank);
+                $bankStmt->bind_param("dsis", $new_balance, $paid_by, $updated_date, $bank_id);
 
                 if (!$bankStmt->execute()) {
                     throw new Exception("Failed to update bank balance: " . $bankStmt->error);

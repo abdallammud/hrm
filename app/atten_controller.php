@@ -16,7 +16,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('leave_types', ['name' => $post['name']]);
-				    check_auth('manage_leaves');
+				    check_auth('create_leave_types');
 
 				    // Call the create method
 				    $result['id'] = $leaveTypesClass->create($data);
@@ -55,7 +55,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('employee_leave', ['leave_id' => $post['leave_id'], 'emp_id' => $post['emp_id'], 'date_from' => $post['date_from']]);
-				    check_auth('manage_leaves');
+				    check_auth('create_leave');
 
 				    // Call the create method
 				    $result['id'] = $employeeLeaveClass->create($data);
@@ -91,7 +91,7 @@ if(isset($_GET['action'])) {
 				        'added_by' => $_SESSION['user_id']
 				    );
 
-				     check_auth('mark_attendance');
+				     check_auth('create_attendance');
 
 				    // Call the create method
 				    $result['id'] = $attendanceClass->create($data);
@@ -181,7 +181,7 @@ if(isset($_GET['action'])) {
 
 				    $result = ['error' => false, 'msg' => '', 'errors' => ''];
 
-				    check_auth('mark_attendance'); // Authorization check
+				    check_auth('create_attendance'); // Authorization check
 
 				    if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
 				        $fileTmpPath = $_FILES['file']['tmp_name'];
@@ -323,7 +323,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    $tsDate = date("Y-m-d", strtotime($post['ts_date']));
-				    check_auth('manage_timesheets');
+				    check_auth('create_timesheet');
 
 				    $check_exists = $GLOBALS['conn']->query("SELECT * FROM `timesheet` WHERE `ts_date` LIKE '$tsDate%'");
 				    if($check_exists->num_rows > 0) {
@@ -401,7 +401,7 @@ if(isset($_GET['action'])) {
 
 				    $result = ['error' => false, 'msg' => '', 'errors' => ''];
 
-				    check_auth('manage_timesheets'); // Authorization check
+				    check_auth('create_timesheet'); // Authorization check
 
 				    if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
 				        $fileTmpPath = $_FILES['file']['tmp_name'];
@@ -557,7 +557,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('leave_types', ['name' => $post['name']], ['id' => $post['id']]);
-				    check_auth('manage_leaves');
+				    check_auth('edit_leave_types');
 
 				    // Call the create method
 				    $result['id'] = $leaveTypesClass->update($post['id'], $data);
@@ -596,7 +596,7 @@ if(isset($_GET['action'])) {
 					    'updated_date' => $updated_date
 					);
 
-					check_auth('manage_leaves');
+					check_auth('edit_leave');
 					if($post['status'] == 'Approved') {
 						check_auth('approve_leaves');
 					}
@@ -633,7 +633,7 @@ if(isset($_GET['action'])) {
 				        'updated_date' => $updated_date 
 				    );
 
-				    check_auth('mark_attendance');
+				    check_auth('edit_attendance');
 
 				    // Call the create method
 				    $attendanceClass->update($post['id'], $data);
@@ -688,7 +688,7 @@ if(isset($_GET['action'])) {
 				        'updated_date' => $updated_date 
 				    );
 
-				    check_auth('manage_timesheets');
+				    check_auth('edit_timesheet');
 
 				    // Call the create method
 				    $timesheetClass->update($post['id'], $data);
@@ -1422,7 +1422,7 @@ if(isset($_GET['action'])) {
 				try {
 				    // Delete branchClass
 				    $post = escapePostData($_POST);
-				    check_auth('manage_leaves');
+				    check_auth('delete_leave_types');
 				    checkForeignKey($post['id'], 'leave_id', ['employee_leave']);
 				    $deleted = $leaveTypesClass->delete($post['id']);
 
@@ -1448,7 +1448,7 @@ if(isset($_GET['action'])) {
 				try {
 				    // Delete branchClass
 				    $post = escapePostData($_POST);
-				    check_auth('manage_leaves');
+				    check_auth('delete_leave');
 				    $leaveInfo = get_data('employee_leave', array('id' => $post['id']))[0];
 
 				    if($leaveInfo['status'] != 'Request' && $leaveInfo['status'] != 'Cancelled') {
@@ -1482,7 +1482,7 @@ if(isset($_GET['action'])) {
 				    // Delete branchClass
 				    $post = escapePostData($_POST);
 				    $atten_id = $post['id'];
-				    check_auth('mark_attendance');
+				    check_auth('delete_attendance');
 
 				    $del_emp = "DELETE FROM `atten_details` WHERE `atten_id` LIKE '$atten_id'";
 					if(!mysqli_query($GLOBALS["conn"], $del_emp)) {
@@ -1514,7 +1514,7 @@ if(isset($_GET['action'])) {
 				    // Delete branchClass
 				    $post = escapePostData($_POST);
 				    $ts_id = $post['id'];
-				    check_auth('manage_timesheets');
+				    check_auth('delete_timesheet');
 
 				    $del_emp = "DELETE FROM `timesheet_details` WHERE `ts_id` LIKE '$ts_id'";
 					if(!mysqli_query($GLOBALS["conn"], $del_emp)) {

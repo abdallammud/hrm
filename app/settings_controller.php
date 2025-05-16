@@ -17,7 +17,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    $setting = get_data('sys_settings', array('type' => $post['type']));
-				    check_auth('manage_states');
+				    check_auth('edit_settings');
 
 				    if(!$setting) {
 				    	$done = $settingsClass->create($data);

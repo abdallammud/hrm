@@ -266,3 +266,36 @@ body.toggled .logo-img{
 	width :100% !important;
 	height: auto !important;
 }
+
+.emp-profile {
+	position: relative;
+}
+img.profile-img {
+	width: 190px !important;
+	height: 190px !important;
+	border-radius: 50%;
+	border: 5px solid;
+	max-width: 190px !important;
+}
+.profile-img-edit {
+	position: absolute;
+	right: 25%;
+	bottom: 20px;
+	width: 30px;
+	height: 30px;
+	background: var(--page-bg);
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+	cursor: pointer;
+}
+.profile-img-edit input {
+	display: none;
+}
+
+.page-footer {
+	position: fixed;
+	bottom: 0;;
+}

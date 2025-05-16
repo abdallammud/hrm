@@ -477,6 +477,9 @@ async function handle_addEmployeeForm(form) {
     let startYear 		= [];
     let endYear 		= [];
 
+    console.log(project_id, project)
+
+
      $('.row.education-row').each((i, el) => {
      	if($(el).find('.degree').val()) {
 	    	degree.push($(el).find('.degree').val());

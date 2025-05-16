@@ -11,18 +11,18 @@ if(isset($_GET['action'])) {
 				    // Begin a transaction
 				    $GLOBALS['conn']->begin_transaction();
 
+					check_auth('create_users'); 
+
 				    // Prepare data from POST request (escaping input)
 				    $full_name 	= escapeStr($_POST['full_name'] ?? "");
 				    $phone 	= escapeStr($_POST['phone'] ?? "");
 				    $email 	= escapeStr($_POST['email'] ?? "");
 				    $username 		= escapeStr($_POST['username'] ?? null);
 				    $password 		= escapeStr($_POST['password'] ?? null);
-				    $systemRole 	= escapeStr($_POST['systemRole'] ?? null);
-				    $permissions 	= $_POST['permissions'];
+				    $sysRole 	= escapeStr($_POST['sysRole'] ?? null);
 				    $password   	= password_hash($password, PASSWORD_DEFAULT);
 
 				    $employee_id = $branch_id = 0;
-			    	
 
 			    	$data = array(
 				        'full_name' => $full_name,
@@ -32,19 +32,11 @@ if(isset($_GET['action'])) {
 				        'branch_id'         => $branch_id,
 				        'username'  	=> $username,
 				        'password'      => $password,
-				        'role'     		=> $systemRole,
+				        'role'     		=> $sysRole,
 				        'added_by'      => $_SESSION['user_id'],
 				    );
 
 				    $user_id = $userClass->create($data);
-				    // exit();
-
-				    if($user_id) {
-				    	foreach ($permissions as $permission) {
-				    		$permissions_data = array('user_id' => $user_id, 'permission_id' => $permission);
-				    		$userPermissionsClass->create($permissions_data);
-				    	}
-				    }
 
 				    $GLOBALS['conn']->commit();
 
@@ -73,6 +65,8 @@ if(isset($_GET['action'])) {
 					$data = array(
 				        'name' => $post['name'], 
 				    );
+
+					check_auth('create_roles'); 
 
 					$role_id = $sys_roles->create($data);
 					if($role_id) {
@@ -112,19 +106,19 @@ if(isset($_GET['action'])) {
 				    // Begin a transaction
 				    $GLOBALS['conn']->begin_transaction();
 
+					check_auth('edit_users'); 
+
 				    // Prepare data from POST request (escaping input)
 				    $full_name 		= escapeStr($_POST['full_name'] ?? "");
-				    $phone 		= escapeStr($_POST['phone'] ?? "");
-				    $email 		= escapeStr($_POST['email'] ?? "");
+				    $phone 			= escapeStr($_POST['phone'] ?? "");
+				    $email 			= escapeStr($_POST['email'] ?? "");
 				    $user_id 		= escapeStr($_POST['user_id'] ?? null);
 				    $employee_id 	= escapeStr($_POST['employee_id'] ?? null);
 				    $username 		= escapeStr($_POST['username'] ?? null);
-				    $systemRole 	= escapeStr($_POST['systemRole'] ?? null);
+				    $sysRole 		= escapeStr($_POST['sysRole'] ?? null);
 				    $slcStatus 		= escapeStr($_POST['slcStatus'] ?? 'Active');
-				    $permissions 	= $_POST['permissions'];
 
-			    	
-			    	$employee_id = $branch_id = 0;
+					$employee_id = $branch_id = 0;
 
 			    	$data = array(
 				        'full_name' => $full_name,
@@ -133,7 +127,7 @@ if(isset($_GET['action'])) {
 				        'emp_id'    => $employee_id,
 				        'branch_id'     => $branch_id,
 				        'username'  	=> $username,
-				        'role'     		=> $systemRole,
+				        'role'     		=> $sysRole,
 				        'status'     	=> $slcStatus,
 				        'updated_by'      => $_SESSION['user_id'],
 				        'updated_date' => $updated_date,
@@ -141,15 +135,6 @@ if(isset($_GET['action'])) {
 
 				    $updateUser = $userClass->update($user_id, $data);
 				    // exit();
-
-				    if($updateUser) {
-				    	$sql = "DELETE FROM `user_permissions` WHERE `user_id` = '$user_id'";
-				    	mysqli_query($GLOBALS['conn'], $sql);
-				    	foreach ($permissions as $permission) {
-				    		$permissions_data = array('user_id' => $user_id, 'permission_id' => $permission);
-				    		$userPermissionsClass->create($permissions_data);
-				    	}
-				    }
 
 				    $GLOBALS['conn']->commit();
 
@@ -169,7 +154,46 @@ if(isset($_GET['action'])) {
 
 				// Return the result as a JSON response
 				echo json_encode($result);
-			} 
+			} else if($_GET['endpoint'] == 'role') {
+				$result = [];
+				try {
+				    // Begin a transaction
+				    $GLOBALS['conn']->begin_transaction();
+					$post = escapePostData($_POST);
+					$data = array(
+				        'name' => $post['name'], 
+				    );
+
+					check_auth('edit_roles');
+
+					$role_id = $sys_roles->update($post['id'], $data);
+					if($role_id) {
+				    	$sql = "DELETE FROM `sys_role_permissions` WHERE `role_id` = '".$post['id']."'";
+				    	mysqli_query($GLOBALS['conn'], $sql);
+				    	foreach ($post['actions'] as $action) {
+				    		$actions_data = array('role_id' => $post['id'], 'permission' => $action);
+				    		$sys_role_permissions->create($actions_data);
+				    	}
+				    }
+
+				    $GLOBALS['conn']->commit();
+			        // Return success response
+			        $result['msg'] = 'Role updated successfully';
+			        $result['error'] = false;
+
+				} catch (Exception $e) {
+				    // If any exception occurs, rollback the transaction
+				    $GLOBALS['conn']->rollback();
+
+				    // Return error response
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				echo json_encode($result);
+				exit();
+			}
 		}
 
 
@@ -232,6 +256,9 @@ if(isset($_GET['action'])) {
 
 			    if ($users->num_rows > 0) {
 			        while ($row = $users->fetch_assoc()) {
+						$role_id = $row['role'];
+						$role = isset($sys_roles->get($role_id)['name']) ? $sys_roles->get($role_id)['name'] : '';
+			            $row['role'] = $role;
 			            $result['data'][] = $row;
 			        }
 			        $result['iTotalRecords'] = $totalRecords;
@@ -315,9 +342,9 @@ if(isset($_GET['action'])) {
                     <div class="row">
                         <div class="col col-xs-12">
                             <div class="form-group">
-                                <label class="label  required"  for="roleName">Role  Name</label>
-                                <input type="text"  data-msg="Please provide role name." value="'.$role['name'].'"  class="form-control validate" id="roleName" name="roleName">
-								input type="hidden" name="role_id" id="role_id" value="'.$_POST['id'].'">
+                                <label class="label  required"  for="roleName4Edit">Role  Name</label>
+                                <input type="text"  data-msg="Please provide role name." value="'.$role['name'].'"  class="form-control validate" id="roleName4Edit" name="roleName4Edit">
+								<input type="hidden" name="role_id" id="role_id" value="'.$_POST['id'].'">
                                 <span class="form-error text-danger">This is error</span>
                             </div>
                         </div>
@@ -362,8 +389,14 @@ if(isset($_GET['action'])) {
 									foreach ($actions as $action_name => $action_code) {
 										$data .= '<td>
 											<div class="form-check form-check-inline">
-												<input class="form-check-input action '.strtolower(str_replace(" ", "_",$permission_name)).'" data-module="'.strtolower(str_replace(" ", "_",$permission_name)).'" type="checkbox" id="'.$action_code->code.'" value="'.$action_code->code.'">
-												<label class="form-check-label" for="'.$action_code->code.'">'.ucwords($action_name).'</label>
+												<input class="form-check-input action 
+												'.strtolower(str_replace(" ", "_",$permission_name)).'" 
+												data-module="'.strtolower(str_replace(" ", "_",$permission_name)).'" 
+												type="checkbox" 
+												id="'.$action_code->code.'4Edit"
+												'.(in_array($action_code->code, $role_permissions) ? 'checked' : '').' 
+												value="'.$action_code->code.'">
+												<label class="form-check-label" for="'.$action_code->code.'4Edit">'.ucwords($action_name).'</label>
 											</div>
 										</td>';
 									}
@@ -381,11 +414,68 @@ if(isset($_GET['action'])) {
 				);
 				echo json_encode($result);
 				exit();
-			} else if ($_GET['endpoint'] === 'branch') {
-				json(get_data('branches', array('id' => $_GET['id'])));
+			} else if ($_GET['endpoint'] === 'user') {
+				json(get_data('users', array('user_id' => $_POST['id'])));
 			}
 		}
 
+
+		// Delete data
+		else if($_GET['action'] == 'delete') {
+			if($_GET['endpoint'] == 'role') {
+				$result = [];
+				try {
+				    // Begin a transaction
+				    $GLOBALS['conn']->begin_transaction();
+
+					$role_id = $_POST['id'];
+					check_auth('delete_roles');
+					
+					// Check if the role is being used by any user
+					$sql = "SELECT * FROM `users` WHERE `role` = '$role_id'";	
+					$found = $GLOBALS['conn']->query($sql);
+					if($found->num_rows > 0) {
+						$result = array(
+							'error' => true,
+							'msg' => 'This role is being used by a user. Please remove the user from this role before deleting it.'
+						);
+						echo json_encode($result);
+						exit();
+					}
+					// Delete the role	
+					$sys_roles->delete($role_id);
+					$del_permission = "DELETE FROM `sys_role_permissions` WHERE `role_id` = '$role_id'";
+					if(!mysqli_query($GLOBALS["conn"], $del_permission)) {
+						// throw new Exception('Error: ' . mysqli_error($GLOBALS["conn"]));
+						$result = array(
+							'error' => true,
+							'msg' => 'Error: ' . mysqli_error($GLOBALS["conn"])
+						);
+						echo json_encode($result);
+						exit();
+					}
+
+				    $GLOBALS['conn']->commit();
+			        // Return success response
+			        $result['msg'] = 'Role deleted successfully';
+			        $result['error'] = false;
+
+				} catch (Exception $e) {
+				    // If any exception occurs, rollback the transaction
+				    $GLOBALS['conn']->rollback();
+
+				    // Return error response
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				echo json_encode($result);
+				exit();
+			}
+
+			// Delet user requires more logic will implement later
+		}
 
 		
 

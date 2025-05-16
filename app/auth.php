@@ -1,6 +1,7 @@
 <?php 
 require('Model.php');
 require('UserClass.php');
+require('sys_permissions.php');
 session_start();
 $userClass = $GLOBALS['userClass'];
 if(isset($_GET['action'])) {
@@ -47,11 +48,6 @@ if(isset($_GET['action'])) {
 
 	    $land = get_landingMenu($user_id);
 
-
-
-
-
-
 	    if(set_sessions($user_id)) {
 	        setLoginInfo($user_id);
 	    } else {
@@ -74,22 +70,26 @@ function get_landingMenu($user_id) {
     $permissions = $GLOBALS['userClass']->getPermissions($user_id);
     // var_dump($permissions);
     $routes = [
-        'view_dashboard' => './dashboard',
-        'manage_company_info' => './org',
+        'manage_dashboard' => './dashboard',
+        'manage_organization' => './org',
         'manage_departments' => './departments',
         'manage_duty_locations' => './locations',
         'manage_states' => './locations',
-        'manage_company_banks' => './banks',
-        'view_employees' => './employees',
-        'manage_designations' => './designations',
-        'view_payroll' => './payroll',
-        'manage_bonus_allowances' => './bonus',
-        'view_attendance' => './attendance',
-        'manage_timesheets' => './timesheet',
-        'manage_leaves' => './leave',
-        'view_payment_history' => './payments',
+        'manage_bank_accounts' => './banks',
+		'manage_designations' => './misc',
+		'manage_projects' => './misc',
+		'manage_budget_codes' => './misc',
+		'manage_contract_types' => './misc',
+		'manage_transaction_subtypes' => './misc',
+        'manage_employees' => './employees',
+        'manage_payroll' => './payroll',
+        'manage_payroll_transactions' => './transactions',
+        'manage_attendance' => './attendance',
+        'manage_timesheet' => './timesheet',
+        'manage_leave' => './leave',
+        // 'view_payment_history' => './payments',
         'manage_users' => './users',
-        'view_reports' => './reports',
+        'manage_reports' => './reports',
         'manage_settings' => './settings'
     ];
     
@@ -133,7 +133,7 @@ function set_sessions($user_id) {
 
 	$_SESSION['avatar'] = $avatar;
 
-	$sysPermissions = $GLOBALS['permissionsClass']->read_all();
+	/* $sysPermissions = $GLOBALS['permissionsClass']->read_all();
 	$userPermissions = $GLOBALS['userClass']->getPermissions($user_id);
 
 	foreach ($sysPermissions as $sysPermission) {
@@ -142,8 +142,20 @@ function set_sessions($user_id) {
 		} else {
 			$_SESSION[$sysPermission['name']] = 'off';
 		}
+	} */
+
+
+	$all_sys_permissions = $GLOBALS['sys_permissions']->get_all();
+
+	foreach ($all_sys_permissions as $sysPermission) {
+		$_SESSION[$sysPermission] = 'off';
 	}
 
+	$role_permissions = $GLOBALS['sys_role_permissions']->get_permissions($user['role']);
+	
+	foreach ($role_permissions as $sysPermission) {
+		$_SESSION[$sysPermission] = 'on';
+	}
 	return true;
 }
 

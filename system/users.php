@@ -4,7 +4,8 @@
         <h5 class="">System Users</h5>
         <div class="ms-auto d-sm-flex">
             <div class="btn-group smr-10">
-                <a href="<?=baseUri();?>/user/add"  class="btn btn-primary">Add User</a>
+                <!-- <a href="<?=baseUri();?>/user/add"  class="btn btn-primary">Add User</a> -->
+                <button type="button" data-bs-toggle="modal" data-bs-target="#addUser"  class="btn btn-primary">Add User</button>
             </div>
         </div>
     </div>
@@ -19,3 +20,7 @@
 		</div>
 	</div>
 </div>
+
+
+<?php require_once 'user_add.php'; ?>
+<?php require_once 'user_edit.php'; ?>

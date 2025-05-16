@@ -16,7 +16,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('company', ['name' => $_POST['name']]);
-				    check_auth('manage_company_info');
+				    check_auth('create_organization');
 
 				    // Call the create method
 				    $result['id'] = $companyClass->create($data);
@@ -50,7 +50,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('branches', ['name' => $_POST['name']]);
-				    check_auth('manage_departments');
+				    check_auth('create_departments');
 
 				    // Call the create method
 				    $result['id'] = $branchClass->create($data);
@@ -87,7 +87,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('states', ['name' => $_POST['name']]);
-				    check_auth('manage_states');
+				    check_auth('create_states');
 
 				    // Call the create method
 				    $result['id'] = $statesClass->create($data);
@@ -123,7 +123,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('locations', ['name' => $post['name']]);
-				    check_auth('manage_duty_locations');
+				    check_auth('create_duty_locations');
 
 				    // Call the create method
 				    $result['id'] = $locationsClass->create($data);
@@ -158,7 +158,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('bank_accounts', ['bank_name' => $post['name']]);
-				    check_auth('manage_company_banks');
+				    check_auth('create_bank_accounts');
 
 				    // Call the create method
 				    $result['id'] = $bankAccountClass->create($data);
@@ -191,7 +191,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('designations', ['name' => $post['name']]);
-				    check_auth('manage_designations');
+				    check_auth('create_designations');
 
 				    // Call the create method
 				    $result['id'] = $designationsClass->create($data);
@@ -225,7 +225,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('projects', ['name' => $post['name']]);
-				    check_auth('manage_projects');
+				    check_auth('create_projects');
 
 				    // Call the create method
 				    $result['id'] = $projectsClass->create($data);
@@ -258,7 +258,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('contract_types', ['name' => $post['name']]);
-				    check_auth('manage_contract_types');
+				    check_auth('create_contract_types');
 
 				    // Call the create method
 				    $result['id'] = $contractTypesClass->create($data);
@@ -292,7 +292,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('budget_codes', ['name' => $post['name']]);
-				    check_auth('manage_budget_codes');
+				    check_auth('create_budget_codes');
 
 				    // Call the create method
 				    $result['id'] = $budgetCodesClass->create($data);
@@ -325,7 +325,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('banks', ['name' => $post['name']]);
-				    check_auth('manage_company_banks');
+				    check_auth('create_bank_accounts');
 
 				    // Call the create method
 				    $result['id'] = $banksClass->create($data);
@@ -359,7 +359,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('trans_subtypes', ['name' => $post['name']]);
-				    check_auth('manage_employee_transactions');
+				    check_auth('create_transaction_subtypes');
 
 				    // Call the create method
 				    $result['id'] = $transSubTypesClass->create($data);
@@ -403,7 +403,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('company', ['name' => $_POST['name']], ['id' => $_POST['id']]);
-				    check_auth('manage_company_info');
+				    check_auth('edit_organization');
 
 				    // Call the create method
 				    $updated = $companyClass->update($_POST['id'], $data);
@@ -439,7 +439,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('branches', ['name' => $_POST['name']], ['id' => $_POST['id']]);
-				    check_auth('manage_departments');
+				    check_auth('edit_departments');
 
 				    // Call the create method
 				    $updated = $branchClass->update($_POST['id'], $data);
@@ -478,7 +478,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('states', ['name' => $post['name']], ['id' => $post['id']]);
-				    check_auth('manage_states');
+				    check_auth('edit_states');
 
 				    // Call the create method
 				    $updated = $statesClass->update($post['id'], $data);
@@ -516,7 +516,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('locations', ['name' => $post['name']], ['id' => $post['id']]);
-				    check_auth('manage_duty_locations');
+				    check_auth('edit_duty_locations');
 
 				    // Call the create method
 				    $result['id'] = $locationsClass->update($post['id'], $data);
@@ -553,7 +553,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('bank_accounts', ['bank_name' => $post['name']], ['id' => $post['id']]);
-				    check_auth('manage_company_banks');
+				    check_auth('edit_bank_accounts');
 
 				    // Call the create method
 				    $result['id'] = $bankAccountClass->update($post['id'], $data);
@@ -588,7 +588,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('designations', ['name' => $post['name']], ['id' => $post['id']]);
-				    check_auth('manage_designations');
+				    check_auth('edit_designations');
 
 				    // Call the create method
 				    $result['id'] = $designationsClass->update($post['id'], $data);
@@ -624,7 +624,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('projects', ['name' => $post['name']], ['id' => $post['id']]);
-				    check_auth('manage_projects');
+				    check_auth('edit_projects');
 
 				    // Call the create method
 				    $result['id'] = $projectsClass->update($post['id'], $data);
@@ -659,7 +659,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('contract_types', ['name' => $post['name']], ['id' => $post['id']]);
-				    check_auth('manage_contract_types');
+				    check_auth('edit_contract_types');
 
 				    // Call the create method
 				    $result['id'] = $contractTypesClass->update($post['id'], $data);
@@ -695,7 +695,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('budget_codes', ['name' => $post['name']], ['id' => $post['id']]);
-				    check_auth('manage_budget_codes');
+				    check_auth('edit_budget_codes');
 
 				    // Call the create method
 				    $result['id'] = $budgetCodesClass->update($post['id'], $data);
@@ -730,7 +730,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('banks', ['name' => $post['name']], ['id' => $post['id']]);
-				    check_auth('manage_company_banks');
+				    check_auth('edit_bank_accounts');
 
 				    // Call the create method
 				    $result['id'] = $banksClass->update($post['id'], $data);
@@ -766,7 +766,7 @@ if(isset($_GET['action'])) {
 				    );
 
 				    check_exists('trans_subtypes', ['name' => $post['name']], ['id' => $post['id']]);
-				    check_auth('manage_employee_transactions');
+				    check_auth('edit_transaction_subtypes');
 
 				    // Call the create method
 				    $result['id'] = $transSubTypesClass->update($post['id'], $data);
@@ -1346,7 +1346,7 @@ if(isset($_GET['action'])) {
 			if ($_GET['endpoint'] === 'company') {
 				try {
 				    // Delete company
-				    check_auth('manage_company_info');
+				    check_auth('delete_organization');
 				    $deleted = $companyClass->delete($_POST['id']);
 
 				    // Company deleted
@@ -1370,7 +1370,7 @@ if(isset($_GET['action'])) {
 			} else if ($_GET['endpoint'] === 'branch') {
 				try {
 				    // Delete branchClass
-				    check_auth('manage_departments');
+				    check_auth('delete_departments');
 				    checkForeignKey($_POST['id'], 'branch_id', ['employees']);
 				    $deleted = $branchClass->delete($_POST['id']);
 
@@ -1397,7 +1397,7 @@ if(isset($_GET['action'])) {
 				    // Delete branchClass
 				    $post = escapePostData($_POST);
 				    checkForeignKey($post['id'], 'state_id', ['employees']);
-				    check_auth('manage_states');
+				    check_auth('delete_states');
 				    $deleted = $statesClass->delete($post['id']);
 
 				    // Company deleted
@@ -1423,7 +1423,7 @@ if(isset($_GET['action'])) {
 				    // Delete branchClass
 				    $post = escapePostData($_POST);
 				    // checkForeignKey($post['id'], 'state_id', ['employees']);
-				    check_auth('manage_duty_locations');
+				    check_auth('delete_duty_locations');
 				    $deleted = $locationsClass->delete($post['id']);
 
 				    // Company deleted
@@ -1448,7 +1448,7 @@ if(isset($_GET['action'])) {
 				try {
 				    // Delete branchClass
 				    $post = escapePostData($_POST);
-				    check_auth('manage_company_banks');
+				    check_auth('delete_bank_accounts');
 				    $deleted = $bankAccountClass->delete($post['id']);
 
 				    // Company deleted
@@ -1474,7 +1474,7 @@ if(isset($_GET['action'])) {
 				    // Delete branchClass
 				    $post = escapePostData($_POST);
 				    // checkForeignKey($post['id'], 'designation', ['employees']);
-				    check_auth('manage_designations');
+				    check_auth('delete_designations');
 				    $deleted = $designationsClass->delete($post['id']);
 
 				    // Company deleted
@@ -1500,7 +1500,7 @@ if(isset($_GET['action'])) {
 				    // Delete branchClass
 				    $post = escapePostData($_POST);
 				    checkForeignKey($post['id'], 'project_id', ['employees']);
-				    check_auth('manage_projects');
+				    check_auth('delete_projects');
 				    $deleted = $projectsClass->delete($post['id']);
 
 				    // Company deleted
@@ -1525,7 +1525,7 @@ if(isset($_GET['action'])) {
 				try {
 				    // Delete branchClass
 				    $post = escapePostData($_POST);
-				    check_auth('manage_contract_types');
+				    check_auth('delete_contract_types');
 				    $deleted = $contractTypesClass->delete($post['id']);
 
 				    // Company deleted
@@ -1550,7 +1550,7 @@ if(isset($_GET['action'])) {
 				try {
 				    // Delete branchClass
 				    $post = escapePostData($_POST);
-				    check_auth('manage_company_banks');
+				    check_auth('delete_bank_accounts');
 				    $deleted = $banksClass->delete($post['id']);
 
 				    // Company deleted
@@ -1575,7 +1575,7 @@ if(isset($_GET['action'])) {
 				try {
 				    // Delete branchClass
 				    $post = escapePostData($_POST);
-				    check_auth('manage_budget_codes');
+				    check_auth('delete_budget_codes');
 				    $deleted = $budgetCodesClass->delete($post['id']);
 
 				    // Company deleted
@@ -1600,7 +1600,7 @@ if(isset($_GET['action'])) {
 				try {
 				    // Delete branchClass
 				    $post = escapePostData($_POST);
-				    check_auth('manage_employee_transactions');
+				    check_auth('delete_transaction_subtypes');
 				    $deleted = $transSubTypesClass->delete($post['id']);
 
 				    // Company deleted
