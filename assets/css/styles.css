@@ -295,6 +295,16 @@ img.profile-img {
 	display: none;
 }
 
+button.btn.dropdown-toggle{
+	background-color: var(--bs-body-bg);
+	color: var(--bs-body-color);
+}
+
+.dropdown.bootstrap-select.my-select {
+	display: block;
+	width: 100% !important;
+}
+
 .page-footer {
 	position: fixed;
 	bottom: 0;;

@@ -10,7 +10,10 @@
             <div class="modal-body" style="max-height: 500px; overflow-y: scroll;">
                 <div>
                 	<div class="row">
-                        <div class="col col-xs-4 col-md-4 col-ms-12">
+                        <input type="hidden" class="slcAttenFor" id="slcAttenFor" value="Employee" name="slcAttenFor" >
+                        <input type="hidden" class="ref_name" id="ref_name" value="" name="ref_name" >
+                        <input type="hidden" id="attendance_id" name="">
+                        <!-- <div class="col col-xs-4 col-md-4 col-ms-12">
                             <div class="form-group">
                                 <label class="label required" for="slcAttenFor4Edit">Attendance for</label>
                                 <select type="text"  class="form-control validate slcAttenFor" data-msg="Please select attendance for" name="slcAttenFor4Edit" id="slcAttenFor4Edit">
@@ -18,19 +21,19 @@
                                 	<option value="Department"> Department</option>
                                 	<option value="Location"> Duty Location</option>
                                 </select>
-                                <input type="hidden" id="attendance_id" name="">
+                                
                                 <span class="form-error text-danger">This is error</span>
                             </div>
-                        </div>
+                        </div> -->
 
-                        <div class="col col-xs-4 col-md-4 col-ms-12">
+                        <!-- <div class="col col-xs-4 col-md-4 col-ms-12">
                             <div class="form-group">
                                 <label class="label required" for="ref_name">&nbsp;</label>
                                 <input type="text"  class="form-control cursor " readonly id="ref_name"  name="ref_name">
                                 <span class="form-error text-danger">This is error</span>
                                 </select>
                             </div>
-                        </div>
+                        </div> -->
 
                         <div class="col-xs-4 col-md-4 col-ms-12">
                             <div class="form-group">

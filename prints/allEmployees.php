@@ -118,7 +118,10 @@ if ($employees->num_rows > 0) {
         $email 		= $row['email'];
         $phone_number = $row['phone_number'];
         $branch 	= $row['branch'];
+        $location_id = $row['location_id'];
         $location_name = $row['location_name'];
+        $location_name = "No specified";
+        if($location_id != 0) $location_name = get_data('locations', ['id' => $location_id])[0]['name'];
         $added_date = new DateTime($row['added_date']);
         $added_date = $added_date->format('F d Y');
 

@@ -222,24 +222,39 @@ function get_menu_config() {
             'sub' => [
                 'attendance' => [
                     'default' => 'attendance',
-                    'auth' => 'view_attendance',
+                    'auth' => 'manage_attendance',
                     'route' => 'attendance',
                     'name' => 'Attendance',
                     'actions' => [
-                        // 'add' => ['file' => 'employee_add', 'auth' => 'add_employee'],
+                        'add' => ['file' => 'add_attendance', 'auth' => 'create_attendance'],
                         // 'show' => ['file' => 'employee_show', 'auth' => 'view_employees'],
                     ],
                 ],
                 'timesheet' => [
                     'default' => 'timesheet',
-                    'auth' => 'manage_timesheets',
+                    'auth' => 'manage_timesheet',
                     'route' => 'timesheet',
                     'name' => 'Timesheets',
+                    'actions' => [
+                        'add' => ['file' => 'add_timesheet_bulk', 'auth' => 'create_timesheet'],
+                        // 'show' => ['file' => 'employee_show', 'auth' => 'view_employees'],
+                    ],
+                ],
+
+                'allocation' => [
+                    'default' => 'res_allocation',
+                    'auth' => 'manage_allocation',
+                    'route' => 'allocation',
+                    'name' => 'Timesheet Allocation',
+                    'actions' => [
+                        'add' => ['file' => 'manage_allocation', 'auth' => 'create_allocation'],
+                        // 'show' => ['file' => 'employee_show', 'auth' => 'view_employees'],
+                    ],
                 ],
 
                 'leave' => [
                     'default' => 'leave_mgt',
-                    'auth' => 'manage_leaves',
+                    'auth' => 'manage_leave',
                     'route' => 'leave',
                     'name' => 'Leave Mgt',
                 ],

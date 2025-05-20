@@ -535,6 +535,220 @@ if(isset($_GET['action'])) {
 				}
 
 				echo json_encode($result);
+			} else if($_GET['endpoint'] == 'bulkAttendance') {
+				try {
+				    // Begin a transaction
+				    $GLOBALS['conn']->begin_transaction();
+
+				    $result = ['error' => false, 'msg' => '', 'errors' => ''];
+					$post = escapePostData($_POST);
+					$atten_date = date('Y-m-d', strtotime($post['date']));
+
+				    check_auth('create_attendance'); // Authorization check
+					$attendanceRecord = $GLOBALS['conn']->query("SELECT id FROM `attendance` WHERE `atten_date` LIKE  '$atten_date%'");
+					if ($attendanceRecord->num_rows > 0) {
+						$atten_id = $attendanceRecord->fetch_assoc()['id'];
+					} else {
+						$data = [
+							'ref' => "Employees",
+							'ref_id' => "1",
+							'ref_name' => "",
+							'atten_date' => $atten_date,
+							'added_by' => $_SESSION['user_id']
+						];
+						$atten_id = $attendanceClass->create($data);
+					}
+
+					foreach($post['employees'] as $index => $value) {
+						$employee_id 	= $post['employees'][$index];
+						$status 		= $post['statuses'][$index];
+
+						$get_employeeInfo =  get_data('employees', array('employee_id' => $employee_id))[0];
+						$full_name = $get_employeeInfo['full_name'];
+						$phone_number = $get_employeeInfo['phone_number'];
+						$email = $get_employeeInfo['email'];
+						$staff_no = $get_employeeInfo['staff_no'];
+
+						$del_prevRecord = "DELETE FROM `atten_details` WHERE `atten_date` LIKE '$atten_date%' AND `emp_id` = '$employee_id'";
+						if(!mysqli_query($GLOBALS["conn"], $del_prevRecord)) {
+							throw new Exception('Error: ' . mysqli_error($GLOBALS["conn"]));
+						}
+
+						$detailData = [
+							'atten_id' => $atten_id,
+							'emp_id' => $employee_id,
+							'full_name' => $full_name,
+							'phone_number' => $phone_number,
+							'email' => $email,
+							'staff_no' => $staff_no,
+							'status' => $status,
+							'atten_date' => $atten_date, 
+							'added_by' => $_SESSION['user_id']
+						];
+
+						$result['id'] = $attenDetailsClass->create($detailData);
+					}
+
+					$GLOBALS['conn']->commit();
+
+
+				    // If the branch is created successfully, return a success message
+				    if($result['id']) {
+				        $result['msg'] = 'Attendance recorded successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+				   
+				} catch (Exception $e) {
+				    $GLOBALS['conn']->rollback();
+				    $result['error'] = true;
+				    $result['msg'] = $e->getMessage();
+				    error_log($e->getMessage());
+				}
+
+				echo json_encode($result);
+			
+			} else if($_GET['endpoint'] == 'bulkTimesheet') {
+				try {
+				    // Begin a transaction
+				    $GLOBALS['conn']->begin_transaction();
+
+				    $result = ['error' => false, 'msg' => '', 'errors' => ''];
+					$post = escapePostData($_POST);
+					$atten_date = date('Y-m-d', strtotime($post['date']));
+
+				    check_auth('create_timesheet'); // Authorization check
+					$ts_record = $GLOBALS['conn']->query("SELECT id FROM `timesheet` WHERE `ts_date` LIKE  '$atten_date%'");
+					if ($ts_record->num_rows > 0) {
+						$ts_id = $ts_record->fetch_assoc()['id'];
+					} else {
+						$data = [
+							'ts_date' => $atten_date,
+							'added_by' => $_SESSION['user_id']
+						];
+						$ts_id = $timesheetClass->create($data);
+					}
+
+					foreach($post['employees'] as $index => $value) {
+						$employee_id 	= $post['employees'][$index];
+						$time_in 		= $post['time_in'][$index];
+						$time_out 		= $post['time_out'][$index];
+
+						$get_employeeInfo =  get_data('employees', array('employee_id' => $employee_id))[0];
+						$full_name = $get_employeeInfo['full_name'];
+						$phone_number = $get_employeeInfo['phone_number'];
+						$email = $get_employeeInfo['email'];
+						$staff_no = $get_employeeInfo['staff_no'];
+
+						$del_prevRecord = "DELETE FROM `timesheet_details` WHERE `ts_date` LIKE '$atten_date%' AND `emp_id` = '$employee_id'";
+						if(!mysqli_query($GLOBALS["conn"], $del_prevRecord)) {
+							throw new Exception('Error: ' . mysqli_error($GLOBALS["conn"]));
+						}
+
+						$detailData = [
+							'ts_id' 	=> $ts_id,
+							'emp_id' 	=> $employee_id,
+							'full_name' 	=> $full_name,
+							'phone_number' 	=> $phone_number,
+							'email' 		=> $email,
+							'staff_no' 		=> $staff_no,
+							'ts_date' 		=> $atten_date, 
+							'time_in' 		=> $time_in, 
+							'time_out' 		=> $time_out, 
+							'added_by' 		=> $_SESSION['user_id']
+						];
+
+						$result['id'] = $timesheetDetailsClass->create($detailData);
+					}
+
+					$GLOBALS['conn']->commit();
+
+
+				    // If the branch is created successfully, return a success message
+				    if($result['id']) {
+				        $result['msg'] = 'Timesheet recorded successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+				   
+				} catch (Exception $e) {
+				    $GLOBALS['conn']->rollback();
+				    $result['error'] = true;
+				    $result['msg'] = $e->getMessage();
+				    error_log($e->getMessage());
+				}
+
+				echo json_encode($result);
+			
+			} else if($_GET['endpoint'] == 'allocation') {
+				try {
+				    // Prepare data from POST request
+				    $post = escapePostData($_POST);
+					$month = $post['month'];
+					$prevMonth = $post['prevMonth'];
+					$employee_id = $post['employee_id'];
+					$supervisor_id = $post['supervisor_id'];
+
+					$get_employeeInfo =  get_data('employees', array('employee_id' => $employee_id))[0];
+					$full_name = $get_employeeInfo['full_name'];
+					$phone_number = $get_employeeInfo['phone_number'];
+					$email = $get_employeeInfo['email'];
+					$staff_no = $get_employeeInfo['staff_no'];
+
+					$get_superInfo =  get_data('employees', array('employee_id' => $supervisor_id))[0];
+					$super_full_name = $get_superInfo['full_name'];
+					$super_phone_number = $get_superInfo['phone_number'];
+					$super_email = $get_superInfo['email'];
+					$super_staff_no = $get_superInfo['staff_no'];
+				    
+					$data = array(
+						'emp_id' => $employee_id,
+						'full_name' => $full_name,
+						'phone_number' => $phone_number,
+						'email' => $email,
+						'staff_no' => $staff_no,
+						'sup_id' => $supervisor_id,
+						'sup_name' => $super_full_name,
+						'sup_phone' => $super_phone_number,
+						'sup_email' => $super_email,
+						'sup_staff_no' => $super_staff_no,
+						'allocation' => json_encode($post['allocation']),
+						'month' => $month,
+				        'added_by' => $_SESSION['user_id']
+				    );
+
+					$del_prevRecord = "DELETE FROM `res_allocation` WHERE `month` LIKE '$prevMonth%' AND `emp_id` = '$employee_id' AND `sup_id` = '$supervisor_id'";
+					if(!mysqli_query($GLOBALS["conn"], $del_prevRecord)) {
+						throw new Exception('Error: ' . mysqli_error($GLOBALS["conn"]));
+					}
+
+				    check_auth('create_allocation');
+
+				    // Call the create method
+				    $result['id'] = $allocationClass->create($data);
+
+				    // If the branch is created successfully, return a success message
+				    if($result['id']) {
+				        $result['msg'] = 'Timesheet allocation added successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+
+				} catch (Exception $e) {
+				    // Catch any exceptions from the create method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
 			}
 
 			exit();
@@ -966,6 +1180,52 @@ if(isset($_GET['action'])) {
 			    } else {
 			        $result['msg'] = "No records found";
 			    }
+			} else if ($_GET['endpoint'] === 'allocations') {
+				if (isset($_POST['order']) && isset($_POST['order'][0])) {
+				    $orderColumnMap = ['month', 'staff_no', 'full_name', 'sup_name', 'added_date'];
+				    $orderByIndex = (int)$_POST['order'][0]['column'];
+				    $orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
+				    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+				}
+			    // Base query
+			    $query = "SELECT * FROM `res_allocation` WHERE `id` IS NOT NULL";
+
+			    // Add search functionality
+			    if ($searchParam) {
+			        $query .= " AND (`full_name` LIKE '%" . escapeStr($searchParam) . "%' OR `added_date` LIKE '%" . escapeStr($searchParam) . "%' OR `sup_name` LIKE '%" . escapeStr($searchParam) . "%' OR `staff_no` LIKE '%" . escapeStr($searchParam) . "%' OR `sup_staff_no` LIKE '%" . escapeStr($searchParam) . "%' OR `added_by` LIKE '%" . escapeStr($searchParam) . "%' )";
+			    }
+
+			    // Add ordering
+			    $query .= " ORDER BY `$orderBy` $order LIMIT $start, $length";
+
+			    // Execute query
+			    $timesheet = $GLOBALS['conn']->query($query);
+
+			    // Count total records for pagination
+			    $countQuery = "SELECT COUNT(*) as total FROM `timesheet` WHERE `id` IS NOT NULL";
+			    if ($searchParam) {
+			        $query .= " AND (`full_name` LIKE '%" . escapeStr($searchParam) . "%' OR `added_date` LIKE '%" . escapeStr($searchParam) . "%' OR `sup_name` LIKE '%" . escapeStr($searchParam) . "%' OR `staff_no` LIKE '%" . escapeStr($searchParam) . "%' OR `sup_staff_no` LIKE '%" . escapeStr($searchParam) . "%' OR `added_by` LIKE '%" . escapeStr($searchParam) . "%' )";
+			    }
+
+			    // Execute count query
+			    $totalRecordsResult = $GLOBALS['conn']->query($countQuery);
+			    $totalRecords = $totalRecordsResult->fetch_assoc()['total'];
+
+			    if ($timesheet->num_rows > 0) {
+			        while ($row = $timesheet->fetch_assoc()) {
+			        	$id = $row['id'];
+						$month = new dateTime($row['month']);
+						$row['month'] = $month->format('M Y');
+
+			        	$row['time'] = $allocationClass->getTotalTime($row['allocation']);
+			            $result['data'][] = $row;
+			        }
+			        $result['iTotalRecords'] = $totalRecords;
+			        $result['iTotalDisplayRecords'] = $totalRecords;
+			        $result['msg'] = $timesheet->num_rows . " records were found.";
+			    } else {
+			        $result['msg'] = "No records found";
+			    }
 			}
 
 			echo json_encode($result);
@@ -1251,7 +1511,578 @@ if(isset($_GET['action'])) {
 				}
 
 	    		echo json_encode($result);
+			} /* else if ($_GET['endpoint'] === 'data4BulkAttendance') {
+				$department = isset($_POST['department']) ? $_POST['department'] : '';
+				$location 	= isset($_POST['location']) ? $_POST['location'] : '';
+				$timesheet 	= isset($_POST['timesheet']) ? $_POST['timesheet'] : '';
+				$date 		= isset($_POST['date']) ? $_POST['date'] : '';
+
+				$data = '';
+				if($timesheet) {
+					$query = "SELECT * FROM `timesheet_details` WHERE `ts_date` LIKE '$date%'  ";
+					
+				} else {
+					$query = "SELECT * FROM `atten_details` WHERE `atten_date` LIKE '$date%'  ";
+				}
+
+				if($department) {
+					$query .= " AND `emp_id` IN (SELECT `employee_id` FROM `employees` WHERE `branch_id` = '$department')";
+				}
+
+				if($location) {
+					$query .= "  AND `emp_id` IN (SELECT `employee_id` FROM `employees` WHERE `location_id` = '$location')";
+				}
+
+				$query .= " ORDER BY `full_name` ASC ";
+
+				// echo $query;
+
+				$found_records = $GLOBALS['conn']->query($query);
+
+				$emp_ids = [12,13];
+
+				if($found_records->num_rows > 0) {
+					$status = $time_in = $time_out = '';
+					while($row = $found_records->fetch_assoc()) {
+						$employee_id = $row['emp_id'];
+						$full_name = $row['full_name'];
+						$phone_number = $row['phone_number'];
+						$staff_no = $row['staff_no'];
+						$emp_ids[] = $employee_id;
+
+						$get_employeeInfo =  get_data('employees', array('employee_id' => $employee_id))[0];
+						$branch = $get_employeeInfo['branch'];
+
+						if($timesheet) {
+							$time_in = $row['time_in'];
+							$time_out = $row['time_out'];
+
+							$data .= '<tr>
+								<td>#'.$staff_no.'</td>
+								<td>'.$full_name.'</td>
+								<td>'.$branch.'</td>
+								<td>
+									<div class=" sflex scenter-items">
+										<input type="hidden" name="employee_id" class="employee_id" value="'.$employee_id.'">
+										<input class="form-check-input smr-10 cursor isPresent" type="checkbox" value="Yes">
+										<!-- <label class="form-check-label" for="selectAll">Attendance</label> -->
+										<div class="sflex scenter-items">
+											<input class="form-control time_in time_in time_input cursor" type="time" value="'.date("H:i:s", strtotime($time_in)).'" style="-width: 100%;" name="">
+											<input class="form-control time_out time_in time_input cursor" type="time" value="'.date("H:i:s", strtotime($time_out)).'" style="-width:  100%;" name=""> 
+										</div>
+									</div>
+								</td>
+							</tr>';
+						} else {
+							$status = $row['status'];
+
+							$PChecked  = $PLChecked = $SChecked = $ULChecked = $HChecked = $NHChecked = $NChecked = '';
+							if($status == 'P') $PChecked = 'selected=""';
+							if($status == 'PL') $PLChecked = 'selected=""';
+							if($status == 'UL') $ULChecked = 'selected=""';
+							if($status == 'S') $SChecked = 'selected=""';
+							if($status == 'H') $HChecked = 'selected=""';
+							if($status == 'NH') $NHChecked = 'selected=""';
+							if($status == 'N') $NChecked = 'selected=""';
+
+							$data .= '<tr>
+								<td>#'.$staff_no.'</td>
+								<td>'.$full_name.'</td>
+								<td>'.$branch.'</td>
+								<td>
+									<div class=" sflex scenter-items">
+										<input type="hidden" name="employee_id" class="employee_id" value="'.$employee_id.'">
+										<input class="form-check-input smr-10 cursor isPresent" type="checkbox" value="Yes">
+										<!-- <label class="form-check-label" for="selectAll">Attendance</label> -->
+										<select type="text"  class="form-control validate slcStatus4Atten" name="slcStatus4Atten">
+											<option value=""> - Select status</option>
+											<option '.$PChecked.' value="P">Present</option>
+											<option '.$SChecked.' value="S">Sick</option>
+											<option '.$PLChecked.' value="PL">Paid Leave</option>
+											<option '.$ULChecked.' value="UL">Unpaid Leave</option>
+											<option '.$HChecked.' value="H">Holiday</option>
+											<option '.$NHChecked.' value="NH">Not hired day</option>
+											<option '.$NChecked.' value="N">Absent</option>
+										</select>
+									</div>
+								</td>
+							</tr>';
+						}
+					}
+
+					$emp_ids = implode(',', $emp_ids);
+					$query = "SELECT * FROM `employees` WHERE `status` = 'active' AND `employee_id` NOT IN ($emp_ids) ";
+					if($department) {
+						$query .= " AND `branch_id` = '$department'";
+					}
+	
+					if($location) {
+						$query .= "  AND `location_id` = '$location'";
+					}
+
+					$query .= " ORDER BY `full_name` ASC ";
+
+					// echo $query;
+					$empSet = $GLOBALS['conn']->query($query);
+					if($empSet->num_rows > 0) {
+						while($row = $empSet->fetch_assoc()) {
+							$employee_id = $row['employee_id'];
+							$full_name = $row['full_name'];
+							$phone_number = $row['phone_number'];
+							$staff_no = $row['staff_no'];
+							$branch = $row['branch'];
+
+							$leaveType = '';
+							$check_leave = $GLOBALS['conn']->query("SELECT * FROM `employee_leave` WHERE `emp_id` = '$employee_id' AND `status` <> 'Cancelled' AND '$date' BETWEEN `date_from` AND `date_to`");
+							if($check_leave->num_rows > 0) {
+								while($leaveRow = $check_leave->fetch_assoc()) {
+									$paid_type = $leaveRow['paid_type'];
+									if($paid_type == 'Unpaid') {
+										$leaveType = 'UL';
+									} else {$leaveType = 'PL';}
+								}
+							}
+
+							if($timesheet) {
+								$time_in = date("H:i:s", strtotime(return_setting('time_in')));
+								$time_out = date("H:i:s", strtotime(return_setting('time_out')));
+								$data .= '<tr>
+									<td>#'.$staff_no.'</td>
+									<td>'.$full_name.'</td>
+									<td>'.$branch.'</td>
+									<td>
+										<div class=" sflex scenter-items">
+											<input type="hidden" name="employee_id" class="employee_id" value="'.$employee_id.'">
+											<input class="form-check-input smr-10 cursor isPresent" type="checkbox" value="Yes">
+											<!-- <label class="form-check-label" for="selectAll">Attendance</label> -->
+											<div class="sflex scenter-items">
+												<input class="form-control time_in time_in time_input cursor" type="time" value="'.date("H:i:s", strtotime($time_in)).'" style="-width: 100%;" name="">
+												<input class="form-control time_out time_in time_input cursor" type="time" value="'.date("H:i:s", strtotime($time_out)).'" style="-width:  100%;" name="">
+											</div>
+										</div>
+									</td>
+								</tr>';
+							} else {
+
+								$PLChecked = $ULChecked = '';
+								if($leaveType == 'UL') $ULChecked = 'selected=""';
+								if($leaveType == 'PL') $PLChecked = 'selected=""';
+
+								$data .= '<tr>
+									<td>#'.$staff_no.'</td>
+									<td>'.$full_name.'</td>
+									<td>'.$branch.'</td>
+									<td>
+										<div class=" sflex scenter-items">
+											<input type="hidden" name="employee_id" class="employee_id" value="'.$employee_id.'">
+											<input class="form-check-input smr-10 cursor isPresent" type="checkbox" value="Yes">
+											<!-- <label class="form-check-label" for="selectAll">Attendance</label> -->
+											<select type="text"  class="form-control validate slcStatus4Atten" name="slcStatus4Atten">
+												<option value=""> - Select status</option>
+												<option value="P">Present</option>
+												<option value="S">Sick</option>
+												<option '.$PLChecked.' value="PL">Paid Leave</option>
+												<option '.$ULChecked.' value="UL">Unpaid Leave</option>
+												<option value="H">Holiday</option>
+												<option value="NH">Not hired day</option>
+												<option value="N">Absent</option>
+											</select>
+										</div>
+									</td>
+								</tr>';
+							}
+						}
+					}
+
+				} else {
+					$query = "SELECT * FROM `employees` WHERE `status` = 'active' ";
+					if($department) {
+						$query .= " AND `branch_id` = '$department'";
+					}
+	
+					if($location) {
+						$query .= "  AND `location_id` = '$location'";
+					}
+
+					$query .= " ORDER BY `full_name` ASC ";
+
+					// echo $query;
+					$empSet = $GLOBALS['conn']->query($query);
+					if($empSet->num_rows > 0) {
+						while($row = $empSet->fetch_assoc()) {
+							$employee_id = $row['employee_id'];
+							$full_name = $row['full_name'];
+							$phone_number = $row['phone_number'];
+							$branch = $row['branch'];
+							$staff_no = $row['staff_no'];
+
+							$leaveType = '';
+							$leave_title = '';
+							$check_leave = $GLOBALS['conn']->query("SELECT * FROM `employee_leave` WHERE `emp_id` = '$employee_id' AND `status` <> 'Cancelled' AND '$date' BETWEEN `date_from` AND `date_to`");
+							if($check_leave->num_rows > 0) {
+								while($leaveRow = $check_leave->fetch_assoc()) {
+									$paid_type = $leaveRow['paid_type'];
+									if($paid_type == 'Unpaid') {
+										$leaveType = 'UL';
+									} else {$leaveType = 'PL';}
+								}
+							}
+
+							if($timesheet) {
+								$time_in = date("H:i:s", strtotime(return_setting('time_in')));
+								$time_out = date("H:i:s", strtotime(return_setting('time_out')));
+
+								$disabled = '';
+								if($leaveType) {
+									$disabled = 'disabled=""';
+									$leave_title = 'On '.$paid_type.' Leave.';
+								} 
+								$data .= '<tr>
+									<td>#'.$staff_no.'</td>
+									<td>'.$full_name.'</td>
+									<td>'.$branch.'</td>
+									<td title="'.$leave_title.'">
+										<div class=" sflex scenter-items">
+											<input type="hidden" name="employee_id" class="employee_id" value="'.$employee_id.'">
+											<input '.$disabled.'  class="form-check-input smr-10 cursor isPresent" type="checkbox" value="Yes">
+											<!-- <label class="form-check-label" for="selectAll">Attendance</label> -->
+											<div class="sflex scenter-items">
+												<input class="form-control time_in time_in time_input cursor" type="time" value="'.date("H:i:s", strtotime($time_in)).'" style="-width: 100%;" name="">
+												<input class="form-control time_out time_in time_input cursor" type="time" value="'.date("H:i:s", strtotime($time_out)).'" style="width:  100%;" name="">
+											</div>
+										</div>
+									</td>
+								</tr>';
+							} else {
+								$PLChecked = $ULChecked = '';
+								if($leaveType == 'UL') $ULChecked = 'selected=""';
+								if($leaveType == 'PL') $PLChecked = 'selected=""';
+
+								$disabled = '';
+								if($leaveType) {
+									$disabled = 'disabled=""';
+									$leave_title = 'On '.$paid_type.' Leave.';
+								} 
+
+								$data .= '<tr>
+									<td>#'.$staff_no.'</td>
+									<td>'.$full_name.'</td>
+									<td>'.$branch.'</td>
+									<td '.$leave_title.'>
+										<div class=" sflex scenter-items">
+											<input type="hidden" name="employee_id" class="employee_id" value="'.$employee_id.'">
+											<input '.$disabled.' class="form-check-input smr-10 cursor isPresent" type="checkbox" value="Yes">
+											<!-- <label class="form-check-label" for="selectAll">Attendance</label> -->
+											<select type="text"  class="form-control validate slcStatus4Atten" name="slcStatus4Atten">
+												<option value=""> - Select status</option>
+												<option value="P">Present</option>
+												<option value="S">Sick</option>
+												<option '.$PLChecked.' value="PL">Paid Leave</option>
+												<option  '.$ULChecked.' value="UL">Unpaid Leave</option>
+												<option value="H">Holiday</option>
+												<option value="NH">Not hired day</option>
+												<option value="N">Absent</option>
+											</select>
+										</div>
+									</td>
+								</tr>';
+							}
+						}
+					}
+				}
+
+				echo $data; exit();
+			} */ else if ($_GET['endpoint'] === 'data4BulkAttendance') {
+				$department = $_POST['department'] ?? '';
+				$location   = $_POST['location'] ?? '';
+				$timesheet  = $_POST['timesheet'] ?? '';
+				$date       = $_POST['date'] ?? '';
+
+				$data = '';
+				$table = $timesheet ? 'timesheet_details' : 'atten_details';
+				$date_column = $timesheet ? 'ts_date' : 'atten_date';
+
+				$query = "SELECT * FROM `$table` WHERE `$date_column` LIKE '$date%'";
+
+				if ($department) {
+					$query .= " AND `emp_id` IN (SELECT `employee_id` FROM `employees` WHERE `branch_id` = '$department')";
+				}
+
+				if ($location) {
+					$query .= " AND `emp_id` IN (SELECT `employee_id` FROM `employees` WHERE `location_id` = '$location')";
+				}
+
+				$query .= " ORDER BY `full_name` ASC";
+
+				$found_records = $GLOBALS['conn']->query($query);
+				$emp_ids = [];
+
+				function buildEmployeeRow($employee, $timesheet, $status = '', $time_in = '', $time_out = '', $rec_found = false, $leaveType = '', $disabled = false, $leave_title = '') {
+					$employee_id = htmlspecialchars($employee['employee_id']);
+					$full_name   = htmlspecialchars($employee['full_name']);
+					$staff_no    = htmlspecialchars($employee['staff_no']);
+					$branch      = htmlspecialchars($employee['branch']);
+
+					$leave_info_attr = $leave_title ? "title=\"$leave_title\"" : '';
+
+					if ($timesheet) {
+						$time_in = date("H:i:s", strtotime($time_in));
+						$time_out = date("H:i:s", strtotime($time_out));
+						$disabledAttr = $disabled ? 'disabled' : '';
+
+						$checked = '';
+						if ($rec_found) $checked = 'checked=""';
+						return "<tr>
+							<td>#{$staff_no}</td>
+							<td>{$full_name}</td>
+							<td>{$branch}</td>
+							<td $leave_info_attr>
+								<div class=\"sflex scenter-items\">
+									<input type=\"hidden\" name=\"employee_id\" class=\"employee_id\" value=\"{$employee_id}\">
+									<input $disabledAttr $checked class=\"form-check-input smr-10 cursor isPresent\" type=\"checkbox\" value=\"Yes\">
+									<div class=\"sflex scenter-items\">
+										<input class=\"form-control time_in time_input cursor\" type=\"time\" value=\"$time_in\">
+										<input class=\"form-control time_out time_input cursor\" type=\"time\" value=\"$time_out\">
+									</div>
+								</div>
+							</td>
+						</tr>";
+					} else {
+						$statusOptions = [
+							'P' => 'Present',
+							'S' => 'Sick',
+							'PL' => 'Paid Leave',
+							'UL' => 'Unpaid Leave',
+							'H' => 'Holiday',
+							'NH' => 'Not hired day',
+							'N' => 'Absent'
+						];
+
+						$optionsHtml = '<option value=""> - Select status</option>';
+						foreach ($statusOptions as $code => $label) {
+							$selected = ($status === $code || $leaveType === $code) ? 'selected' : '';
+							$optionsHtml .= "<option $selected value=\"$code\">$label</option>";
+						}
+
+						$disabledAttr = $disabled ? 'disabled' : '';
+						return "<tr>
+							<td>#{$staff_no}</td>
+							<td>{$full_name}</td>
+							<td>{$branch}</td>
+							<td $leave_info_attr>
+								<div class=\"sflex scenter-items\">
+									<input type=\"hidden\" name=\"employee_id\" class=\"employee_id\" value=\"{$employee_id}\">
+									<input $disabledAttr class=\"form-check-input smr-10 cursor isPresent\" type=\"checkbox\" value=\"Yes\">
+									<select class=\"form-control validate slcStatus4Atten\" name=\"slcStatus4Atten\">$optionsHtml</select>
+								</div>
+							</td>
+						</tr>";
+					}
+				}
+
+				if ($found_records->num_rows > 0) {
+					while ($row = $found_records->fetch_assoc()) {
+						$employee_id = $row['emp_id'];
+						$emp_ids[] = $employee_id;
+
+						$employee_info = get_data('employees', ['employee_id' => $employee_id])[0] ?? [];
+						$employee_info['employee_id'] = $employee_id;
+						$employee_info['full_name'] = $row['full_name'];
+						$employee_info['staff_no'] = $row['staff_no'];
+						$employee_info['phone_number'] = $row['phone_number'];
+						$employee_info['branch'] = $employee_info['branch'] ?? '';
+
+						if ($timesheet) {
+							$data .= buildEmployeeRow($employee_info, true, '', $row['time_in'], $row['time_out'], true);
+						} else {
+							$data .= buildEmployeeRow($employee_info, false, $row['status']);
+						}
+					}
+
+					$emp_ids = implode(',', $emp_ids);
+					$query = "SELECT * FROM `employees` WHERE `status` = 'active' AND `employee_id` NOT IN ($emp_ids)";
+					if ($department) $query .= " AND `branch_id` = '$department'";
+					if ($location) $query .= " AND `location_id` = '$location'";
+					$query .= " ORDER BY `full_name` ASC";
+
+					$empSet = $GLOBALS['conn']->query($query);
+					if ($empSet->num_rows > 0) {
+						while ($row = $empSet->fetch_assoc()) {
+							$employee_id = $row['employee_id'];
+							$leaveType = '';
+							$leave_title = '';
+							$disabled = false;
+
+							$check_leave = $GLOBALS['conn']->query("SELECT * FROM `employee_leave` WHERE `emp_id` = '$employee_id' AND `status` <> 'Cancelled' AND '$date' BETWEEN `date_from` AND `date_to`");
+							if ($check_leave->num_rows > 0) {
+								while ($leaveRow = $check_leave->fetch_assoc()) {
+									$paid_type = $leaveRow['paid_type'];
+									$leaveType = ($paid_type == 'Unpaid') ? 'UL' : 'PL';
+									$leave_title = "On $paid_type Leave";
+									$disabled = true;
+								}
+							}
+
+							$row['branch'] = $row['branch'] ?? '';
+
+							if ($timesheet) {
+								$time_in = return_setting('time_in');
+								$time_out = return_setting('time_out');
+								$data .= buildEmployeeRow($row, true, '', $time_in, $time_out, false, $leaveType, $disabled, $leave_title);
+							} else {
+								$data .= buildEmployeeRow($row, false, '', '', '', false, $leaveType, $disabled, $leave_title);
+							}
+						}
+					}
+				} else {
+					// No existing attendance or timesheet records, show all active employees
+					$query = "SELECT * FROM `employees` WHERE `status` = 'active'";
+					if ($department) $query .= " AND `branch_id` = '$department'";
+					if ($location) $query .= " AND `location_id` = '$location'";
+					$query .= " ORDER BY `full_name` ASC";
+
+					$empSet = $GLOBALS['conn']->query($query);
+					if ($empSet->num_rows > 0) {
+						while ($row = $empSet->fetch_assoc()) {
+							$employee_id = $row['employee_id'];
+							$leaveType = '';
+							$leave_title = '';
+							$disabled = false;
+
+							$check_leave = $GLOBALS['conn']->query("SELECT * FROM `employee_leave` WHERE `emp_id` = '$employee_id' AND `status` <> 'Cancelled' AND '$date' BETWEEN `date_from` AND `date_to`");
+							if ($check_leave->num_rows > 0) {
+								while ($leaveRow = $check_leave->fetch_assoc()) {
+									$paid_type = $leaveRow['paid_type'];
+									$leaveType = ($paid_type == 'Unpaid') ? 'UL' : 'PL';
+									$leave_title = "On $paid_type Leave";
+									$disabled = true;
+								}
+							}
+
+							$row['branch'] = $row['branch'] ?? '';
+
+							if ($timesheet) {
+								$time_in = return_setting('time_in');
+								$time_out = return_setting('time_out');
+								$data .= buildEmployeeRow($row, true, '', $time_in, $time_out, false, $leaveType, $disabled, $leave_title);
+							} else {
+								$data .= buildEmployeeRow($row, false, '', '', '', false, $leaveType, $disabled, $leave_title);
+							}
+						}
+					}
+				}
+
+				echo $data;
+				exit();
+			} else if ($_GET['endpoint'] === 'employeeData4Allocation') {
+				$post = escapePostData($_POST);
+				$emp_id = $post['emp_id'];
+				$month  = $post['month'];	
+
+				$query = "SELECT * FROM `employees` WHERE `status` = 'active' AND `employee_id` = ?";
+				$stmt = $GLOBALS['conn']->prepare($query);
+				$stmt->bind_param("i", $emp_id);
+				$stmt->execute();
+				$result = $stmt->get_result();
+
+				$data = '<h6>Allocate resources</h6>';
+
+				if ($row = $result->fetch_assoc()) {
+					$employee_id  = $row['employee_id'];
+					$project_ids  = array_filter(explode(",", $row['project_id']));
+					$budget_codes = array_filter(explode(",", $row['budget_code']));
+
+					// Budget Code Allocation UI
+					if (count($budget_codes) > 0) {
+						$data .= '<div class="col-sm-12 col-md-12 col-lg-6 smb-15">';
+						$num = 1;
+						foreach ($budget_codes as $budget) {
+							$budget = htmlspecialchars($budget);
+							$data .= '
+							<div class="row budgetItem budgetItem'.$num.'">
+								<div class="col-sm-12 col-md-12 col-lg-8 ">
+									<div class="form-group">
+										<label class="label required" >Budget line '.$num.'</label>
+										<select class="form-control slcBudget">
+											<option value="">-- Select</option>';
+							foreach ($budget_codes as $b) {
+								$b = htmlspecialchars($b);
+								$data .= '<option value="'.trim($b).'">'.$b.'</option>';
+							}
+							$data .= '</select>
+									</div>
+								</div>
+								<div class="col-sm-12 col-md-12 col-lg-4">
+									<div class="form-group">
+										<label class="label required">Time effort '.$num.'</label>
+										<input type="text" class="form-control budgetTime">
+									</div>
+								</div>
+							</div>';
+							$num++;
+						}
+						$data .= '</div>';
+					}
+
+					// Project Allocation UI
+					if (count($project_ids) > 0) {
+						$data .= '<div class="col-sm-12 col-md-12 col-lg-6 smb-15">';
+						$num = 1;
+						foreach ($project_ids as $project_id) {
+							$project_id = (int)$project_id;
+							$project_info = get_data('projects', ['id' => $project_id]);
+							$project_name = $project_info ? htmlspecialchars($project_info[0]['name']) : 'Unknown';
+
+							$data .= '
+							<div class="row projectItem projectItem'.$num.'">
+								<div class="col-sm-12 col-md-12 col-lg-8 ">
+									<div class="form-group">
+										<label class="label required" >Project line '.$num.'</label>
+										<select class="form-control slcProject">
+											<option value="">-- Select</option>';
+							foreach ($project_ids as $pid) {
+								$pid = (int)$pid;
+								$proj = get_data('projects', ['id' => $pid]);
+								$name = $proj ? htmlspecialchars($proj[0]['name']) : 'Unknown';
+								$data .= '<option value="'.$pid.'">'.$name.'</option>';
+							}
+							$data .= '</select>
+									</div>
+								</div>
+								<div class="col-sm-12 col-md-12 col-lg-4">
+									<div class="form-group">
+										<label class="label required">Time effort '.$num.'</label>
+										<input type="text" class="form-control projectTime">
+									</div>
+								</div>
+							</div>';
+							$num++;
+						}
+						$data .= '</div>';
+					}
+				} else {
+					$data .= '<p class="text-danger">Employee not found or inactive.</p>';
+				}
+
+				echo $data;
+			} else if ($_GET['endpoint'] === 'prev_allocation') {
+				$employee_id = $_POST['employee_id'];
+				$month = $_POST['month'];
+				$foundData = '';
+				$get_record = "SELECT * FROM `res_allocation` WHERE `emp_id` = $employee_id  AND `month` LIKE '$month%'";
+				$allocation = $GLOBALS['conn']->query($get_record);
+				while($row = $allocation->fetch_assoc()) {
+					$employee_id1 = $row['emp_id'];
+					$supervisor_id = $row['sup_id'];
+					$month = $row['month'];
+					$foundData = $row['allocation'];
+				}
+				
+
+				echo $foundData;
 			}
+
+
  
 			exit();
 		}
@@ -1526,6 +2357,38 @@ if(isset($_GET['action'])) {
 				    // Company deleted
 				    if($deleted) {
 				        $result['msg'] = 'Timesheet record has been  deleted successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+
+				} catch (Exception $e) {
+				    // Catch any exceptions from the create method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
+			} else if ($_GET['endpoint'] === 'allocation') {
+				try {
+				    // Delete branchClass
+				    $post = escapePostData($_POST);
+				    $id = $post['id'];
+				    check_auth('delete_allocation');
+
+				    $del_emp = "DELETE FROM `res_allocation` WHERE `id` LIKE '$id'";
+					if(!mysqli_query($GLOBALS["conn"], $del_emp)) {
+						throw new Exception('Error: ' . mysqli_error($GLOBALS["conn"]));
+					}
+
+				    $deleted = $timesheetClass->delete($post['id']);
+
+				    // Company deleted
+				    if($deleted) {
+				        $result['msg'] = 'Timesheet allocation record has been  deleted successfully';
 				        $result['error'] = false;
 				    } else {
 				        $result['msg'] = 'Something went wrong, please try again';

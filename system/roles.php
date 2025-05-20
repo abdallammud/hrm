@@ -32,7 +32,7 @@
                                 <td>
                                     <?php
                                     foreach ($permissions as $permission) {
-                                        echo "<span  class='btn smt-10 btn-success'>".ucwords(str_replace('_',' ',$permission))."</span> ";
+                                        echo "<span  class='btn smt-10 btn-outline-secondary'>".ucwords(str_replace('_',' ',$permission))."</span> ";
                                     }
                                     ?>
                                 </td>
@@ -77,7 +77,8 @@
                         
                          <div class="table-responsive">
                             <table class="table assing_roles table-borderless">
-                                <thead style="background-color: #f2f2f2;">
+                                <thead>
+                                    <hr>
                                     <tr>
                                         <th scope="col">
                                             <div class="form-check">
@@ -90,6 +91,7 @@
                                         <th scope="col"></th>
                                         <th scope="col"></th>
                                     </tr>
+                                    
                                 </thead>
                                 <tbody>
                                 <?php

@@ -16,6 +16,10 @@
 		            <div class="btn-group smr-10">
 		                <button type="button" data-bs-toggle="modal" data-bs-target="#add_timesheet"  class="btn btn-primary">Add Record</button>
 		            </div>
+
+					<div class="btn-group smr-10">
+		                <a type="button" href="<?=baseUri();?>/timesheet/add"  class="btn btn-primary">Bulk add</a>
+		            </div>
 		        </div>
 		    </div>
 		    <hr>

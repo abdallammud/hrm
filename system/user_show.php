@@ -24,7 +24,7 @@ $role = isset($GLOBALS['sys_roles']->get($role_id)['name']) ? $GLOBALS['sys_role
 			</div>
             <hr>
 			<div class="row">
-				<div class="col-lg-4 col-md-12">
+				<!-- <div class="col-lg-4 col-md-12">
 					<div class="card">
 						<div class="card-header bold">
 							Profile picture
@@ -40,8 +40,8 @@ $role = isset($GLOBALS['sys_roles']->get($role_id)['name']) ? $GLOBALS['sys_role
 							</div>
                         </div>  
                     </div>
-                </div>
-                <div class="col-lg-8 col-md-12">
+                </div> -->
+                <div class="col-lg-12 col-md-12">
 					<div class="card">
 						<div class="card-header bold">
 							Profile Information
@@ -115,7 +115,7 @@ $role = isset($GLOBALS['sys_roles']->get($role_id)['name']) ? $GLOBALS['sys_role
 
 <div class="modal fade " data-bs-focus="false" id="changePassword" tabindex="-1" role="dialog" aria-labelledby="changePasswordLabel" aria-hidden="true">
     <div class="modal-dialog" role="Category" style="min-width:400px; width: 50vw; max-width: 400px;">
-        <form class="modal-content" onsubmit="return handle_changePasswordForm(this)" method="post" id="changePasswordForm" style="border-radius: 14px 14px 0px 0px; margin-top: 25px;">
+        <form class="modal-content" " method="post" id="changePasswordForm" style="border-radius: 14px 14px 0px 0px; margin-top: 25px;">
         	<div class="modal-header">
                 <h5 class="modal-title" id="changePasswordLabel">Change Password</h5>
                 <button type="button" class="close modal-close" data-bs-dismiss="modal" aria-label="Close">

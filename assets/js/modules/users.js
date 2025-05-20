@@ -156,6 +156,8 @@ document.addEventListener("DOMContentLoaded", function() {
 	})
 	
 	$('#changePasswordForm').on('submit', async (e) => {
+		console.log(e.target)
+		e.preventDefault();
 		handle_changePasswordForm(e.target);
 		return false
 	})
@@ -284,7 +286,7 @@ async function handle_editUserForm(form) {
     return false
 }
 
-function handle_changePasswordForm(form) {
+async function handle_changePasswordForm(form) {
 	let newPassword =  $(form).find('#newPassword').val();
 	let confirmNewPassword = $(form).find('#confirmNewPassword').val();
 	if(newPassword != confirmNewPassword) {
@@ -296,7 +298,6 @@ function handle_changePasswordForm(form) {
 
 	console.log(newPassword, confirmNewPassword)
 
-	return false;
 	
 	let formData = {
 		newPassword: newPassword,
@@ -314,7 +315,7 @@ function handle_changePasswordForm(form) {
 			} else {
 				toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:2000 }).then(() => {
 				}).then((e) => {
-					window.location = `${base_url}/users`;
+					location.reload();
 				});
 				console.log(res)
 			}
@@ -328,6 +329,7 @@ function handle_changePasswordForm(form) {
 
 	return false
 }
+
 function simplifyRoles() {
 	$('#selectAll').on('change', function() {
 		var isChecked = $(this).is(':checked');

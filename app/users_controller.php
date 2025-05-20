@@ -193,6 +193,47 @@ if(isset($_GET['action'])) {
 
 				echo json_encode($result);
 				exit();
+			} else if($_GET['endpoint'] == 'user_password') {
+				$result = [];
+				try {
+				    // Begin a transaction
+				    $GLOBALS['conn']->begin_transaction();
+					$post = escapePostData($_POST);
+					$password 	= $post['newPassword'];
+					$user_id 	= $post['user_id'];
+					$password 	= password_hash($password, PASSWORD_DEFAULT);
+					$data = array(
+				        'password' => $password, 
+				    );
+
+					
+					check_auth('edit_users');
+
+					$data = array(
+				        'password' => $password,
+				    );
+
+				    $updateUser = $userClass->update($user_id, $data);
+				    // exit();
+
+				    $GLOBALS['conn']->commit();
+
+			        // Return success response
+			        $result['msg'] = 'User password changed successfully';
+			        $result['error'] = false;
+
+				} catch (Exception $e) {
+				    // If any exception occurs, rollback the transaction
+				    $GLOBALS['conn']->rollback();
+
+				    // Return error response
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				echo json_encode($result);
+				exit();
 			}
 		}
 

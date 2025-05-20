@@ -16,6 +16,10 @@
 		            <div class="btn-group smr-10">
 		                <button type="button" data-bs-toggle="modal" data-bs-target="#add_attendance"  class="btn btn-primary">Add Record</button>
 		            </div>
+
+					<div class="btn-group smr-10">
+		                <a type="button" href="<?=baseUri();?>/attendance/add"  class="btn btn-primary">Add Bulk</a>
+		            </div>
 		        </div>
 		    </div>
 		    <hr>

@@ -2,7 +2,7 @@ async function send_attendancePost(str, data) {
     let [action, endpoint] = str.split(' ');
 
     try {
-        const response = await $.post(`./app/atten_controller.php?action=${action}&endpoint=${endpoint}`, data);
+        const response = await $.post(`${base_url}/app/atten_controller.php?action=${action}&endpoint=${endpoint}`, data);
         return response;
     } catch (error) {
         console.error('Error occurred during the request:', error);
@@ -508,7 +508,7 @@ function load_attendance() {
 	    // "searching": false,  
 	    "info": false,
 	    "columnDefs": [
-	        { "orderable": false, "searchable": false,  "targets": [2, 4] }  // Disable search on first and last columns
+	        { "orderable": false, "searchable": false,  "targets": [2, 3] }  // Disable search on first and last columns
 	    ],
 	    "serverMethod": 'post',
 	    "ajax": {
@@ -525,11 +525,11 @@ function load_attendance() {
 	    },
 	    columns: [
 
-	    	{ title: `Attendance for`, data: null, render: function(data, type, row) {
+	    	/* { title: `Attendance for`, data: null, render: function(data, type, row) {
 	            return `<div>
 	            		<span>${row.ref} - ${row.ref_name}</span>
 	                </div>`;
-	        }},
+	        }}, */
 
 	        { title: `Attendance date `, data: null, render: function(data, type, row) {
 	            return `<div>
@@ -917,10 +917,567 @@ async function handle_upload_attendanceForm(form) {
 	ajax.send(formData);
 }
 
+// Bulk attendance
+function handleBulkAttendance() {
+	$('#add_bulkAttendanceForm').on('submit', (e) => {
+		handle_add_bulkAttendanceForm(e.target);
+		return false
+	})
+
+	$('#add_bulkTimesheetForm').on('submit', (e) => {
+		handle_add_bulkTimesheetForm(e.target);
+		return false
+	})
+}
+function simplifyAddAttendanceTable(timesheet = '') {
+	$(document).on('change', '.slcStatus4Atten', (e) => {
+		let status = $(e.target).val();
+		let row = $(e.target).parents('tr');
+		// console.log(row)
+		const $presentCheckboxes = $('.form-check-input.isPresent:not(:disabled)');
+		if(status) {
+			// $(row).find('.isPresent').prop('checked', true)
+			// $(row).find('.isPresent').attr('checked', true)
+
+			$presentCheckboxes.prop('checked', true);
+			$presentCheckboxes.attr('checked', true);
+		} else {
+			// $(row).find('.isPresent').prop('checked', false)
+			// $(row).find('.isPresent').attr('checked', false)
+
+			$presentCheckboxes.prop('checked', false);
+			$presentCheckboxes.attr('checked', false);
+		}
+	})
+
+	$(document).on('change', '.isPresent', (e) => {
+		let row = $(e.target).closest('tr'); 
+		if ($(e.target).is(':checked')) { 
+			row.find('.slcStatus4Atten').val('P');
+		} else {
+			row.find('.slcStatus4Atten').val(''); 
+		}
+	});
+
+	$('.selectAll').on('change', (e) => {
+		const isChecked = $(e.target).is(':checked'); // Get the checked state of the 'selectAll' checkbox
+		const $presentCheckboxes = $('.form-check-input.isPresent:not(:disabled)');
+		$presentCheckboxes.prop('checked', isChecked);
+		$presentCheckboxes.attr('checked', isChecked);
+		$presentCheckboxes.trigger('change');
+	});
+
+	$('.slcDepartment4Atten, .slcLocation4Atten, .attendDate').on('change', (e) => {
+		let dep = $(e.target).val();
+		get_data4Attendance(timesheet);
+	})
+
+	let table = $('#attendanceTable').DataTable({ 
+		"paging": true,         
+		"ordering": true,      
+		"info": true,           
+		"searching": true,       
+		"lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]], 
+		"displayLength": -1,
+		"language": {
+			"paginate": {
+				"previous": "&lt;", // Use < instead of <
+				"next": "&gt;"    // Use > instead of >
+			}
+		}
+	});
+	
+}
+
+function get_data4Attendance(timesheet = '') {
+	let department = $('.slcDepartment4Atten').val();
+	let location = $('.slcLocation4Atten').val();
+	let date = $('.attendDate').val();
+
+	let data = {
+		department:department,
+		location:location,
+		date:date,
+		timesheet:timesheet,
+	}
+
+	// console.log(data)
+
+	$.post(`${base_url}/app/atten_controller.php?action=get&endpoint=data4BulkAttendance`, {department:department, location:location, timesheet:timesheet, date:date}, (data) => {
+		// console.log(data)
+		if ( $.fn.DataTable.isDataTable('#attendanceTable') ) {
+			$('#attendanceTable').DataTable().destroy();
+		}
+		$('#attendanceTable tbody').empty();
+		$('#attendanceTable tbody').html(data)
+		reInitDataTable();
+
+		$('.slcStatus4Atten').trigger('change')
+	});
+}
+
+function reInitDataTable() {
+	table = $('#attendanceTable').DataTable({
+		"paging": true,
+		"ordering": true,
+		"info": true,
+		"searching": true,
+		"lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+		"displayLength": -1,
+		"language": {
+			"paginate": {
+				"previous": "&lt;",
+				"next": "&gt;"
+			}
+		}
+	});
+
+	$(document).find('.slcStatus4Atten').trigger('change')
+}
+        
+
+async function handle_add_bulkAttendanceForm(form) {
+	let employees   = [];
+	let statuses      = [];
+	let department  = $(form).find('.slcDepartment4Atten').val();
+	let location    = $(form).find('.slcLocation4Atten').val();
+	let date        = $(form).find('.attendDate').val();
+
+	$(form).find('.isPresent:checked').each((i, el) => {
+		
+		let row = $(el).parents('tr');
+		let employee_id = $(row).find('.employee_id').val();
+		let status      = $(row).find('.slcStatus4Atten').val();
+
+		console.log(el)
+		console.log(employee_id)
+		console.log(status)
+
+		if(status) {
+			employees.push(employee_id);
+			statuses.push(status)
+		}
+	});
+
+	/* $(form).find('tbody tr').each((i, row) => {
+		let employee_id = $(row).find('.employee_id').val();
+		let status      = $(row).find('.slcStatus4Atten').val();
+		if(status) {
+			employees.push(employee_id);
+			statuses.push(status)
+		}
+	}) */
+
+	if(employees.length < 1 || statuses.length < 1) {
+		toaster.warning("Please select attendance status.", 'Sorry', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+		});
+		// swal('Ooops', 'There are no employees in this record.', 'error')
+		return false;
+	}
+
+	const postData = {
+		department: department,
+		location: location,
+		date: date,
+		employees: employees,
+		statuses:statuses
+	};
+
+	console.log(postData)
+
+	try {
+        let response = await send_attendancePost('save bulkAttendance', postData);
+        console.log(response)
+        if (response) {
+            let res = JSON.parse(response)
+            $('#edit_budgetCode').modal('hide');
+            if(res.error) {
+            	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 3000 }).then(() => {
+            		window.location.reload();
+            	});;
+            } else {
+            	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+            		window.location.reload();
+            		// load_budgetCodes();
+            	});
+            	console.log(res)
+            }
+        } else {
+            console.log('Failed to save state.' + response);
+        }
+
+    } catch (err) {
+        console.error('Error occurred during form submission:', err);
+    }
+}
+
+async function handle_add_bulkTimesheetForm(form) {
+	let employees   = [];
+	let time_in      = [];
+	let time_out      = [];
+	let department  = $(form).find('.slcDepartment4Atten').val();
+	let location    = $(form).find('.slcLocation4Atten').val();
+	let date        = $(form).find('.attendDate').val();
+
+	$(form).find('.isPresent:checked').each((i, el) => {
+		// Only process if the checkbox is not disabled
+		if (!$(el).is(':disabled')) {
+			const $row = $(el).closest('tr'); // Use .closest() for better robustness
+			const employeeId = $row.find('.employee_id').val();
+			const timeIn = $row.find('.time_in').val();
+			const timeOut = $row.find('.time_out').val();
+
+			employees.push(employeeId);
+			time_in.push(timeIn);
+			time_out.push(timeOut);
+		}
+	});
+
+
+	if(employees.length < 1 || time_in.length < 1) {
+		toaster.warning("Please check some records.", 'Sorry', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+		});
+		// swal('Ooops', 'There are no employees in this record.', 'error')
+		return false;
+	}
+
+	const postData = {
+		department: department,
+		location: location,
+		date: date,
+		employees: employees,
+		time_in:time_in,
+		time_out:time_out
+	};
+
+	console.log(postData)
+
+	// return false;
+
+	try {
+        let response = await send_attendancePost('save bulkTimesheet', postData);
+        console.log(response)
+        if (response) {
+            let res = JSON.parse(response)
+            $('#edit_budgetCode').modal('hide');
+            if(res.error) {
+            	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 3000 }).then(() => {
+            		window.location.reload();
+            	});;
+            } else {
+            	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+            		window.location.reload();
+            		// load_budgetCodes();
+            	});
+            	console.log(res)
+            }
+        } else {
+            console.log('Failed to save state.' + response);
+        }
+
+    } catch (err) {
+        console.error('Error occurred during form submission:', err);
+    }
+}
 
 
 
+// Resource Allocation
+function handleAllocation() {
+	load_timesheetAllocation();
+}
+function simplifyResourceAllocation() {
+	$('.searchEmployee').on('change', async function () {
+		var emp_id = $('.searchEmployee option:selected').val();
+		let month =  $('#rsaMonth').val();
+		if(emp_id) {
+			// console.log(emp_id);
+			let postData = {
+				emp_id: emp_id,
+				month: month,
+			};
+			try {
+				let response = await send_attendancePost('get employeeData4Allocation', postData);
+				// console.log(response)
+				$('.employeeData4Allocation').html(response)
+				get_prevAllocation(emp_id, month)
+			} catch (err) {
+				console.error('Error occurred during form submission:', err);
+			}
+		}
+	});
 
+	$('#rsaMonth').on('change', async function () {
+		var emp_id = $('.searchEmployee option:selected').val();
+		let month =  $('#rsaMonth').val();
+		if(emp_id) {
+			get_prevAllocation(emp_id, month)
+		}
+	});
+
+	
+	console.log($('#add_allocationForm'))
+	$('#add_allocationForm').on('submit', (e) => {
+		handle_add_allocationForm(e.target);
+		return false
+	})
+}
+
+async function handle_add_allocationForm(form) {
+	var employee_id = $(form).find('#searchEmployee').val();
+	var supervisor_id = $(form).find('#searchSupervisor').val();
+	let month 		= $(form).find('#rsaMonth').val();
+	let prevMonth 	= $(form).find('#prevMonth').val();
+
+	console.log(form)
+
+	let budegets 		= [];
+	let budegetTimes 	= [];
+	let projectIds		= [];
+	let projects 		= [];
+	let projectTimes 	= [];
+	let projectsJson 	= [];
+	let budgetsJson 	= [];
+
+	$(form).find('.budgetItem.row').each((i, el) => {
+		let budgetCode = $(el).find('.slcBudget').val();
+		let budgetTime = $(el).find('.budgetTime').val();
+		if(budgetCode) {
+			budegets.push(budgetCode);
+			budegetTimes.push(budgetTime);
+			budgetsJson.push({name:budgetCode, time:budgetTime})
+		}
+	})
+
+	$(form).find('.projectItem.row').each((i, el) => {
+		let projectId = $(el).find('.slcProject').val();
+		let project = $(el).find('.slcProject option:selected').text();
+		let projectTime = $(el).find('.projectTime').val();
+		if(projectId) {
+			projectIds.push(projectId);
+			projects.push(project);
+			projectTimes.push(projectTime);
+			projectsJson.push({id:projectId, name:project, time:projectTime})
+		}
+	})
+
+	if(!employee_id) {
+		swal('Ooops', 'Please select employee', 'error')
+		return false;
+	}
+	if(!supervisor_id) {
+		swal('Ooops', 'Please select supervisor', 'error')
+		return false;
+	}
+	
+
+	if(budegets.length < 1 && projects.length < 1) {
+		toaster.warning("Please provide budget or project.", 'Sorry', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+		});
+		// swal('Ooops', 'There are no employees in this record.', 'error')
+		return false;
+	}
+
+	let allocation = {
+		budgets: budgetsJson,
+		projects: projectsJson,
+	};
+
+	const postData = {
+		employee_id: employee_id,
+		supervisor_id: supervisor_id,
+		allocation: allocation,
+		month: month,
+		prevMonth: prevMonth,
+	};
+
+	console.log(postData)
+
+	try {
+        let response = await send_attendancePost('save allocation', postData);
+        console.log(response)
+        if (response) {
+            let res = JSON.parse(response)
+            $('#edit_budgetCode').modal('hide');
+            if(res.error) {
+            	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 3000 }).then(() => {
+            		window.location.reload();
+            	});;
+            } else {
+            	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+            		window.location.href = base_url + '/allocation';
+            		// load_budgetCodes();
+            	});
+            	console.log(res)
+            }
+        } else {
+            console.log('Failed to save state.' + response);
+        }
+
+    } catch (err) {
+        console.error('Error occurred during form submission:', err);
+    }
+}
+
+function load_timesheetAllocation() {
+	var datatable = $('#allocationDT').DataTable({
+		// let datatable = new DataTable('#companyDT', {
+	    "processing": true,
+	    "serverSide": true,
+	    "bDestroy": true,
+	    // "searching": false,  
+	    "info": false,
+	    "columnDefs": [
+	        { "orderable": false, "searchable": false,  "targets": [6, 5] }  // Disable search on first and last columns
+	    ],
+	    "serverMethod": 'post',
+	    "ajax": {
+	        "url": "./app/atten_controller.php?action=load&endpoint=allocations",
+	        "method": "POST",
+		    /*dataFilter: function(data) {
+				console.log(data)
+			}*/
+	    },
+	    
+	    "createdRow": function(row, data, dataIndex) { 
+	    	// Add your custom class to the row 
+	    	// $(row).addClass('table-row ' +data.status.toLowerCase());
+	    },
+	    columns: [
+
+	    	{ title: `Month`, data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${(row.month)}</span>
+	                </div>`;
+	        }},
+
+			{ title: `Employee ID`, data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.staff_no} </span>
+	                </div>`;
+	        }},
+	      
+
+	        { title: `Employee `, data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.full_name} </span>
+	                </div>`;
+	        }},
+
+			{ title: `Supervisor`, data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.sup_name} </span>
+	                </div>`;
+	        }},
+
+			{ title: `Time Accounted for`, data: null, render: function(data, type, row) {
+	            return `<div>
+					<span>${row.time}% </span>
+				</div>`;
+	        }},
+	      
+	        { title: `Date added`, data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${formatDate(row.added_date)}</span>
+	                </div>`;
+	        }},
+
+	        { title: "Action", data: null, render: function(data, type, row) {
+	            return `<div class="sflex scenter-items">
+            		<a href="${base_url}/allocation/edit/${row.id}" class="fa  smt-5 cursor smr-10 fa-pencil"></a>
+            		<span onclick="return delete_allocation(${row.id})" class="fa smt-5 cursor fa-trash"></span>
+                </div>`;
+	        }},
+	    ]
+	});
+
+	return false;
+}
+
+async function get_prevAllocation(employee_id, month) {
+	let data = {employee_id:employee_id, month:month};
+	let response = await send_attendancePost('get prev_allocation', data);
+	if(response) {
+		let allocation = JSON.parse(response);
+
+		setTimeout(() => {
+			let budgetNum = 1;
+			allocation.budgets.forEach((budget) => { 
+				// console.log(budget)
+				const trimmedBudgetName = budget.name.trim(); 
+				// console.log(`Processing budget: ${trimmedBudgetName}`);
+				const budgetItem = $(document).find(`.budgetItem${budgetNum}`);
+				if (budgetItem.length > 0) { 
+					const selectElement = budgetItem.find('.slcBudget');
+					const timeInput = budgetItem.find('.budgetTime');
+					selectElement.val(trimmedBudgetName); 
+					timeInput.val(budget.time)
+				} else {
+				}
+
+				budgetNum++;
+			});
+
+			let projectNum = 1;
+			allocation.projects.forEach((project) => { 
+				// console.log(project)
+				const projectId = project.id; 
+				// console.log(`Processing project: ${projectId}`);
+				const projectItem = $(document).find(`.projectItem${projectNum}`);
+				if (projectItem.length > 0) { 
+					const selectElement = projectItem.find('.slcProject');
+					const timeInput = projectItem.find('.projectTime');
+					selectElement.val(projectId); 
+					timeInput.val(project.time)
+				} else {
+				}
+
+				projectNum++;
+			});
+		}, 500)
+	} else {
+		$('.slcBudget').val('')
+		$('.budgetTime').val('')
+		$('.slcProject').val('')
+		$('.projectTime').val('')
+	}
+}
+
+function delete_allocation(id) {
+	swal({
+        title: "Are you sure?",
+        text: `You are going to delete this allocation record.`,
+        icon: "warning",
+        className: 'warning-swal',
+        buttons: ["Cancel", "Yes, delete"],
+    }).then(async (confirm) => {
+        if (confirm) {
+            let data = { id: id };
+            try {
+                let response = await send_attendancePost('delete allocation', data);
+                console.log(response)
+                if (response) {
+                    let res = JSON.parse(response);
+                    if (res.error) {
+                        toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 3000 }).then(() => {
+			            		location.reload();
+			            	});;
+                    } else {
+                        toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                            location.reload();
+                            // load_branches();
+                        });
+                        console.log(res);
+                    }
+                } else {
+                    console.log('Failed to edit state.' + response);
+                }	
+            } catch (err) {
+                console.error('Error occurred during form submission:', err);
+            }
+        }
+    })
+}
 
 
 
@@ -1350,6 +1907,8 @@ document.addEventListener("DOMContentLoaded", function() {
 	handleEmpLeave();
 	handleAttendance();
 	handleTimesheet();
+	handleBulkAttendance();
+	handleAllocation();
 	
 
 	$('.my-select').selectpicker({
@@ -1368,6 +1927,26 @@ document.addEventListener("DOMContentLoaded", function() {
 		        let res = JSON.parse(response);
 		        if(!res.error) {
 					$('#searchEmployee').html(res.options)
+					$('.my-select').selectpicker('refresh');
+				} 
+		    } catch (err) {
+		        console.error('Error occurred during form submission:', err);
+		    }
+		}
+    })
+
+	// Search employee
+	$(document).on('keyup', '.bootstrap-select.searchSupervisor input.form-control', async (e) => {
+    	let search = $(e.target).val();
+    	let searchFor = 'leave';
+    	let formData = {search:search, searchFor:searchFor}
+		if(search) {
+			try {
+		        let response = await send_attendancePost('search employee4Select', formData);
+		        console.log(response)
+		        let res = JSON.parse(response);
+		        if(!res.error) {
+					$('#searchSupervisor').html(res.options)
 					$('.my-select').selectpicker('refresh');
 				} 
 		    } catch (err) {
