@@ -43,8 +43,13 @@ RewriteRule ^payroll/([0-9-]+)$ index.php?menu=payroll&tab=payroll&action=show&p
 
 
 RewriteRule ^attendance/?$ index.php?menu=attendance&tab=attendance [NC,L]
+RewriteRule ^attendance/add/?$ index.php?menu=attendance&tab=attendance&action=add [NC,L]
 RewriteRule ^leave/?$ index.php?menu=attendance&tab=leave [NC,L]
 RewriteRule ^timesheet/?$ index.php?menu=attendance&tab=timesheet [NC,L]
+RewriteRule ^timesheet/add/?$ index.php?menu=attendance&tab=timesheet&action=add [NC,L]
+RewriteRule ^allocation/?$ index.php?menu=attendance&tab=allocation [NC,L]
+RewriteRule ^allocation/add/?$ index.php?menu=attendance&tab=allocation&action=add [NC,L]
+RewriteRule ^allocation/edit/([0-9-]+)/?$ index.php?menu=attendance&tab=allocation&action=add&id=$1  [NC,L]
 
 
 
@@ -67,6 +72,10 @@ RewriteRule ^settings/?$ index.php?menu=settings&tab=settings [NC,L]
 RewriteRule ^user/?$ index.php?menu=users&tab=users [NC,L]
 RewriteRule ^user/add/?$ index.php?menu=users&tab=users&action=add [NC,L]
 RewriteRule ^user/edit/([0-9-]+)$ index.php?menu=users&tab=users&action=edit&user_id=$1 [NC,L]
+RewriteRule ^user/show/([0-9-]+)$ index.php?menu=users&tab=users&action=show&user_id=$1 [NC,L]
+
+
+RewriteRule ^roles/?$ index.php?menu=users&tab=roles [NC,L]
 
 
 
