@@ -1,1 +1,0 @@
-ALTER TABLE `employees` CHANGE `project_id` `project_id` VARCHAR(250) NOT NULL;
