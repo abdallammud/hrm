@@ -24,6 +24,98 @@
 .info-tooltip {
 	position: relative;
 }
+/*
+ * Assuming your CSS file is in 'css/style.css'
+ * and your fonts are in 'fonts/' relative to the project root.
+ * The path to the font file will be '../fonts/...'
+ */
+
+/* Open Sans Light (300) */
+@font-face {
+    font-family: 'osl';
+    src: url('../fonts/OpenSans-Light.ttf');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap; /* Optional: controls font loading behavior */
+}
+
+@font-face {
+    font-family: 'osli';
+    src: url('../fonts/OpenSans-LightItalic.ttf');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap; /* Optional: controls font loading behavior */
+}
+
+@font-face {
+    font-family: 'osr';
+    src: url('../fonts/OpenSans-Regular.ttf');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap; /* Optional: controls font loading behavior */
+}
+
+@font-face {
+    font-family: 'osi';
+    src: url('../fonts/OpenSans-Italic.ttf');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap; /* Optional: controls font loading behavior */
+}
+
+@font-face {
+    font-family: 'ossb';
+    src: url('../fonts/OpenSans-SemiBold.ttf');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap; /* Optional: controls font loading behavior */
+}
+
+
+@font-face {
+    font-family: 'osb';
+    src: url('../fonts/OpenSans-Bold.ttf');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap; /* Optional: controls font loading behavior */
+}
+
+@font-face {
+    font-family: 'osbi';
+    src: url('../fonts/OpenSans-BoldItalic.ttf');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap; /* Optional: controls font loading behavior */
+}
+
+
+* {
+	font-family: osr, "Noto Sans", sans-serif;
+}
+
+.ff-osl {
+	font-family: osl;
+}
+.ff-osli {
+	font-family: osli;
+}
+
+.ff-osb {
+	font-family: osb;
+}
+.ff-osbi {
+	font-family: osbi;
+}
+
+.ff-osr {
+	font-family: osr;
+}
+.ff-osi {
+	font-family: osi;
+}
+.ff-ossb {
+	font-family: ossb;
+}
 
 .info-tooltip .tooltip-div {
 	position: absolute;
@@ -76,7 +168,9 @@
 .form-error {
 	display: none;
 }
-
+.form-control {
+    padding: .65rem .75rem;
+}
 
 
 
@@ -308,4 +402,13 @@ button.btn.dropdown-toggle{
 .page-footer {
 	position: fixed;
 	bottom: 0;;
+}
+
+
+.sidebar-wrapper .sidebar-nav .metismenu a .parent-icon .bi {
+	font-size: 1.5em;
+	font-weight: bold;
+}
+.sidebar-wrapper .sidebar-nav .metismenu ul a i {
+	font-size: 0.7em;;
 }

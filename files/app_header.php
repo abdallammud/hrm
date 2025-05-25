@@ -31,6 +31,7 @@ if (!authenticate()) {
   <link href="https://fonts.googleapis.com/css?family=Material+Icons+Outlined" rel="stylesheet">
   <link href="<?=baseUri();?>/assets/css/sumo_select.css" rel="stylesheet">
   <!--main css-->
+  <link href="<?=baseUri();?>/assets/css/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
   <link href="<?=baseUri();?>/assets/css/bootstrap-extended.css" rel="stylesheet">
   <link href="<?=baseUri();?>/assets/sass/main.css" rel="stylesheet">
   <link href="<?=baseUri();?>/assets/sass/dark-theme.css" rel="stylesheet">

@@ -1,7 +1,7 @@
 <?php require('./files/login_header.php');?>
 <?php require('./asset_config.php');?>
-	<div class="mx-3 mx-lg-0">
-		<div class="card my-5 col-xl-3 col-xxl-3 col-lg-4 col-md-6 col-sm-12 mt-9 mx-auto rounded-4 overflow-hidden p-4" >
+	<div class="mx-3 mx-lg-0" style="display: flex; align-items: center; height: 100vh;">
+		<div style="min-width: 400px;" class="card my-5 col-xl-3 col-xxl-3 col-lg-4 col-md-6 col-sm-12 mt-9 mx-auto rounded-4 overflow-hidden p-4" >
 			<div class="row g-4">
 				<div class="col-lg-12 d-flex">
 					<div class="card-body">

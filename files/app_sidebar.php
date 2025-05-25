@@ -20,7 +20,7 @@ foreach ($menus as $sideMenu) {
 				<li class="'.$active.'">
 					<a href="javascript:;" class="has-arrow">
 						<div class="parent-icon">
-							<i class="material-icons-outlined">'.$sideMenu['icon'].'</i>
+							<i class="bi bi-'.$sideMenu['icon'].'"></i>
 						</div>
 						<div class="menu-title">'.$sideMenu['name'].'</div>
 					</a>
@@ -32,7 +32,7 @@ foreach ($menus as $sideMenu) {
 					$sidebar .= '
 						<li class="'.$activeSub.'">
 							<a href="'.baseUri().'/'.strtolower($sub['route']).'">
-								<i class="material-icons-outlined">arrow_right</i>
+								<i class="bi caret bi-caret-right-fill"></i>
 								'.$sub['name'].'
 							</a>
 						</li>';
@@ -47,7 +47,7 @@ foreach ($menus as $sideMenu) {
 			$sidebar .= '<li class="'.$active.'">
 				<a href="'.baseUri().'/'.$sideMenu['route'].'">
 					<div class="parent-icon">
-						<i class="material-icons-outlined">'.$sideMenu['icon'].'</i>
+						<i class="bi bi-'.$sideMenu['icon'].'"></i>
 					</div>
 					<div class="menu-title">'.$sideMenu['name'].'</div>
 				</a>
