@@ -846,7 +846,7 @@ if(isset($_GET['action'])) {
 			} else if ($_GET['endpoint'] === 'folders') {
 				$result = [];
 				try {
-					check_auth('view_employees');
+					check_auth('manage_employee_docs');
 					
 					$search = isset($_POST['search']) ? escapeStr($_POST['search']) : '';
 					$where = "";

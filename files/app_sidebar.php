@@ -32,7 +32,7 @@ foreach ($menus as $sideMenu) {
 					$sidebar .= '
 						<li class="'.$activeSub.'">
 							<a href="'.baseUri().'/'.strtolower($sub['route']).'">
-								<i class="bi caret bi-caret-right-fill"></i>
+								<i class="bi caret bi-caret-right"></i>
 								'.$sub['name'].'
 							</a>
 						</li>';

@@ -21,7 +21,7 @@ function load_files() {
     // var_dump($authKey);
 
     // Handle submenus and their actions
-    // var_dump($menus[$menu]['sub']);
+    // var_dump($menus);
     if ($tab && isset($menus[$menu]['sub'][$tab])) {
         handle_sub_menu($menus[$menu]['sub'][$tab], $folder, $action);
     } 
@@ -40,12 +40,17 @@ function load_files() {
 }
 
 function handle_sub_menu($subMenu, $folder, $action) {
+    // var_dump($subMenu);
     if ($action && isset($subMenu['actions'][$action])) {
         handle_action($subMenu['actions'][$action], $folder);
     } else {
         if (check_session($subMenu['auth'])) {
             // var_dump($subMenu['default']);
-            load_file($folder . $subMenu['default'] . '.php');
+            if(isset($subMenu['coming'])) {
+                load_file($folder . $subMenu['default'] . '.php', true);
+            } else {
+                load_file($folder . $subMenu['default'] . '.php');
+            }
         } else {
             load_unauthorized();
         }
@@ -63,11 +68,15 @@ function handle_action($actionConfig, $folder) {
     }
 }
 
-function load_file($filePath) {
-    if (file_exists($filePath)) {
-        require $filePath;
+function load_file($filePath, $coming = false) {
+    if($coming) {
+        require 'coming.php';
     } else {
-        load_not_found();
+        if (file_exists($filePath)) {
+            require $filePath;
+        } else {
+            load_not_found();
+        }
     }
 }
 
@@ -81,7 +90,7 @@ function load_not_found() {
     // exit;
 }
 
-function get_menu_config() {
+function get_menu_config2() {
     return [
         'dashboard' => [
             // 'folder' => 'hrm',
@@ -356,5 +365,342 @@ function get_menu_config() {
             
         ],
         // Add more menus here
+    ];
+}
+
+function get_menu_config() {
+    return [
+        'dashboard' => [
+            'default' => 'dashboard',
+            'folder' => 'dashboard',
+            'icon' => 'columns-gap',
+            'name' => 'Dashboard',
+            'route' => 'dashboard',
+            'menu' => 'dashboard',
+            'auth' => 'manage_dashboard',
+        ],
+
+        'hrm' => [
+            'default' => 'employees',
+            'folder' => 'hrm',
+            'name' => 'Employees',
+            'icon' => 'people',
+            'route' => 'employees',
+            'menu' => 'employees',
+            'auth' => 'manage_employees',
+            'sub' => [
+                'employees' => [
+                    'default' => 'employees',
+                    'name' => 'All Employees',
+                    'route' => 'employees',
+                    'auth' => 'manage_employees',
+                    'actions' => [
+                        'add' => ['file' => 'employee_add', 'auth' => 'create_employees'],
+                        'show' => ['file' => 'employee_show', 'auth' => 'manage_employees'],
+                        'edit' => ['file' => 'employee_edit', 'auth' => 'edit_employees'],
+                    ],
+                ],
+                'documents' => [
+                    'default' => 'documents',
+                    'auth' => 'manage_employee_docs',
+                    'route' => 'documents',
+                    'name' => 'Documents',
+                    'js' => ['docs'],
+                ],
+                'awards' => [
+                    'default' => 'awards',
+                    'folder' => 'awards',
+                    'name' => 'Awards',
+                    'route' => 'awards',
+                    'auth' => 'manage_awards',
+                    'coming' => true,
+                ],
+                'contracts' => [
+                    'default' => 'contracts',
+                    'folder' => 'contracts',
+                    'name' => 'Contracts',
+                    'route' => 'contracts',
+                    'auth' => 'manage_contracts',
+                    'coming' => true,
+                ],
+            ],
+        ],
+
+        'payroll' => [
+            'default' => 'payroll',
+            'folder' => 'payroll_fol',
+            'name' => 'Payroll',
+            'icon' => 'calculator',
+            'menu' => 'payroll',
+            'route' => 'payroll',
+            'auth' => 'manage_payroll',
+            'sub' => [
+                'manage_payroll' => [
+                    'default' => 'payroll',
+                    'folder' => 'payroll',
+                    'name' => 'Manage Payroll',
+                    'route' => 'payroll',
+                    'auth' => 'manage_payroll',
+                ],
+                'transactions' => [
+                    'default' => 'transactions',
+                    'folder' => 'transactions',
+                    'name' => 'Transactions',
+                    'route' => 'transactions',
+                    'auth' => 'manage_payroll_transactions',
+                ],
+            ],
+        ],
+
+        'attendance' => [
+            'default' => 'timesheet',
+            'folder' => 'attendance_fol',
+            'name' => 'Timesheet',
+            'icon' => 'clock-history',
+            'route' => 'timesheet',
+            'menu' => 'timesheet',
+            'auth' => 'manage_timesheet',
+            'sub' => [
+                'timesheet' => [
+                    'default' => 'timesheet',
+                    'name' => 'Timesheet',
+                    'route' => 'timesheet',
+                    'auth' => 'manage_timesheet',
+                ],
+                'attendance' => [
+                    'default' => 'attendance',
+                    'folder' => 'attendance',
+                    'name' => 'Attendance',
+                    'route' => 'attendance',
+                    'auth' => 'manage_attendance',
+                ],
+                'manage_leave' => [
+                    'default' => 'leave',
+                    'folder' => 'leave',
+                    'name' => 'Manage Leave',
+                    'route' => 'leave',
+                    'auth' => 'manage_leave',
+                ],
+                'allocation' => [
+                    'default' => 'allocation',
+                    'folder' => 'allocation',
+                    'name' => 'Timesheet Allocation',
+                    'route' => 'allocation',
+                    'auth' => 'manage_allocation',
+                ],
+            ],
+        ],
+
+        'performance' => [
+            'default' => 'performance',
+            'folder' => 'performance',
+            'name' => 'Performance',
+            'icon' => 'trophy',
+            'route' => 'performance',
+            'menu' => 'performance',
+            'auth' => 'manage_performance',
+            'sub' => [
+                'appraisals' => [
+                    'default' => 'appraisals',
+                    'folder' => 'appraisals',
+                    'name' => 'Appraisals',
+                    'route' => 'appraisals',
+                    'auth' => 'manage_appraisals',
+                ],
+                'indicators' => [
+                    'default' => 'indicators',
+                    'folder' => 'indicators',
+                    'name' => 'Indicators',
+                    'route' => 'indicators',
+                    'auth' => 'manage_indicators',
+                ],
+                'goal_tracking' => [
+                    'default' => 'goals',
+                    'folder' => 'goals',
+                    'name' => 'Goal Tracking',
+                    'route' => 'goals',
+                    'auth' => 'manage_goals',
+                ],
+            ],
+        ],
+
+        'finance' => [
+            'default' => 'finance',
+            'folder' => 'finance',
+            'name' => 'Finance',
+            'icon' => 'currency-dollar',
+            'route' => 'finance',
+            'menu' => 'finance',
+            'auth' => 'manage_finance',
+            'sub' => [
+                'accounts' => [
+                    'default' => 'accounts',
+                    'folder' => 'accounts',
+                    'name' => 'Manage Accounts',
+                    'route' => 'accounts',
+                    'auth' => 'manage_accounts',
+                ],
+                'payroll_payment' => [
+                    'default' => 'payroll_payment',
+                    'folder' => 'payroll_payment',
+                    'name' => 'Payroll Payment',
+                    'route' => 'payroll_payment',
+                    'auth' => 'manage_payroll_payment',
+                ],
+                'expenses' => [
+                    'default' => 'expenses',
+                    'folder' => 'expenses',
+                    'name' => 'Other Expenses',
+                    'route' => 'expenses',
+                    'auth' => 'manage_expenses',
+                ],
+            ],
+        ],
+
+        'reports' => [
+            'default' => 'reports',
+            'folder' => 'reports',
+            'name' => 'Reports',
+            'icon' => 'graph-up',
+            'route' => 'reports',
+            'menu' => 'reports',
+            'auth' => 'manage_reports',
+        ],
+
+        'training' => [
+            'default' => 'training',
+            'folder' => 'training',
+            'name' => 'Training',
+            'icon' => 'book',
+            'route' => 'training',
+            'menu' => 'training',
+            'auth' => 'manage_training',
+            'sub' => [
+                'list' => [
+                    'default' => 'training_list',
+                    'folder' => 'training_list',
+                    'name' => 'Training List',
+                    'route' => 'training_list',
+                    'auth' => 'manage_training',
+                ],
+                'trainers' => [
+                    'default' => 'trainers',
+                    'folder' => 'trainers',
+                    'name' => 'Trainers',
+                    'route' => 'trainers',
+                    'auth' => 'manage_trainers',
+                ],
+            ],
+        ],
+
+        'management' => [
+            'default' => 'management',
+            'folder' => 'management',
+            'name' => 'Management',
+            'icon' => 'briefcase',
+            'route' => 'management',
+            'menu' => 'management',
+            'auth' => 'manage_hrm',
+            'sub' => [
+                'resignations' => [
+                    'default' => 'resignations',
+                    'folder' => 'resignations',
+                    'name' => 'Resignations',
+                    'route' => 'resignations',
+                    'auth' => 'manage_resignations',
+                ],
+                'transfers' => [
+                    'default' => 'transfers',
+                    'folder' => 'transfers',
+                    'name' => 'Transfers',
+                    'route' => 'transfers',
+                    'auth' => 'manage_transfers',
+                ],
+                'promotion' => [
+                    'default' => 'promotion',
+                    'folder' => 'promotion',
+                    'name' => 'Promotion',
+                    'route' => 'promotion',
+                    'auth' => 'manage_promotion',
+                ],
+                'complaints' => [
+                    'default' => 'complaints',
+                    'folder' => 'complaints',
+                    'name' => 'Complaints',
+                    'route' => 'complaints',
+                    'auth' => 'manage_complaints',
+                ],
+                'warning' => [
+                    'default' => 'warning',
+                    'folder' => 'warning',
+                    'name' => 'Warning',
+                    'route' => 'warning',
+                    'auth' => 'manage_warnings',
+                ],
+                'termination' => [
+                    'default' => 'termination',
+                    'folder' => 'termination',
+                    'name' => 'Termination',
+                    'route' => 'termination',
+                    'auth' => 'manage_termination',
+                ],
+            ],
+        ],
+
+        'recruitment' => [
+            'default' => 'recruitment',
+            'folder' => 'recruitment',
+            'name' => 'Recruitment',
+            'icon' => 'person-add',
+            'route' => 'recruitment',
+            'menu' => 'recruitment',
+            'auth' => 'manage_recruitment',
+        ],
+
+        'system_setup' => [
+            'default' => 'system_setup',
+            'folder' => 'system_setup',
+            'name' => 'System Setup',
+            'icon' => 'tools',
+            'route' => 'system_setup',
+            'menu' => 'system_setup',
+            'auth' => 'manage_system_setup',
+        ],
+
+        'settings' => [
+            'default' => 'settings',
+            'folder' => 'settings',
+            'name' => 'Settings',
+            'icon' => 'gear',
+            'route' => 'settings',
+            'menu' => 'settings',
+            'auth' => 'manage_settings',
+        ],
+
+        'users' => [
+            'default' => 'users',
+            'folder' => 'system',
+            'name' => 'Users',
+            'icon' => 'person-gear',
+            'route' => 'user',
+            'menu' => 'users',
+            'auth' => 'manage_users',
+            'sub' => [
+                'users' => [
+                    'default' => 'users',
+                    'folder' => 'users',
+                    'name' => 'Users',
+                    'route' => 'user',
+                    'auth' => 'manage_users',
+                ],
+                'roles' => [
+                    'default' => 'roles',
+                    'folder' => 'roles',
+                    'name' => 'Roles',
+                    'route' => 'roles',
+                    'auth' => 'manage_roles',
+                ],
+            ],
+        ],
     ];
 }

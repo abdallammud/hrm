@@ -867,7 +867,7 @@ async function handle_editFolderForm(form) {
 async function load_folders() {
     let search = $('#searchFolder').val() || '';
     const response = await $.post(`${base_url}/app/hrm_controller.php?action=load&endpoint=folders`, { search });
-	//console.log(response)
+	console.log(response)
     let res = JSON.parse(response)
     if(!res.error) {
         let folders = '';
@@ -906,6 +906,8 @@ async function load_folders() {
                 </div>
             </div>
         </a>`;
+
+        console.log(folders)
         
         $('#folders').html(folders);
     }

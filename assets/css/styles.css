@@ -169,7 +169,7 @@
 	display: none;
 }
 .form-control {
-    padding: .65rem .75rem;
+    padding: .75rem .75rem;
 }
 
 
@@ -392,6 +392,8 @@ img.profile-img {
 button.btn.dropdown-toggle{
 	background-color: var(--bs-body-bg);
 	color: var(--bs-body-color);
+	height: 46px;
+	border: var(--bs-border-width) solid var(--bs-border-color);
 }
 
 .dropdown.bootstrap-select.my-select {
@@ -406,9 +408,12 @@ button.btn.dropdown-toggle{
 
 
 .sidebar-wrapper .sidebar-nav .metismenu a .parent-icon .bi {
-	font-size: 1.5em;
+	font-size: 20px;
 	font-weight: bold;
 }
 .sidebar-wrapper .sidebar-nav .metismenu ul a i {
 	font-size: 0.7em;;
+}
+.sidebar-wrapper .sidebar-nav .metismenu ul {
+	padding-left: 25px;
 }
