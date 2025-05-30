@@ -15,24 +15,24 @@
 			<li class="nav-item dropdown">
 				<a class="nav-link dropdown-toggle dropdown-toggle-nocaret" href="avascript:;" data-bs-toggle="dropdown">
 					<!-- <span class="material-symbols-outlined">light_mode</span> -->
-					<i class="material-icons-outlined">light_mode</i>
+					<i class="bi bi-brightness-high"></i>
 				</a>
 				<ul class="dropdown-menu dropdown-menu-end">
 					<li>
 						<a data-color="light" class="dropdown-item toggle-system-color d-flex align-items-center py-2" href="javascript:;">
-							<i class="material-icons-outlined">light_mode</i>
+							<i class="bi bi-brightness-high"></i>
 							<span class="ms-2">Light mode</span>
 						</a>
 					</li>
 					<li>
 						<a data-color="dark" class="dropdown-item toggle-system-color d-flex align-items-center py-2" href="javascript:;">
-							<i class="material-icons-outlined">dark_mode</i>
+							<i class="bi bi-moon"></i>
 							<span class="ms-2">Dark Mode</span>
 						</a>
 					</li>
 					<li>
 						<a data-color="blue-theme" class="dropdown-item toggle-system-color d-flex align-items-center py-2" href="javascript:;">
-							<i style="color:#181f4a;" class="material-icons-outlined">contrast</i>
+							<i class="bi bi-brightness-low-fill"></i>
 							<span class="ms-2">Dark blue</span>
 						</a>
 					</li>

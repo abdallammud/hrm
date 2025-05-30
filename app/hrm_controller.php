@@ -29,13 +29,17 @@ if(isset($_GET['action'])) {
 				    }
 
 					$data['project_id'] = $data['project'] =  $data['budget_code'] = '';
-					foreach ($post['project_id'] as $id) {
-						$data['project_id'] .= $id.', ';;
-						$data['project'] .= get_data('projects', ['id' => $id])[0]['name'].', ';
-				    }
+					if(isset($post['project_id']) && is_array($post['project_id'])) {
+						foreach ($post['project_id'] as $id) {
+							$data['project_id'] .= $id.', ';;
+							$data['project'] .= get_data('projects', ['id' => $id])[0]['name'].', ';
+					    }
+					}
 
-					foreach ($post['budget_code'] as $code) {
-						$data['budget_code'] .= $code .', ';
+					if(isset($post['budget_code']) && is_array($post['budget_code'])) {
+						foreach ($post['budget_code'] as $code) {
+							$data['budget_code'] .= $code .', ';
+						}
 					}
 
 
@@ -421,7 +425,75 @@ if(isset($_GET['action'])) {
 				}
 				echo json_encode($result);
 				exit();
-			} 
+			} else if($_GET['endpoint'] == 'award') {
+				try {
+				    // Begin a transaction
+				    $GLOBALS['conn']->begin_transaction();
+				    $post = escapePostData($_POST);
+				    
+				    check_auth('manage_awards');
+				    
+				    // Get employee details
+				    $emp_query = "SELECT * FROM employees WHERE employee_id = '{$post['employee_id']}'";
+				    $emp_result = $GLOBALS['conn']->query($emp_query);
+				    
+				    if ($emp_result->num_rows === 0) {
+				        throw new Exception('Invalid employee selected');
+				    }
+				    
+				    $employee = $emp_result->fetch_assoc();
+				    
+				    // Get award type name
+				    $type_query = "SELECT name FROM award_types WHERE id = '{$post['award_type']}'";
+				    $type_result = $GLOBALS['conn']->query($type_query);
+				    
+				    if ($type_result->num_rows === 0) {
+				        throw new Exception('Invalid award type selected');
+				    }
+				    
+				    $award_type_name = $type_result->fetch_assoc()['name'];
+				    
+				    // Prepare data
+				    $data = array(
+				        'award_type' => $award_type_name,
+				        'type_id' => $post['award_type'],
+				        'emp_id' => $post['employee_id'],
+				        'full_name' => $employee['full_name'],
+				        'phone_number' => $employee['phone_number'],
+				        'staff_no' => $employee['staff_no'],
+				        'email' => $employee['email'],
+				        'gift' => $post['gift'],
+				        'award_date' => $post['award_date'],
+				        'added_by' => $_SESSION['user_id']
+				    );
+				    
+				    // Insert into database
+				    $columns = implode(", ", array_keys($data));
+				    $values = "'" . implode("', '", array_values($data)) . "'";
+				    $sql = "INSERT INTO employee_awards ($columns) VALUES ($values)";
+				    
+				    if ($GLOBALS['conn']->query($sql)) {
+				        $result['id'] = $GLOBALS['conn']->insert_id;
+				        $GLOBALS['conn']->commit();
+				        $result['msg'] = 'Award added successfully';
+				        $result['error'] = false;
+				    } else {
+				        throw new Exception("Error adding award: " . $GLOBALS['conn']->error);
+				    }
+				    
+				} catch (Exception $e) {
+				    // If any exception occurs, rollback the transaction
+				    $GLOBALS['conn']->rollback();
+				    
+				    // Return error response
+				    $result['msg'] = 'Error: ' . $e->getMessage();
+				    $result['error'] = true;
+				}
+				
+				// Return the result as a JSON response
+				echo json_encode($result);
+				exit();
+			}
 
 			exit();
 		} 
@@ -744,6 +816,68 @@ if(isset($_GET['action'])) {
 				}
 				echo json_encode($result);
 				exit();
+			} else if($_GET['endpoint'] == 'award') {
+				try {
+				    // Begin a transaction
+				    $GLOBALS['conn']->begin_transaction();
+				    $post = escapePostData($_POST);
+				    
+				    check_auth('manage_awards');
+				    
+				    // Validate award ID
+				    if (!isset($post['id']) || empty($post['id'])) {
+				        throw new Exception('Invalid award ID');
+				    }
+				    
+				    // Get award type name
+				    $type_query = "SELECT name FROM award_types WHERE id = '{$post['award_type']}'";
+				    $type_result = $GLOBALS['conn']->query($type_query);
+				    
+				    if ($type_result->num_rows === 0) {
+				        throw new Exception('Invalid award type selected');
+				    }
+				    
+				    $award_type_name = $type_result->fetch_assoc()['name'];
+				    
+				    // Prepare data
+				    $data = array(
+				        'award_type' => $award_type_name,
+				        'type_id' => $post['award_type'],
+				        'gift' => $post['gift'],
+				        'award_date' => $post['award_date'],
+				        'status' => $post['status'],
+				        'updated_by' => $_SESSION['user_id'],
+				        'updated_date' => $updated_date
+				    );
+				    
+				    // Update database
+				    $updates = array();
+				    foreach ($data as $key => $value) {
+				        $updates[] = "`$key` = '$value'";
+				    }
+				    
+				    $sql = "UPDATE employee_awards SET " . implode(", ", $updates) . " WHERE id = '{$post['id']}'";
+				    
+				    if ($GLOBALS['conn']->query($sql)) {
+				        $GLOBALS['conn']->commit();
+				        $result['msg'] = 'Award updated successfully';
+				        $result['error'] = false;
+				    } else {
+				        throw new Exception("Error updating award: " . $GLOBALS['conn']->error);
+				    }
+				    
+				} catch (Exception $e) {
+				    // If any exception occurs, rollback the transaction
+				    $GLOBALS['conn']->rollback();
+				    
+				    // Return error response
+				    $result['msg'] = 'Error: ' . $e->getMessage();
+				    $result['error'] = true;
+				}
+				
+				// Return the result as a JSON response
+				echo json_encode($result);
+				exit();
 			} 
 
 			exit();
@@ -972,7 +1106,56 @@ if(isset($_GET['action'])) {
 			    } else {
 			        $result['msg'] = "No records found";
 			    }
-			} 
+			}  else if ($_GET['endpoint'] === 'awards') {
+				
+				if (isset($_POST['order']) && isset($_POST['order'][0])) {
+				    $orderColumnMap = ['full_name', 'award_type', 'gift', 'award_date', 'status'];
+				    $orderByIndex = (int)$_POST['order'][0]['column'];
+				    $orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
+				    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+				}
+			    // Base query
+			    $query = "SELECT * FROM `employee_awards` WHERE `id` IS NOT NULL";
+
+			    // Add search functionality
+			    if ($searchParam) {
+			        $query .= " AND (`full_name` LIKE '%" . escapeStr($searchParam) . "%' OR `award_type` LIKE '%" . escapeStr($searchParam) . "%' OR `gift` LIKE '%" . escapeStr($searchParam) . "%' )";
+			    }
+
+				
+
+				
+				
+
+			    // Add ordering
+			    $query .= " ORDER BY `$orderBy` $order LIMIT $start, $length";
+
+			    // Execute query
+			    $awards = $GLOBALS['conn']->query($query);
+
+			    // Count total records for pagination
+			    $countQuery = "SELECT COUNT(*) as total FROM `employee_awards` WHERE `id` IS NOT NULL";
+			    if ($searchParam) {
+			        $countQuery .= " AND (`full_name` LIKE '%" . escapeStr($searchParam) . "%' OR `award_type` LIKE '%" . escapeStr($searchParam) . "%' OR `gift` LIKE '%" . escapeStr($searchParam) . "%' )";
+			    }
+
+			    
+
+			    // Execute count query
+			    $totalRecordsResult = $GLOBALS['conn']->query($countQuery);
+			    $totalRecords = $totalRecordsResult->fetch_assoc()['total'];
+
+			    if ($awards->num_rows > 0) {
+			        while ($row = $awards->fetch_assoc()) {
+			            $result['data'][] = $row;
+			        }
+			        $result['iTotalRecords'] = $totalRecords;
+			        $result['iTotalDisplayRecords'] = $totalRecords;
+			        $result['msg'] = $awards->num_rows . " records were found.";
+			    } else {
+			        $result['msg'] = "No records found";
+			    }
+			}
 
 			echo json_encode($result);
 
@@ -983,7 +1166,31 @@ if(isset($_GET['action'])) {
 
 		// Get data
 		else if($_GET['action'] == 'get') {
-			if ($_GET['endpoint'] === 'company') {
+			if ($_GET['endpoint'] === 'award') {
+				check_auth('manage_awards');
+				$id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+				
+				if (empty($id)) {
+					$result['error'] = true;
+					$result['msg'] = 'Invalid award ID';
+					echo json_encode($result);
+					exit();
+				}
+				
+				$sql = "SELECT * FROM employee_awards WHERE id = '$id'";
+				$query = $GLOBALS['conn']->query($sql);
+				
+				if ($query->num_rows > 0) {
+					$result['error'] = false;
+					$result['data'] = $query->fetch_assoc();
+				} else {
+					$result['error'] = true;
+					$result['msg'] = 'Award not found';
+				}
+				
+				echo json_encode($result);
+				exit();
+			} else if ($_GET['endpoint'] === 'company') {
 				json(get_data('company', array('id' => $_POST['id'])));
 			} else if ($_GET['endpoint'] === 'branch') {
 				json(get_data('branches', array('id' => $_POST['id'])));
@@ -1044,12 +1251,327 @@ if(isset($_GET['action'])) {
 				}
 				echo json_encode($data);
 				exit();
-			}
+			} else if ($_GET['endpoint'] === 'employee4Select') {
+				$searchFor = isset($_POST['searchFor']) ? $_POST['searchFor'] : '';
+				$search = isset($_POST['search']) ? $_POST['search'] : '';
+
+				$options = '';
+				$response = [];
+				$response['error'] = true;
+				if($search) {
+					$query = "SELECT * FROM `employees` WHERE `status` = 'active' AND (`full_name` LIKE '$search%' OR `phone_number` LIKE '$search%' OR `email` LIKE '$search%') ORDER BY `full_name` ASC LIMIT 10";
+                    $empSet = $GLOBALS['conn']->query($query);
+                    if($empSet->num_rows > 0) {
+                    	while($row = $empSet->fetch_assoc()) {
+                    		$employee_id = $row['employee_id'];
+                    		$full_name = $row['full_name'];
+                    		$phone_number = $row['phone_number'];
+
+							$text = $full_name;
+
+							if($phone_number) {
+								$text .= ", ".$phone_number;
+							}
+
+                    		$options .=  '<option value="'.$employee_id.'">'.$text.'</option>';
+                    		$response['error'] = false;
+                    	}
+                    } 
+				} else {
+					$query = "SELECT * FROM `employees` WHERE `status` = 'active' ORDER BY `full_name` ASC LIMIT 10";
+                    $empSet = $GLOBALS['conn']->query($query);
+                    if($empSet->num_rows > 0) {
+                    	while($row = $empSet->fetch_assoc()) {
+                    		$employee_id = $row['employee_id'];
+                    		$full_name = $row['full_name'];
+                    		$phone_number = $row['phone_number'];
+
+                    		$options .=  '<option value="'.$employee_id.'">'.$full_name.', '.$phone_number.'</option>';
+                    	}
+                    } 
+				}
+
+				$response['options'] = $options;
+				echo json_encode($response); exit();
+			} else if ($_GET['endpoint'] === 'awards') {
+                // Load awards for DataTable
+                if ($_GET['action'] === 'load') {
+                    // DataTable server-side processing
+                    $draw = isset($_POST['draw']) ? intval($_POST['draw']) : 1;
+                    $start = isset($_POST['start']) ? intval($_POST['start']) : 0;
+                    $length = isset($_POST['length']) ? intval($_POST['length']) : 10;
+                    $search = isset($_POST['search']['value']) ? $_POST['search']['value'] : '';
+                    $order_column = isset($_POST['order'][0]['column']) ? intval($_POST['order'][0]['column']) : 3;
+                    $order_dir = isset($_POST['order'][0]['dir']) ? $_POST['order'][0]['dir'] : 'desc';
+                    
+                    // Map DataTable column index to database column name
+                    $columns = array(
+                        0 => 'full_name',
+                        1 => 'award_type',
+                        2 => 'gift',
+                        3 => 'award_date',
+                        4 => 'status'
+                    );
+                    
+                    $order_column_name = isset($columns[$order_column]) ? $columns[$order_column] : 'award_date';
+                    
+                    // Build query
+                    $query = "SELECT ea.*, at.name as award_type FROM employee_awards ea 
+                              LEFT JOIN award_types at ON ea.type_id = at.id ";
+                    
+                    // Add search condition if search term provided
+                    if (!empty($search)) {
+                        $query .= " WHERE ea.full_name LIKE '%$search%' OR at.name LIKE '%$search%' OR ea.gift LIKE '%$search%' ";
+                    }
+                    
+                    // Count total records
+                    $total_query = "SELECT COUNT(*) as total FROM employee_awards";
+                    $total_result = $GLOBALS['conn']->query($total_query);
+                    $total_records = $total_result->fetch_assoc()['total'];
+                    
+                    // Count filtered records
+                    $filtered_query = $query;
+                    $filtered_query = "SELECT COUNT(*) as total FROM ($filtered_query) as filtered";
+                    $filtered_result = $GLOBALS['conn']->query($filtered_query);
+                    $filtered_records = $filtered_result->fetch_assoc()['total'];
+                    
+                    // Add order and limit
+                    $query .= " ORDER BY $order_column_name $order_dir LIMIT $start, $length";
+                    
+                    // Execute query
+                    $result = $GLOBALS['conn']->query($query);
+                    $data = array();
+                    
+                    if ($result->num_rows > 0) {
+                        while ($row = $result->fetch_assoc()) {
+                            $data[] = $row;
+                        }
+                    }
+                    
+                    // Prepare response
+                    $response = array(
+                        "draw" => $draw,
+                        "recordsTotal" => $total_records,
+                        "recordsFiltered" => $filtered_records,
+                        "data" => $data
+                    );
+                    
+                    echo json_encode($response);
+                    exit();
+                }
+                // Save new award
+                else if ($_GET['action'] === 'save') {
+                    check_auth('manage_awards');
+                    $response = array('error' => true, 'msg' => 'Failed to save award');
+                    
+                    // Get POST data
+                    $employee_id = isset($_POST['employee_id']) ? intval($_POST['employee_id']) : 0;
+                    $award_type = isset($_POST['award_type']) ? intval($_POST['award_type']) : 0;
+                    $gift = isset($_POST['gift']) ? $_POST['gift'] : '';
+                    $award_date = isset($_POST['award_date']) ? $_POST['award_date'] : date('Y-m-d');
+                    $description = isset($_POST['description']) ? $_POST['description'] : '';
+                    
+                    // Validate required fields
+                    if (empty($employee_id) || empty($award_type)) {
+                        $response['msg'] = 'Employee and Award Type are required fields';
+                        echo json_encode($response);
+                        exit();
+                    }
+                    
+                    // Get employee details
+                    $emp_query = "SELECT * FROM employees WHERE employee_id = $employee_id";
+                    $emp_result = $GLOBALS['conn']->query($emp_query);
+                    
+                    if ($emp_result->num_rows === 0) {
+                        $response['msg'] = 'Invalid employee selected';
+                        echo json_encode($response);
+                        exit();
+                    }
+                    
+                    $employee = $emp_result->fetch_assoc();
+                    
+                    // Get award type name
+                    $type_query = "SELECT name FROM award_types WHERE id = $award_type";
+                    $type_result = $GLOBALS['conn']->query($type_query);
+                    
+                    if ($type_result->num_rows === 0) {
+                        $response['msg'] = 'Invalid award type selected';
+                        echo json_encode($response);
+                        exit();
+                    }
+                    
+                    $award_type_name = $type_result->fetch_assoc()['name'];
+                    
+                    // Current user ID
+                    $added_by = $_SESSION['user_id'];
+                    
+                    // Insert award
+                    $insert_query = "INSERT INTO employee_awards (award_type, type_id, emp_id, full_name, phone_number, staff_no, email, gift, award_date, added_by) 
+                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    
+                    $stmt = $GLOBALS['conn']->prepare($insert_query);
+                    $stmt->bind_param('siisssssi', 
+                        $award_type_name,
+                        $award_type,
+                        $employee_id,
+                        $employee['full_name'],
+                        $employee['phone_number'],
+                        $employee['staff_no'],
+                        $employee['email'],
+                        $gift,
+                        $award_date,
+                        $added_by
+                    );
+                    
+                    if ($stmt->execute()) {
+                        $response['error'] = false;
+                        $response['msg'] = 'Award added successfully';
+                    }
+                    
+                    echo json_encode($response);
+                    exit();
+                }
+                // Get award details for editing
+                else if ($_GET['action'] === 'get') {
+                    check_auth('manage_awards');
+                    $response = array('error' => true, 'msg' => 'Failed to get award details');
+                    
+                    $award_id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+                    
+                    if (empty($award_id)) {
+                        $response['msg'] = 'Invalid award ID';
+                        echo json_encode($response);
+                        exit();
+                    }
+                    
+                    $query = "SELECT * FROM employee_awards WHERE id = $award_id";
+                    $result = $GLOBALS['conn']->query($query);
+                    
+                    if ($result->num_rows > 0) {
+                        $response['error'] = false;
+                        $response['data'] = $result->fetch_assoc();
+                    }
+                    
+                    echo json_encode($response);
+                    exit();
+                }
+                // Update award
+                else if ($_GET['action'] === 'update') {
+                    check_auth('manage_awards');
+                    $response = array('error' => true, 'msg' => 'Failed to update award');
+                    
+                    // Get POST data
+                    $award_id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+                    $award_type = isset($_POST['award_type']) ? intval($_POST['award_type']) : 0;
+                    $gift = isset($_POST['gift']) ? $_POST['gift'] : '';
+                    $award_date = isset($_POST['award_date']) ? $_POST['award_date'] : date('Y-m-d');
+                    $status = isset($_POST['status']) ? $_POST['status'] : 'Active';
+                    
+                    // Validate required fields
+                    if (empty($award_id) || empty($award_type)) {
+                        $response['msg'] = 'Award ID and Award Type are required fields';
+                        echo json_encode($response);
+                        exit();
+                    }
+                    
+                    // Get award type name
+                    $type_query = "SELECT name FROM award_types WHERE id = $award_type";
+                    $type_result = $GLOBALS['conn']->query($type_query);
+                    
+                    if ($type_result->num_rows === 0) {
+                        $response['msg'] = 'Invalid award type selected';
+                        echo json_encode($response);
+                        exit();
+                    }
+                    
+                    $award_type_name = $type_result->fetch_assoc()['name'];
+                    
+                    // Current user ID
+                    $updated_by = $_SESSION['user_id'];
+                    $updated_date = date('Y-m-d H:i:s');
+                    
+                    // Update award
+                    $update_query = "UPDATE employee_awards SET 
+                                     award_type = ?, 
+                                     type_id = ?, 
+                                     gift = ?, 
+                                     award_date = ?, 
+                                     status = ?, 
+                                     updated_by = ?, 
+                                     updated_date = ? 
+                                     WHERE id = ?";
+                    
+                    $stmt = $GLOBALS['conn']->prepare($update_query);
+                    $stmt->bind_param('sisssis', 
+                        $award_type_name,
+                        $award_type,
+                        $gift,
+                        $award_date,
+                        $status,
+                        $updated_by,
+                        $updated_date,
+                        $award_id
+                    );
+                    
+                    if ($stmt->execute()) {
+                        $response['error'] = false;
+                        $response['msg'] = 'Award updated successfully';
+                    }
+                    
+                    echo json_encode($response);
+                    exit();
+                }
+                // Delete award
+                else if ($_GET['action'] === 'delete') {
+                    check_auth('manage_awards');
+                    $response = array('error' => true, 'msg' => 'Failed to delete award');
+                    
+                    $award_id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+                    
+                    if (empty($award_id)) {
+                        $response['msg'] = 'Invalid award ID';
+                        echo json_encode($response);
+                        exit();
+                    }
+                    
+                    $query = "DELETE FROM employee_awards WHERE id = $award_id";
+                    
+                    if ($GLOBALS['conn']->query($query)) {
+                        $response['error'] = false;
+                        $response['msg'] = 'Award deleted successfully';
+                    }
+                    
+                    echo json_encode($response);
+                    exit();
+                }
+            }
 		} 
 
 
 		// Delete data
 		else if($_GET['action'] == 'delete') {
+			if ($_GET['endpoint'] === 'award') {
+				check_auth('manage_awards');
+				$response = array('error' => true, 'msg' => 'Failed to delete award');
+				
+				$award_id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+				
+				if (empty($award_id)) {
+					$response['msg'] = 'Invalid award ID';
+					echo json_encode($response);
+					exit();
+				}
+				
+				$query = "DELETE FROM employee_awards WHERE id = $award_id";
+				
+				if ($GLOBALS['conn']->query($query)) {
+					$response['error'] = false;
+					$response['msg'] = 'Award deleted successfully';
+				}
+				
+				echo json_encode($response);
+				exit();
+			}
 			if ($_GET['endpoint'] === 'employee') {
 				try {
 				    // Delete company

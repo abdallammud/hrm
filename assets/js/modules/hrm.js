@@ -210,6 +210,8 @@ document.addEventListener("DOMContentLoaded", function() {
     $('.my-select').selectpicker({
 	    noneResultsText: "No results found"
 	});
+
+    handleAddAwards();
 });	
 
 function load_employees(department = '', state = '', location = '', status = '') {
@@ -867,7 +869,7 @@ async function handle_editFolderForm(form) {
 async function load_folders() {
     let search = $('#searchFolder').val() || '';
     const response = await $.post(`${base_url}/app/hrm_controller.php?action=load&endpoint=folders`, { search });
-	console.log(response)
+	// console.log(response)
     let res = JSON.parse(response)
     if(!res.error) {
         let folders = '';
@@ -907,7 +909,7 @@ async function load_folders() {
             </div>
         </a>`;
 
-        console.log(folders)
+        // console.log(folders)
         
         $('#folders').html(folders);
     }
@@ -1508,4 +1510,274 @@ async function handleDeleteDocument(id) {
     });
 }
 
+
+// Awards
+function handleAddAwards() {
+    // Initialize DataTable for awards
+    loadAwards();
+    
+    // Search employee
+    $(document).on('keyup', '.bootstrap-select.searchEmployee input.form-control', async (e) => {
+        let search = $(e.target).val();
+        let searchFor = 'award';
+        let formData = {search:search, searchFor:searchFor}
+        if(search) {
+            try {
+                let response = await send_hrmPost('search employee4Select', formData);
+                let res = JSON.parse(response);
+                if(!res.error) {
+                    $('#searchEmployee').html(res.options)
+                    $('.my-select').selectpicker('refresh');
+                } 
+            } catch (err) {
+                console.error('Error occurred during employee search:', err);
+            }
+        }
+    });
+    
+    // Handle Add Award Form Submission
+    $('#addAwardForm').on('submit', function(e) {
+        e.preventDefault();
+        handleAddAwardForm(this);
+    });
+    
+    // Handle Edit Award Form Submission
+    $('#editAwardForm').on('submit', function(e) {
+        e.preventDefault();
+        handleEditAwardForm(this);
+    });
+    
+    // Handle Edit Award Button Click
+    $(document).on('click', '.edit-award', function() {
+        const awardId = $(this).data('id');
+        getAwardDetails(awardId);
+    });
+    
+    // Handle Delete Award Button Click
+    $(document).on('click', '.delete-award', function() {
+        const awardId = $(this).data('id');
+        deleteAward(awardId);
+    });
+}
+
+// Load Awards DataTable
+function loadAwards() {
+    $('#awardsDT').DataTable({
+        "processing": true,
+        "serverSide": true,
+        "bDestroy": true,
+        "ajax": {
+            "url": `${base_url}/app/hrm_controller.php?action=load&endpoint=awards`,
+            "type": "POST",
+            dataFilter: function(data) {
+				console.log(data)
+				return data;
+			}
+        },
+        "columns": [
+            { title: "Employee", data: "full_name", render: function(data, type, row) {
+                return `<div>
+                    <span class="d-block">${row.full_name}</span>
+                    <small class="text-muted">${row.staff_no || ''}</small>
+                </div>`;
+            }},
+            { title: "Award Type", data: "award_type" },
+            { title: "Gift/Prize", data: "gift", defaultContent: "-" },
+            { title: "Date", data: "award_date", render: function(data) {
+                return formatDate(data);
+            }},
+            { title: "Status", data: "status", render: function(data) {
+                return `<span class="badge badge-${data === 'Active' ? 'success' : 'danger'}">${data}</span>`;
+            }},
+            { title: "Actions", data: null, render: function(data, type, row) {
+                return `<div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-info edit-award" data-id="${row.id}" data-toggle="modal" data-target="#edit_award"><i class="fas fa-edit"></i></button>
+                    <button type="button" class="btn btn-sm btn-danger delete-award" data-id="${row.id}"><i class="fas fa-trash"></i></button>
+                </div>`;
+            }}
+        ],
+        "order": [[3, "desc"]]
+    });
+}
+
+// Handle Add Award Form Submission
+async function handleAddAwardForm(form) {
+    clearErrors();
+    
+    // Get form data
+    const employeeId = $(form).find('#searchEmployee').val();
+    const awardType = $(form).find('#awardType').val();
+    const gift = $(form).find('#gift').val();
+    const awardDate = $(form).find('#awardDate').val();
+    const description = $(form).find('#description').val();
+    
+    // Validate form fields
+    let error = false;
+    if (!employeeId) {
+        showError('#searchEmployee', 'Please select an employee');
+        error = true;
+    }
+    if (!awardType) {
+        showError('#awardType', 'Please select an award type');
+        error = true;
+    }
+    if (!awardDate) {
+        showError('#awardDate', 'Please select a date');
+        error = true;
+    }
+    
+    if (error) return false;
+    
+    // Prepare form data
+    const formData = {
+        employee_id: employeeId,
+        award_type: awardType,
+        gift: gift,
+        award_date: awardDate,
+        description: description
+    };
+    
+    form_loading(form);
+    
+    try {
+        const response = await send_hrmPost('save award', formData);
+        const res = JSON.parse(response);
+        
+        if (res.error) {
+            toaster.warning(res.msg || 'Failed to save award', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            form_loadingUndo(form);
+        } else {
+            toaster.success(res.msg || 'Award saved successfully', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                $('#add_award').modal('hide');
+                form_loadingUndo(form);
+                $(form)[0].reset();
+                loadAwards();
+            });
+        }
+    } catch (err) {
+        console.error('Error occurred during award submission:', err);
+        toaster.error('An unexpected error occurred. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        form_loadingUndo(form);
+    }
+}
+
+// Get Award Details for Editing
+async function getAwardDetails(awardId) {
+    try {
+        const response = await send_hrmPost('get award', { id: awardId });
+        const res = JSON.parse(response);
+        
+        if (res.error) {
+            toaster.warning(res.msg || 'Failed to get award details', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        } else {
+            const award = res.data;
+            
+            // Populate form fields
+            $('#award_id').val(award.id);
+            $('#employee_name').val(award.full_name);
+            $('#employee_id').val(award.emp_id);
+            $('#edit_award_type').val(award.type_id);
+            $('#edit_gift').val(award.gift);
+            $('#edit_award_date').val(award.award_date);
+            $('#edit_status').val(award.status);
+        }
+    } catch (err) {
+        console.error('Error occurred while getting award details:', err);
+        toaster.error('An unexpected error occurred. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+    }
+}
+
+// Handle Edit Award Form Submission
+async function handleEditAwardForm(form) {
+    clearErrors();
+    
+    // Get form data
+    const awardId = $(form).find('#award_id').val();
+    const employeeId = $(form).find('#employee_id').val();
+    const awardType = $(form).find('#edit_award_type').val();
+    const gift = $(form).find('#edit_gift').val();
+    const awardDate = $(form).find('#edit_award_date').val();
+    const status = $(form).find('#edit_status').val();
+    
+    // Validate form fields
+    let error = false;
+    if (!awardType) {
+        showError('#edit_award_type', 'Please select an award type');
+        error = true;
+    }
+    if (!awardDate) {
+        showError('#edit_award_date', 'Please select a date');
+        error = true;
+    }
+    
+    if (error) return false;
+    
+    // Prepare form data
+    const formData = {
+        id: awardId,
+        employee_id: employeeId,
+        award_type: awardType,
+        gift: gift,
+        award_date: awardDate,
+        status: status
+    };
+    
+    form_loading(form);
+    
+    try {
+        const response = await send_hrmPost('update award', formData);
+        const res = JSON.parse(response);
+        
+        if (res.error) {
+            toaster.warning(res.msg || 'Failed to update award', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            form_loadingUndo(form);
+        } else {
+            toaster.success(res.msg || 'Award updated successfully', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                $('#edit_award').modal('hide');
+                form_loadingUndo(form);
+                loadAwards();
+            });
+        }
+    } catch (err) {
+        console.error('Error occurred during award update:', err);
+        toaster.error('An unexpected error occurred. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        form_loadingUndo(form);
+    }
+}
+
+// Delete Award
+async function deleteAward(awardId) {
+    if (!confirm('Are you sure you want to delete this award?')) {
+        return;
+    }
+    
+    try {
+        const response = await send_hrmPost('delete award', { id: awardId });
+        const res = JSON.parse(response);
+        
+        if (res.error) {
+            toaster.warning(res.msg || 'Failed to delete award', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        } else {
+            toaster.success(res.msg || 'Award deleted successfully', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                loadAwards();
+            });
+        }
+    } catch (err) {
+        console.error('Error occurred during award deletion:', err);
+        toaster.error('An unexpected error occurred. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+    }
+}
+
+// Helper function to format date
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+}
+
+// Helper function to show validation errors
+function showError(selector, message) {
+    $(selector).addClass('is-invalid');
+    $(selector).next('.form-error').text(message).show();
+}
 

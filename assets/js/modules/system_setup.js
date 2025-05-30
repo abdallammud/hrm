@@ -2531,16 +2531,673 @@ async function get_subtype(id) {
 	return response;
 }
 
+// Goal types
+function load_goalTypes() {
+	var datatable = $('#goalTypesDT').DataTable({
+		// let datatable = new DataTable('#companyDT', {
+	    "processing": true,
+	    "serverSide": true,
+	    "bDestroy": true,
+	    "searching": false,  
+	    "info": false,
+	    "columnDefs": [
+	        { "orderable": false, "searchable": false,  "targets": [1] }  // Disable search on first and last columns
+	    ],
+	    "serverMethod": 'post',
+	    "ajax": {
+        	"url": "./app/org_controller.php?action=load&endpoint=goal_types",
+        	"method": "POST",
+		    /*dataFilter: function(data) {
+				console.log(data)
+			}*/
+	    },
+	    
+	    "createdRow": function(row, data, dataIndex) { 
+	    	// Add your custom class to the row 
+	    	$(row).addClass('table-row ' +data.status.toLowerCase());
+	    },
+	    columns: [
+	        { title: `Goal Type`, data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.name}</span>
+	                </div>`;
+	        }},
+
+	        { title: "Action", data: null, render: function(data, type, row) {
+            		return `<div class="sflex scenter-items">
+            			<span data-recid="${row.id}" class="fa edit_goalTypeInfo smt-5 cursor smr-10 fa-pencil"></span>
+            			<span data-recid="${row.id}" class="fa delete_goalType smt-5 cursor fa-trash"></span>
+                </div>`;
+	        }},
+	    ]
+	});
+
+	return false;
+}
+
+function handleGoalTypes() {
+    // Ensure jQuery is loaded
+    if (typeof $ === 'undefined') {
+        console.error('jQuery is not loaded. Cannot initialize handleGoalTypes.');
+        return;
+    }
+
+    // Handle Add Goal Type form submission
+    // Note: The form ID is 'addGoalTypeForm' from your HTML
+    $('#addGoalTypeForm').on('submit', function(e) {
+        e.preventDefault(); // Prevent default form submission
+        handle_addGoalTypeForm(this); // 'this' refers to the form element
+        return false;
+    });
+
+    load_goalTypes();
+
+    // Handle Edit Goal Type action
+    $(document).on('click', '.edit_goalTypeInfo', async function(e) {
+        let id = $(this).data('recid');
+        if (!id) {
+            console.error("Edit action: Goal Type ID is missing.");
+            // Consider showing a user-friendly error message
+            return;
+        }
+        let modal = $('#edit_goalType'); // Assumes an edit modal with this ID exists
+
+        if (modal.length === 0) {
+            console.error("Edit Goal Type modal (#edit_goalType) not found.");
+            alert("Edit functionality is currently unavailable. Modal not found."); // Replace with non-blocking UI
+            return;
+        }
+
+        try {
+            let data = await get_goalType(id);
+            if (data) {
+                let res;
+                try {
+                    res = JSON.parse(data)[0];
+                } catch (parseError) {
+                    console.error("Failed to parse goal type data for editing:", parseError, data);
+                    toaster.warning('Could not load goal type details for editing.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                    return;
+                }
+
+                if(res) {
+                    $(modal).find('#goalType_id').val(id); // Assumes an input with this ID exists in edit modal
+                    $(modal).find('#goalTypeName4Edit').val(res.name); // Assumes an input with this ID
+                    $(modal).find('#slcStatus').val(res.status); // Assumes a select/input with this ID
+                    $(modal).modal('show');
+                } else {
+                     toaster.warning('Goal type details not found.', 'Not Found', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                }
+            } else {
+                 toaster.warning('Failed to retrieve goal type details.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            }
+        } catch (err) {
+            console.error('Error occurred while getting goal type for edit:', err);
+            toaster.error('An unexpected error occurred. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        }
+    });
+
+    // Handle Edit Goal Type form submission
+    // Assumes an edit form with ID #editGoalTypeForm exists
+    $('#editGoalTypeForm').on('submit', function(e) {
+        e.preventDefault();
+        handle_editGoalTypeForm(this);
+        return false;
+    });
+
+    // Handle Delete Goal Type action
+    $(document).on('click', '.delete_goalType', async function(e) {
+        let id = $(this).data('recid');
+        if (!id) {
+            console.error("Delete action: Goal Type ID is missing.");
+            // Consider showing a user-friendly error message
+            return;
+        }
+
+        // Ensure swal is available
+        if (typeof swal === 'undefined') {
+            console.error('SweetAlert (swal) is not loaded. Cannot show delete confirmation.');
+            if (confirm(`Are you sure you want to delete this goal type? This action cannot be undone.`)) { // Fallback to native confirm
+                 await processDeleteGoalType(id);
+            }
+            return;
+        }
+
+        swal({
+            title: "Are you sure?",
+            text: `You are about to delete this goal type. This action cannot be undone.`,
+            icon: "warning",
+            className: 'warning-swal',
+            buttons: ["Cancel", "Yes, delete it"],
+            dangerMode: true, // Emphasizes the destructive nature
+        }).then(async (willDelete) => {
+            if (willDelete) {
+                await processDeleteGoalType(id);
+            }
+        });
+    });
+}
+
+
+async function processDeleteGoalType(id) {
+    let data = { id: id };
+    try {
+        // Assume send_orgPost is a global function for making POST requests
+        if (typeof send_orgPost !== 'function') {
+            console.error('send_orgPost function is not defined.');
+            toaster.error('Cannot delete goal type. System error.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            return;
+        }
+        let response = await send_orgPost('delete goal_type', data); // Updated action
+        if (response) {
+            let res;
+            try {
+                res = JSON.parse(response);
+            } catch (parseError) {
+                console.error("Failed to parse delete response:", parseError, response);
+                toaster.warning('Received an invalid response from the server after delete attempt.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                return;
+            }
+
+            if (res.error) {
+                toaster.warning(res.msg || 'Could not delete goal type.', 'Deletion Failed', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            } else {
+                toaster.success(res.msg || 'Goal type deleted successfully.', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                    load_goalTypes(); // Reload the DataTable
+                });
+            }
+        } else {
+            console.log('Failed to delete goal type. Empty response from server.');
+            toaster.error('Failed to delete goal type. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        }
+    } catch (err) {
+        console.error('Error occurred during goal type deletion:', err);
+        toaster.error('An unexpected error occurred while deleting. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+    }
+}
+
+
+
+async function handle_addGoalTypeForm(form) {
+    // Ensure necessary helper functions are available
+    if (typeof clearErrors !== 'function' || typeof validateForm !== 'function' || typeof form_loading !== 'function' || typeof send_orgPost !== 'function' || typeof form_loadingUndo !== 'function' || typeof toaster === 'undefined') {
+        console.error('One or more helper functions (clearErrors, validateForm, form_loading, send_orgPost, form_loadingUndo, toaster) are not defined.');
+        alert('Cannot process form. A system error occurred.'); // Replace with non-blocking UI
+        return;
+    }
+
+    clearErrors(); // Assumes this function clears previous form errors
+    let error = validateForm(form); // Assumes this function validates the form and returns true if errors
+
+    let goalTypeName = $(form).find('#goalTypeName').val(); // ID from your Add Goal Type form
+
+    if (error) {
+        console.log("Validation errors found in add goal type form.");
+        return false;
+    }
+    if (!goalTypeName || goalTypeName.trim() === "") {
+        console.log("Goal Type name is required.");
+        // This should ideally be handled by validateForm, but as a fallback:
+        $(form).find('#goalTypeName').addClass('is-invalid'); // Example: Bootstrap class
+        $(form).find('#goalTypeName').next('.form-error').text('Goal Type name is required.').show();
+        return false;
+    }
+
+
+    let formData = {
+        name: goalTypeName,
+    };
+
+    form_loading(form); // Show loading indicator on the form
+
+    try {
+        let response = await send_orgPost('save goal_type', formData); // Updated action
+        if (response) {
+            let res;
+            try {
+                res = JSON.parse(response);
+            } catch (parseError) {
+                console.error("Failed to parse add response:", parseError, response);
+                toaster.warning('Received an invalid response from the server.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                form_loadingUndo(form);
+                return;
+            }
+
+            // Use Bootstrap's modal method if available, otherwise fallback
+            if ($.fn.modal) {
+                 $('#add_goalType').modal('hide'); // Hide the Add Goal Type modal
+            } else {
+                document.getElementById('add_goalType').style.display = 'none'; // Fallback for hiding
+            }
+
+
+            if (res.error) {
+                toaster.warning(res.msg || 'Could not save goal type.', 'Save Failed', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            } else {
+                toaster.success(res.msg || 'Goal type saved successfully.', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                    form_loadingUndo(form);
+                    load_goalTypes(); // Reload the DataTable
+                    $(form).trigger('reset'); // Reset the form fields
+                });
+            }
+        } else {
+            console.log('Failed to save goal type. Empty response from server.');
+            toaster.error('Failed to save goal type. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            form_loadingUndo(form);
+        }
+    } catch (err) {
+        console.error('Error occurred during add goal type form submission:', err);
+        toaster.error('An unexpected error occurred. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        form_loadingUndo(form);
+    }
+}
+
+
+async function handle_editGoalTypeForm(form) {
+     if (typeof clearErrors !== 'function' || typeof validateForm !== 'function' || typeof form_loading !== 'function' || typeof send_orgPost !== 'function' || typeof form_loadingUndo !== 'function' || typeof toaster === 'undefined') {
+        console.error('One or more helper functions are not defined for edit form.');
+        alert('Cannot process edit form. A system error occurred.');
+        return;
+    }
+
+    clearErrors();
+    let error = validateForm(form);
+
+    let id = $(form).find('#goalType_id').val(); // Assumed ID for hidden input in edit form
+    let name = $(form).find('#goalTypeName4Edit').val(); // Assumed ID for name input in edit form
+    let slcStatus = $(form).find('#slcStatus').val(); // Assumed ID for status input/select in edit form
+
+    if (error) {
+        console.log("Validation errors found in edit goal type form.");
+        return false;
+    }
+     if (!name || name.trim() === "") {
+        console.log("Goal Type name is required for editing.");
+        $(form).find('#goalTypeName4Edit').addClass('is-invalid').next('.form-error').text('Goal Type name is required.').show();
+        return false;
+    }
+
+
+    let formData = {
+        id: id,
+        name: name,
+        status: slcStatus // Changed from slcStatus to status to be more generic
+    };
+
+    form_loading(form);
+
+    try {
+        let response = await send_orgPost('update goal_type', formData); // Updated action
+        if (response) {
+            let res;
+             try {
+                res = JSON.parse(response);
+            } catch (parseError) {
+                console.error("Failed to parse edit response:", parseError, response);
+                toaster.warning('Received an invalid response from the server after edit attempt.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                form_loadingUndo(form);
+                return;
+            }
+
+            if ($.fn.modal) {
+                $('#edit_goalType').modal('hide'); // Hide the Edit Goal Type modal
+            } else {
+                 document.getElementById('edit_goalType').style.display = 'none';
+            }
+
+
+            if (res.error) {
+                toaster.warning(res.msg || 'Could not update goal type.', 'Update Failed', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            } else {
+                toaster.success(res.msg || 'Goal type updated successfully.', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                    form_loadingUndo(form);
+                    load_goalTypes(); // Reload the DataTable
+                });
+            }
+        } else {
+            console.log('Failed to update goal type. Empty response from server.');
+            toaster.error('Failed to update goal type. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            form_loadingUndo(form);
+        }
+    } catch (err) {
+        console.error('Error occurred during edit goal type form submission:', err);
+        toaster.error('An unexpected error occurred while updating. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        form_loadingUndo(form);
+    }
+}
+
+async function get_goalType(id) {
+    if (typeof send_orgPost !== 'function') {
+        console.error('send_orgPost function is not defined. Cannot get goal type.');
+        return null;
+    }
+    let data = { id: id };
+    try {
+        let response = await send_orgPost('get goal_type', data); // Updated action
+        return response;
+    } catch (err) {
+        console.error('Error occurred while fetching goal type:', err);
+        return null; // Return null or throw error as per desired error handling strategy
+    }
+}
+
+// Award types
+function load_awardTypes() {
+    var datatable = $('#awardTypesDT').DataTable({
+        "processing": true,
+        "serverSide": true,
+        "bDestroy": true,
+        "searching": false,  
+        "info": false,
+        "columnDefs": [
+            { "orderable": false, "searchable": false,  "targets": [1] }  // Disable search on first and last columns
+        ],
+        "serverMethod": 'post',
+        "ajax": {
+            "url": "./app/org_controller.php?action=load&endpoint=award_types",
+            "method": "POST",
+        },
+        
+        "createdRow": function(row, data, dataIndex) { 
+            // Add your custom class to the row 
+            $(row).addClass('table-row ' +data.status.toLowerCase());
+        },
+        columns: [
+            { title: `Award Type`, data: null, render: function(data, type, row) {
+                return `<div>
+                        <span>${row.name}</span>
+                    </div>`;
+            }},
+
+            { title: "Action", data: null, render: function(data, type, row) {
+                return `<div class="sflex scenter-items">
+                    <span data-recid="${row.id}" class="fa edit_awardTypeInfo smt-5 cursor smr-10 fa-pencil"></span>
+                    <span data-recid="${row.id}" class="fa delete_awardType smt-5 cursor fa-trash"></span>
+                </div>`;
+            }},
+        ]
+    });
+
+    return false;
+}
+
+function handleAwardTypes() {
+    // Ensure jQuery is loaded
+    if (typeof $ === 'undefined') {
+        console.error('jQuery is not loaded. Cannot initialize handleAwardTypes.');
+        return;
+    }
+
+    // Handle Add Award Type form submission
+    $('#addAwardTypeForm').on('submit', function(e) {
+        e.preventDefault(); // Prevent default form submission
+        handle_addAwardTypeForm(this); // 'this' refers to the form element
+        return false;
+    });
+
+    load_awardTypes();
+
+    // Handle Edit Award Type action
+    $(document).on('click', '.edit_awardTypeInfo', async function(e) {
+        let id = $(this).data('recid');
+        if (!id) {
+            console.error("Edit action: Award Type ID is missing.");
+            return;
+        }
+        let modal = $('#edit_awardType'); 
+
+        if (modal.length === 0) {
+            console.error("Edit Award Type modal (#edit_awardType) not found.");
+            alert("Edit functionality is currently unavailable. Modal not found.");
+            return;
+        }
+
+        try {
+            let data = await get_awardType(id);
+            if (data) {
+                let res;
+                try {
+                    res = JSON.parse(data)[0];
+                } catch (parseError) {
+                    console.error("Failed to parse award type data for editing:", parseError, data);
+                    toaster.warning('Could not load award type details for editing.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                    return;
+                }
+
+                if(res) {
+                    $(modal).find('#awardType_id').val(id);
+                    $(modal).find('#awardTypeName4Edit').val(res.name);
+                    $(modal).find('#slcStatus').val(res.status);
+                    $(modal).modal('show');
+                } else {
+                    toaster.warning('Award type details not found.', 'Not Found', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                }
+            } else {
+                toaster.warning('Failed to retrieve award type details.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            }
+        } catch (err) {
+            console.error('Error occurred while getting award type for edit:', err);
+            toaster.error('An unexpected error occurred. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        }
+    });
+
+    // Handle Edit Award Type form submission
+    $('#editAwardTypeForm').on('submit', function(e) {
+        e.preventDefault();
+        handle_editAwardTypeForm(this);
+        return false;
+    });
+
+    // Handle Delete Award Type action
+    $(document).on('click', '.delete_awardType', async function(e) {
+        let id = $(this).data('recid');
+        if (!id) {
+            console.error("Delete action: Award Type ID is missing.");
+            return;
+        }
+
+        // Ensure swal is available
+        if (typeof swal === 'undefined') {
+            console.error('SweetAlert (swal) is not loaded. Cannot show delete confirmation.');
+            if (confirm(`Are you sure you want to delete this award type? This action cannot be undone.`)) {
+                await processDeleteAwardType(id);
+            }
+            return;
+        }
+
+        swal({
+            title: "Are you sure?",
+            text: `You are about to delete this award type. This action cannot be undone.`,
+            icon: "warning",
+            className: 'warning-swal',
+            buttons: ["Cancel", "Yes, delete it"],
+            dangerMode: true, // Emphasizes the destructive nature
+        }).then(async (willDelete) => {
+            if (willDelete) {
+                await processDeleteAwardType(id);
+            }
+        });
+    });
+}
+
+async function processDeleteAwardType(id) {
+    let data = { id: id };
+    try {
+        let response = await send_orgPost('delete award_type', data);
+        if (response) {
+            let res;
+            try {
+                res = JSON.parse(response);
+            } catch (parseError) {
+                console.error("Failed to parse delete response:", parseError, response);
+                toaster.warning('Received an invalid response from the server after delete attempt.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                return;
+            }
+
+            if (res.error) {
+                toaster.warning(res.msg || 'Failed to delete award type.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                if (res.sql_error) {
+                    console.error('SQL Error:', res.sql_error);
+                }
+            } else {
+                toaster.success(res.msg || 'Award type deleted successfully.', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                    load_awardTypes(); // Reload the DataTable
+                });
+            }
+        } else {
+            console.log('Failed to delete award type. Empty response from server.');
+            toaster.error('Failed to delete award type. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        }
+    } catch (err) {
+        console.error('Error occurred during delete award type operation:', err);
+        toaster.error('An unexpected error occurred while deleting. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+    }
+}
+
+async function handle_addAwardTypeForm(form) {
+    clearErrors();
+
+    let awardTypeName = $(form).find('#awardTypeName').val();
+
+    // Input validation
+    let error = false;
+    error = !validateField(awardTypeName, "Award Type name is required", 'awardTypeName') || error;
+
+    if (error) return false;
+
+    let formData = {
+        awardTypeName: awardTypeName
+    };
+
+    form_loading(form);
+
+    try {
+        let response = await send_orgPost('save award_type', formData);
+
+        if (response) {
+            let res;
+            try {
+                res = JSON.parse(response);
+            } catch (parseError) {
+                console.error("Failed to parse response:", parseError, response);
+                toaster.warning('Received an invalid response from the server.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                form_loadingUndo(form);
+                return;
+            }
+
+            if (res.error) {
+                toaster.warning(res.msg || 'Failed to add award type.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                if (res.sql_error) {
+                    console.error('SQL Error:', res.sql_error);
+                }
+                form_loadingUndo(form);
+            } else {
+                toaster.success(res.msg || 'Award type added successfully.', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                    $('#add_awardType').modal('hide');
+                    form_loadingUndo(form);
+                    $(form)[0].reset(); // Reset the form
+                    load_awardTypes(); // Reload the DataTable
+                });
+            }
+        } else {
+            console.log('Failed to add award type. Empty response from server.');
+            toaster.error('Failed to add award type. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            form_loadingUndo(form);
+        }
+    } catch (err) {
+        console.error('Error occurred during add award type form submission:', err);
+        toaster.error('An unexpected error occurred while adding. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        form_loadingUndo(form);
+    }
+}
+
+async function handle_editAwardTypeForm(form) {
+    clearErrors();
+
+    let id = $(form).find('#awardType_id').val();
+    let name = $(form).find('#awardTypeName4Edit').val();
+    let status = $(form).find('#slcStatus').val();
+
+    // Input validation
+    let error = false;
+    error = !validateField(name, "Award Type name is required", 'awardTypeName4Edit') || error;
+
+    if (error) return false;
+
+    let formData = {
+        id: id,
+        name: name,
+        status: status
+    };
+
+    form_loading(form);
+
+    try {
+        let response = await send_orgPost('update award_type', formData);
+
+        if (response) {
+            let res;
+            try {
+                res = JSON.parse(response);
+            } catch (parseError) {
+                console.error("Failed to parse response:", parseError, response);
+                toaster.warning('Received an invalid response from the server.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                form_loadingUndo(form);
+                return;
+            }
+
+            if (res.error) {
+                toaster.warning(res.msg || 'Failed to update award type.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                if (res.sql_error) {
+                    console.error('SQL Error:', res.sql_error);
+                }
+                form_loadingUndo(form);
+            } else {
+                toaster.success(res.msg || 'Award type updated successfully.', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                    $('#edit_awardType').modal('hide');
+                    form_loadingUndo(form);
+                    load_awardTypes(); // Reload the DataTable
+                });
+            }
+        } else {
+            console.log('Failed to update award type. Empty response from server.');
+            toaster.error('Failed to update award type. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            form_loadingUndo(form);
+        }
+    } catch (err) {
+        console.error('Error occurred during edit award type form submission:', err);
+        toaster.error('An unexpected error occurred while updating. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        form_loadingUndo(form);
+    }
+}
+
+async function get_awardType(id) {
+    if (typeof send_orgPost !== 'function') {
+        console.error('send_orgPost function is not defined. Cannot get award type.');
+        return null;
+    }
+    let data = { id: id };
+    try {
+        let response = await send_orgPost('get award_type', data);
+        return response;
+    } catch (err) {
+        console.error('Error occurred while fetching award type:', err);
+        return null;
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function() {
-	handleOrg();
-	handleBranches();
-	handleStates();
-	handleLocations();
-	handleBanks();
-	handleDesignations();
-	handleProjects();
-	handleContractTypes();
-	handleBudgetCodes();
-	handleAllBanks();
-	handleSubTypes();
+    handleOrg();
+    handleBranches();
+    handleStates();
+    handleLocations();
+    handleBanks();
+    handleDesignations();
+    handleProjects();
+    handleContractTypes();
+    handleBudgetCodes();
+    handleAllBanks();
+    handleSubTypes();
+    handleGoalTypes();
+    handleAwardTypes();
 });

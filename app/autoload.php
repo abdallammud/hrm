@@ -413,7 +413,6 @@ function get_menu_config() {
                     'name' => 'Awards',
                     'route' => 'awards',
                     'auth' => 'manage_awards',
-                    'coming' => true,
                 ],
                 'contracts' => [
                     'default' => 'contracts',
@@ -435,16 +434,17 @@ function get_menu_config() {
             'route' => 'payroll',
             'auth' => 'manage_payroll',
             'sub' => [
-                'manage_payroll' => [
+                'payroll' => [
                     'default' => 'payroll',
-                    'folder' => 'payroll',
                     'name' => 'Manage Payroll',
                     'route' => 'payroll',
                     'auth' => 'manage_payroll',
+                    'actions' => [
+                        'show' => ['file' => 'payroll_show', 'auth' => 'manage_payroll'],
+                    ],
                 ],
                 'transactions' => [
                     'default' => 'transactions',
-                    'folder' => 'transactions',
                     'name' => 'Transactions',
                     'route' => 'transactions',
                     'auth' => 'manage_payroll_transactions',
@@ -466,27 +466,37 @@ function get_menu_config() {
                     'name' => 'Timesheet',
                     'route' => 'timesheet',
                     'auth' => 'manage_timesheet',
+                    'actions' => [
+                        'add' => ['file' => 'add_timesheet_bulk', 'auth' => 'create_timesheet'],
+                        'show' => ['file' => 'timesheet_show', 'auth' => 'manage_timesheet'],
+                    ],
                 ],
                 'attendance' => [
                     'default' => 'attendance',
-                    'folder' => 'attendance',
                     'name' => 'Attendance',
                     'route' => 'attendance',
                     'auth' => 'manage_attendance',
+                    'actions' => [
+                        'add' => ['file' => 'add_attendance', 'auth' => 'create_attendance'],
+                        'show' => ['file' => 'attendance_show', 'auth' => 'manage_attendance'],
+                    ],
                 ],
-                'manage_leave' => [
-                    'default' => 'leave',
-                    'folder' => 'leave',
-                    'name' => 'Manage Leave',
-                    'route' => 'leave',
+                'leave' => [
+                    'default' => 'leave_mgt',
                     'auth' => 'manage_leave',
+                    'route' => 'leave',
+                    'name' => 'Manage Leave',
                 ],
+                
                 'allocation' => [
                     'default' => 'allocation',
                     'folder' => 'allocation',
                     'name' => 'Timesheet Allocation',
                     'route' => 'allocation',
                     'auth' => 'manage_allocation',
+                    'actions' => [
+                        'show' => ['file' => 'allocation_show', 'auth' => 'manage_allocation'],
+                    ],
                 ],
             ],
         ],
@@ -506,6 +516,7 @@ function get_menu_config() {
                     'name' => 'Appraisals',
                     'route' => 'appraisals',
                     'auth' => 'manage_appraisals',
+                    'coming' => true,
                 ],
                 'indicators' => [
                     'default' => 'indicators',
@@ -513,13 +524,15 @@ function get_menu_config() {
                     'name' => 'Indicators',
                     'route' => 'indicators',
                     'auth' => 'manage_indicators',
-                ],
+                    'coming' => true,
+                    ],
                 'goal_tracking' => [
-                    'default' => 'goals',
-                    'folder' => 'goals',
+                    'default' => 'goal_tracking',
+                    'folder' => 'goal_tracking',
                     'name' => 'Goal Tracking',
-                    'route' => 'goals',
-                    'auth' => 'manage_goals',
+                    'route' => 'goal_tracking',
+                    'auth' => 'manage_goal_tracking',
+                    'coming' => true,
                 ],
             ],
         ],
@@ -545,7 +558,7 @@ function get_menu_config() {
                     'folder' => 'payroll_payment',
                     'name' => 'Payroll Payment',
                     'route' => 'payroll_payment',
-                    'auth' => 'manage_payroll_payment',
+                    'auth' => 'manage_payroll_payments',
                 ],
                 'expenses' => [
                     'default' => 'expenses',
@@ -559,12 +572,15 @@ function get_menu_config() {
 
         'reports' => [
             'default' => 'reports',
-            'folder' => 'reports',
+            'folder' => 'reports_fol',
             'name' => 'Reports',
             'icon' => 'graph-up',
             'route' => 'reports',
             'menu' => 'reports',
             'auth' => 'manage_reports',
+            'actions' => [
+                'show' => ['file' => 'report_show', 'auth' => 'manage_reports'],
+            ],
         ],
 
         'training' => [
@@ -596,11 +612,11 @@ function get_menu_config() {
         'management' => [
             'default' => 'management',
             'folder' => 'management',
-            'name' => 'Management',
+            'name' => 'HRM Management',
             'icon' => 'briefcase',
             'route' => 'management',
             'menu' => 'management',
-            'auth' => 'manage_hrm',
+            'auth' => ['manage_hrm', 'manage_resignations', 'manage_transfers', 'manage_promotion', 'manage_complaints', 'manage_warning', 'manage_termination'],
             'sub' => [
                 'resignations' => [
                     'default' => 'resignations',
@@ -616,12 +632,12 @@ function get_menu_config() {
                     'route' => 'transfers',
                     'auth' => 'manage_transfers',
                 ],
-                'promotion' => [
-                    'default' => 'promotion',
-                    'folder' => 'promotion',
-                    'name' => 'Promotion',
-                    'route' => 'promotion',
-                    'auth' => 'manage_promotion',
+                'promotions' => [
+                    'default' => 'promotions',
+                    'folder' => 'promotions',
+                    'name' => 'Promotions',
+                    'route' => 'promotions',
+                    'auth' => 'manage_promotions',
                 ],
                 'complaints' => [
                     'default' => 'complaints',
@@ -630,24 +646,24 @@ function get_menu_config() {
                     'route' => 'complaints',
                     'auth' => 'manage_complaints',
                 ],
-                'warning' => [
-                    'default' => 'warning',
-                    'folder' => 'warning',
-                    'name' => 'Warning',
-                    'route' => 'warning',
+                'warnings' => [
+                    'default' => 'warnings',
+                    'folder' => 'warnings',
+                    'name' => 'Warnings',
+                    'route' => 'warnings',
                     'auth' => 'manage_warnings',
                 ],
-                'termination' => [
-                    'default' => 'termination',
-                    'folder' => 'termination',
-                    'name' => 'Termination',
-                    'route' => 'termination',
-                    'auth' => 'manage_termination',
+                'terminations' => [
+                    'default' => 'terminations',
+                    'folder' => 'terminations',
+                    'name' => 'Terminations',
+                    'route' => 'terminations',
+                    'auth' => 'manage_terminations',
                 ],
             ],
         ],
 
-        'recruitment' => [
+        /* 'recruitment' => [
             'default' => 'recruitment',
             'folder' => 'recruitment',
             'name' => 'Recruitment',
@@ -655,21 +671,58 @@ function get_menu_config() {
             'route' => 'recruitment',
             'menu' => 'recruitment',
             'auth' => 'manage_recruitment',
-        ],
+        ], */
 
         'system_setup' => [
-            'default' => 'system_setup',
-            'folder' => 'system_setup',
+            'default' => 'org',
+            'folder' => 'setup',
             'name' => 'System Setup',
             'icon' => 'tools',
             'route' => 'system_setup',
             'menu' => 'system_setup',
             'auth' => 'manage_system_setup',
+            'sub' => [
+               'setup' => [
+                    'default' => 'org',
+                    'name' => 'Organization',
+                    'route' => 'system_setup',
+                    'auth' => 'manage_organization',
+                    'actions' => [
+                        // 'show' => ['file' => 'chart_show', 'auth' => 'view_chart']
+                    ],
+                ],
+                'branches' => [
+                    'default' => 'branches',
+                    'auth' => 'manage_departments',
+                    'route' => $GLOBALS['branch_keyword']['plu'],
+                    'name' => $GLOBALS['branch_keyword']['plu'],
+                    'actions' => [
+                        'show' => ['file' => 'branch_show', 'auth' => 'view_branch']
+                    ],
+                ],
+                'locations' => [
+                    'default' => 'locations',
+                    'name' => 'Duty Locations',
+                    'route' => 'locations',
+                    'auth' => 'manage_duty_locations',
+                    'actions' => [
+                        'show' => ['file' => 'chart_show', 'auth' => 'view_chart']
+                    ],
+                ],
+               
+                'misc' => [
+                    'default' => 'misc',
+                    'name' => 'HRM System Setup',
+                    'route' => 'misc',
+                    'auth' => ['manage_designations', 'manage_projects', 'manage_budget_codes', 'manage_contract_types', 'manage_transaction_subtypes', 'manage_gaol_types'],
+                ],
+                // Add other submenus here
+            ],
         ],
 
         'settings' => [
             'default' => 'settings',
-            'folder' => 'settings',
+            'folder' => 'settings_fol',
             'name' => 'Settings',
             'icon' => 'gear',
             'route' => 'settings',

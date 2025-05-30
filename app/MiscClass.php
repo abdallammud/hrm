@@ -49,3 +49,21 @@ class TransSubTypesClass extends Model {
 }
 
 $GLOBALS['transSubTypesClass'] = $transSubTypesClass = new TransSubTypesClass();
+
+
+class GoalTypesClass extends Model {
+    public function __construct() {
+        parent::__construct('goal_types');
+    }
+}
+
+$GLOBALS['goalTypesClass'] = $goalTypesClass = new GoalTypesClass();
+
+
+class AwardTypesClass extends Model {
+    public function __construct() {
+        parent::__construct('award_types');
+    }
+}
+
+$GLOBALS['awardTypesClass'] = $awardTypesClass = new AwardTypesClass();

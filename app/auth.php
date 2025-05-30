@@ -65,7 +65,7 @@ if(isset($_GET['action'])) {
 	} 
 }
 
-function get_landingMenu($user_id) {
+function get_landingMenu2($user_id) {
     $menu = null;
     $permissions = $GLOBALS['userClass']->getPermissions($user_id);
     // var_dump($permissions);
@@ -101,6 +101,42 @@ function get_landingMenu($user_id) {
     }
 
     return $menu;
+}
+function get_landingMenu($user_id) {
+    $permissions = $GLOBALS['userClass']->getPermissions($user_id);
+
+    // Centralized route configuration (ordered by priority)
+    $menuConfig = [
+        ['permission' => 'manage_dashboard', 'route' => './dashboard'],
+        ['permission' => 'manage_employees', 'route' => './employees'],
+        ['permission' => 'manage_documents', 'route' => './documents'],
+        ['permission' => 'manage_attendance', 'route' => './attendance'],
+        ['permission' => 'manage_leave', 'route' => './leave'],
+        ['permission' => 'manage_payroll', 'route' => './payroll'],
+        ['permission' => 'manage_designations', 'route' => './misc'],
+        ['permission' => 'manage_projects', 'route' => './misc'],
+        ['permission' => 'manage_budget_codes', 'route' => './misc'],
+        ['permission' => 'manage_contract_types', 'route' => './misc'],
+        ['permission' => 'manage_transaction_subtypes', 'route' => './misc'],
+        ['permission' => 'manage_payroll', 'route' => './payroll'],
+        ['permission' => 'manage_payroll_transactions', 'route' => './transactions'],
+        ['permission' => 'manage_timesheet', 'route' => './timesheet'],
+        ['permission' => 'manage_users', 'route' => './users'],
+        ['permission' => 'manage_reports', 'route' => './reports'],
+        ['permission' => 'manage_settings', 'route' => './settings'],
+    ];
+
+    // Convert to faster lookup
+    $userPermissions = array_flip($permissions);
+
+    foreach ($menuConfig as $item) {
+        if (isset($userPermissions[$item['permission']])) {
+            return $item['route'];
+        }
+    }
+
+    // Optional: define a default landing page
+    return './dashboard'; // or './unauthorized', or null if you want to handle that explicitly
 }
 
 function set_sessions($user_id) {

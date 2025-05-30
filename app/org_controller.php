@@ -382,6 +382,68 @@ if(isset($_GET['action'])) {
 
 				// Return the result as a JSON response (for example in an API)
 				echo json_encode($result);
+			} else if($_GET['endpoint'] == 'goal_type') {
+				try {
+				    // Prepare data from POST request
+				    $post = escapePostData($_POST);
+				    check_auth('add_goal_types');
+				    $data = array(
+				        'name' => $post['goalTypeName'],
+				        'status' => 'Active',
+				        'created_date' => date('Y-m-d H:i:s')
+				    );
+
+				    // Create the goal type
+				    $result['id'] = $goalTypesClass->create($data);
+
+				    // Goal type created
+				    if($result['id']) {
+				        $result['msg'] = 'Goal type has been added successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+
+				} catch (Exception $e) {
+				    // Catch any exceptions from the create method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
+			} else if($_GET['endpoint'] == 'award_type') {
+				try {
+				    // Prepare data from POST request
+				    $post = escapePostData($_POST);
+				    check_auth('create_award_types');
+				    $data = array(
+				        'name' => $post['awardTypeName'],
+				    );
+
+				    // Create the award type
+				    $result['id'] = $awardTypesClass->create($data);
+
+				    // Award type created
+				    if($result['id']) {
+				        $result['msg'] = 'Award type has been added successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+
+				} catch (Exception $e) {
+				    // Catch any exceptions from the create method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
 			}
 
 			exit();
@@ -774,6 +836,76 @@ if(isset($_GET['action'])) {
 				    // If the branch is editted successfully, return a success message
 				    if($result['id']) {
 				        $result['msg'] = 'Subtype info editted successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+
+				} catch (Exception $e) {
+				    // Catch any exceptions from the create method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
+			} else if($_GET['endpoint'] == 'goal_type') {
+				try {
+				    // Prepare data from POST request
+				    $post = escapePostData($_POST);
+				    $data = array(
+				        'name' => $post['name'], 
+				        'status' => isset($post['status']) ? $post['status']: "Active" ,
+				        'updated_by' => $_SESSION['user_id'],
+				        'updated_date' => $updated_date
+				    );
+
+				    check_exists('goal_types', ['name' => $post['name']], ['id' => $post['id']]);
+				    check_auth('edit_goal_types');
+
+				    // Call the create method
+				    $result['id'] = $goalTypesClass->update($post['id'], $data);
+
+				    // If the branch is editted successfully, return a success message
+				    if($result['id']) {
+				        $result['msg'] = 'Goal type info editted successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+
+				} catch (Exception $e) {
+				    // Catch any exceptions from the create method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
+			} else if($_GET['endpoint'] == 'award_type') {
+				try {
+				    // Prepare data from POST request
+				    $post = escapePostData($_POST);
+				    $data = array(
+				        'name' => $post['name'], 
+				        'status' => isset($post['status']) ? $post['status']: "Active" ,
+				        'updated_by' => $_SESSION['user_id'],
+				        'updated_date' => $updated_date
+				    );
+
+				    check_exists('award_types', ['name' => $post['name']], ['id' => $post['id']]);
+				    check_auth('edit_award_types');
+
+				    // Call the create method
+				    $result['id'] = $awardTypesClass->update($post['id'], $data);
+
+				    // If the award type is edited successfully, return a success message
+				    if($result['id']) {
+				        $result['msg'] = 'Award type info edited successfully';
 				        $result['error'] = false;
 				    } else {
 				        $result['msg'] = 'Something went wrong, please try again';
@@ -1269,6 +1401,88 @@ if(isset($_GET['action'])) {
 			    } else {
 			        $result['msg'] = "No records found";
 			    }
+			} else if ($_GET['endpoint'] === 'goal_types') {
+				if (isset($_POST['order']) && isset($_POST['order'][0])) {
+				    $orderColumnMap = ['name'];
+				    $orderByIndex = (int)$_POST['order'][0]['column'];
+				    $orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
+				    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+				}
+			    // Base query
+			    $query = "SELECT * FROM `goal_types` WHERE `id` IS NOT NULL";
+
+			    // Add search functionality
+			    if ($searchParam) {
+			        $query .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%')";
+			    }
+
+			    // Add ordering
+			    $query .= " ORDER BY `$orderBy` $order LIMIT $start, $length";
+
+			    // Execute query
+			    $goal_types = $GLOBALS['conn']->query($query);
+
+			    // Count total records for pagination
+			    $countQuery = "SELECT COUNT(*) as total FROM `goal_types` WHERE `id` IS NOT NULL";
+			    if ($searchParam) {
+			        $query .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%')";
+			    }
+
+			    // Execute count query
+			    $totalRecordsResult = $GLOBALS['conn']->query($countQuery);
+			    $totalRecords = $totalRecordsResult->fetch_assoc()['total'];
+
+			    if ($goal_types->num_rows > 0) {
+			        while ($row = $goal_types->fetch_assoc()) {
+			            $result['data'][] = $row;
+			        }
+			        $result['iTotalRecords'] = $totalRecords;
+			        $result['iTotalDisplayRecords'] = $totalRecords;
+			        $result['msg'] = $goal_types->num_rows . " records were found.";
+			    } else {
+			        $result['msg'] = "No records found";
+			    }
+			} else if ($_GET['endpoint'] === 'award_types') {
+				if (isset($_POST['order']) && isset($_POST['order'][0])) {
+				    $orderColumnMap = ['name'];
+				    $orderByIndex = (int)$_POST['order'][0]['column'];
+				    $orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
+				    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+				}
+			    // Base query
+			    $query = "SELECT * FROM `award_types` WHERE `id` IS NOT NULL";
+
+			    // Add search functionality
+			    if ($searchParam) {
+			        $query .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%')";
+			    }
+
+			    // Add ordering
+			    $query .= " ORDER BY `$orderBy` $order LIMIT $start, $length";
+
+			    // Execute query
+			    $award_types = $GLOBALS['conn']->query($query);
+
+			    // Count total records for pagination
+			    $countQuery = "SELECT COUNT(*) as total FROM `award_types` WHERE `id` IS NOT NULL";
+			    if ($searchParam) {
+			        $countQuery .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%')";
+			    }
+
+			    // Execute count query
+			    $totalRecordsResult = $GLOBALS['conn']->query($countQuery);
+			    $totalRecords = $totalRecordsResult->fetch_assoc()['total'];
+
+			    if ($award_types->num_rows > 0) {
+			        while ($row = $award_types->fetch_assoc()) {
+			            $result['data'][] = $row;
+			        }
+			        $result['iTotalRecords'] = $totalRecords;
+			        $result['iTotalDisplayRecords'] = $totalRecords;
+			        $result['msg'] = $award_types->num_rows . " records were found.";
+			    } else {
+			        $result['msg'] = "No records found";
+			    }
 			}
 
 			echo json_encode($result);
@@ -1335,6 +1549,10 @@ if(isset($_GET['action'])) {
 				json(get_data('banks', array('id' => $_POST['id'])));
 			} else if ($_GET['endpoint'] === 'subtype') {
 				json(get_data('trans_subtypes', array('id' => $_POST['id'])));
+			} else if ($_GET['endpoint'] === 'goal_type') {
+				json(get_data('goal_types', array('id' => $_POST['id'])));
+			} else if ($_GET['endpoint'] === 'award_type') {
+				json(get_data('award_types', array('id' => $_POST['id'])));
 			}
 
 			exit();
@@ -1606,6 +1824,56 @@ if(isset($_GET['action'])) {
 				    // Company deleted
 				    if($deleted) {
 				        $result['msg'] = 'Subtype has been  deleted successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+
+				} catch (Exception $e) {
+				    // Catch any exceptions from the create method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
+			} else if ($_GET['endpoint'] === 'goal_type') {
+				try {
+				    // Delete branchClass
+				    $post = escapePostData($_POST);
+				    check_auth('delete_goal_types');
+				    $deleted = $goalTypesClass->delete($post['id']);
+
+				    // Company deleted
+				    if($deleted) {
+				        $result['msg'] = 'Goal type has been  deleted successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+
+				} catch (Exception $e) {
+				    // Catch any exceptions from the create method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
+			} else if ($_GET['endpoint'] === 'award_type') {
+				try {
+				    // Delete award type
+				    $post = escapePostData($_POST);
+				    check_auth('delete_award_types');
+				    $deleted = $awardTypesClass->delete($post['id']);
+
+				    // Award type deleted
+				    if($deleted) {
+				        $result['msg'] = 'Award type has been deleted successfully';
 				        $result['error'] = false;
 				    } else {
 				        $result['msg'] = 'Something went wrong, please try again';
