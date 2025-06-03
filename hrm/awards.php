@@ -1,13 +1,17 @@
-<div class="page content">
-	<div class="page-breadcrumb d-sm-flex align-items-center mb-3">
-        <h5 class="">Awards</h5>
+<div class="page content header">
+    <div class="page-breadcrumb d-sm-flex align-items-center ">
+        <h5 class="spy-10">Awards</h5>
         <div class="ms-auto d-sm-flex">
         	<div class="btn-group smr-10">
-	            <button type="button" data-bs-toggle="modal" data-bs-target="#add_award"  class="btn btn-primary">Add Award</button>
+	            <button type="button" data-bs-toggle="modal" data-bs-target="#add_award"  class="btn btn-primary">
+                    <i class="bi bi-plus"></i>
+                    Add
+                </button>
 	        </div>
         </div>
     </div>
-    <hr>
+</div>
+<div class="page content">
     <div class="card">
 		<div class="card-body">
 			<div class="table-responsive">

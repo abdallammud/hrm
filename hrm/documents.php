@@ -1,4 +1,9 @@
-<div class="row">
+<div class="page content header">
+	<div class="page-breadcrumb d-sm-flex align-items-center sp-y-10">
+        <h5 class="spy-10">Documents</h5>
+    </div>
+</div>
+
 	<div class="page content">
 		<div class="col-sm-12 col-md-12 col-lg-12">
 			<ul class="nav nav-tabs" id="myTab" role="tablist">
@@ -15,17 +20,7 @@
 			</ul>
 			<div class="tab-content" id="myTabContent">
 				<div class="tab-pane fade show active" id="documents" role="tabpanel" aria-labelledby="home-tab">
-					<div class="page-breadcrumb mt-3 d-sm-flex align-items-center mb-3">
-						<h5 class="">Documents</h5>
-						<div class="ms-auto d-sm-flex">
-							<div class="btn-group smr-10">
-								
-							</div>
-						</div>
-					</div>
-					<hr>
-					
-					<div class="">
+					<div class="smt-10">
 						<div class="">
 							<input type="text" class="form-control" id="searchFolder" placeholder="Search folder">
 							<div class="row" id="folders">
@@ -78,7 +73,7 @@
 			</div>
 		</div>
 	</div>
-</div>
+
 <script type="text/javascript">
 
 </script>

@@ -1,17 +1,21 @@
-<div class="page content">
-	<div class="page-breadcrumb d-sm-flex align-items-center mb-3">
+<div class="page content header">
+	<div class="page-breadcrumb d-sm-flex align-items-center sp-y-10">
         <h5 class="">Employees</h5>
         <div class="ms-auto d-sm-flex">
-        	<div class="btn-group smr-10">
-	            <button type="button" data-bs-toggle="modal" data-bs-target="#upload_employees"  class="btn btn-primary">Upload employees</button>
-	        </div>
-            <div class="btn-group smr-10">
-                <a href="<?=baseUri();?>/employees/add"  class="btn btn-primary">Add Employee</a>
+            <div class="btn-group smr-20">
+                <a href="<?=baseUri();?>/employees/add"  class="btn btn-primary sflex scenter-items"><span class="fa fa-plus"></span> Add </a>
             </div>
+            <div class="btn-group smr-35 ">
+                <label type="button" data-bs-toggle="modal" data-bs-target="#upload_employees"  class="smt-7">
+                    <span class="fa fa-upload"></span>
+                    Bulk 
+                </label>
+	        </div>
+           
             <div class="ms-auto d-none d-md-block">
                 <div class="btn-group">
-                    <button type="button" class="btn btn-outline-primary">Actions</button>
-                    <button type="button" class="btn btn-outline-primary split-bg-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown"> <span class="visually-hidden">Toggle Dropdown</span>
+                    <button type="button" class="btn btn-outline-primary">More</button>
+                    <button type="button" class="btn btn-outline-primary split-bg-primary dropdown-toggle actions dropdown-toggle-split" data-bs-toggle="dropdown"> <span class="visually-hidden">Toggle Dropdown</span>
                     </button>
                     <div class="dropdown-menu dropdown-menu-right dropdown-menu-lg-end">
                         <a class="dropdown-item cursor  edit-table_customize" data-table="employeesDT"> Edit table columns</a>
@@ -22,7 +26,9 @@
         </div>
 
     </div>
-    <hr>
+</div>
+<div class="page content">
+    
     <div class="card">
 		<div class="card-body">
 			<div class="row d-md-none d-lg-flex">

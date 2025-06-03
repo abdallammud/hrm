@@ -394,6 +394,7 @@ function get_menu_config() {
                     'name' => 'All Employees',
                     'route' => 'employees',
                     'auth' => 'manage_employees',
+                    'icon' => 'people',
                     'actions' => [
                         'add' => ['file' => 'employee_add', 'auth' => 'create_employees'],
                         'show' => ['file' => 'employee_show', 'auth' => 'manage_employees'],
@@ -405,6 +406,7 @@ function get_menu_config() {
                     'auth' => 'manage_employee_docs',
                     'route' => 'documents',
                     'name' => 'Documents',
+                    'icon' => 'file-earmark-text',
                     'js' => ['docs'],
                 ],
                 'awards' => [
@@ -413,15 +415,16 @@ function get_menu_config() {
                     'name' => 'Awards',
                     'route' => 'awards',
                     'auth' => 'manage_awards',
+                    'icon' => 'trophy',
                 ],
-                'contracts' => [
+                /* 'contracts' => [
                     'default' => 'contracts',
                     'folder' => 'contracts',
                     'name' => 'Contracts',
                     'route' => 'contracts',
                     'auth' => 'manage_contracts',
                     'coming' => true,
-                ],
+                ], */
             ],
         ],
 
@@ -439,6 +442,7 @@ function get_menu_config() {
                     'name' => 'Manage Payroll',
                     'route' => 'payroll',
                     'auth' => 'manage_payroll',
+                    'icon' => 'calculator',
                     'actions' => [
                         'show' => ['file' => 'payroll_show', 'auth' => 'manage_payroll'],
                     ],
@@ -448,6 +452,7 @@ function get_menu_config() {
                     'name' => 'Transactions',
                     'route' => 'transactions',
                     'auth' => 'manage_payroll_transactions',
+                    'icon' => 'plus-slash-minus',
                 ],
             ],
         ],
@@ -466,6 +471,7 @@ function get_menu_config() {
                     'name' => 'Timesheet',
                     'route' => 'timesheet',
                     'auth' => 'manage_timesheet',
+                    'icon' => 'clock-history',
                     'actions' => [
                         'add' => ['file' => 'add_timesheet_bulk', 'auth' => 'create_timesheet'],
                         'show' => ['file' => 'timesheet_show', 'auth' => 'manage_timesheet'],
@@ -476,6 +482,7 @@ function get_menu_config() {
                     'name' => 'Attendance',
                     'route' => 'attendance',
                     'auth' => 'manage_attendance',
+                    'icon' => 'calendar2-check',
                     'actions' => [
                         'add' => ['file' => 'add_attendance', 'auth' => 'create_attendance'],
                         'show' => ['file' => 'attendance_show', 'auth' => 'manage_attendance'],
@@ -486,6 +493,7 @@ function get_menu_config() {
                     'auth' => 'manage_leave',
                     'route' => 'leave',
                     'name' => 'Manage Leave',
+                    'icon' => 'calendar-range',
                 ],
                 
                 'allocation' => [
@@ -494,6 +502,7 @@ function get_menu_config() {
                     'name' => 'Timesheet Allocation',
                     'route' => 'allocation',
                     'auth' => 'manage_allocation',
+                    'icon' => 'calendar-check',
                     'actions' => [
                         'show' => ['file' => 'allocation_show', 'auth' => 'manage_allocation'],
                     ],

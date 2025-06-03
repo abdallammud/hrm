@@ -28,11 +28,18 @@ foreach ($menus as $sideMenu) {
 			foreach ($sideMenu['sub'] as $sub) {
 				if(check_session($sub['auth'])) {
 					$activeSub = '';
-					if($tab == $sub['route']) $activeSub = 'active mm-active';
+					$icon = 'caret-right';
+					if(isset($sub['icon'])) {
+						$icon = $sub['icon'];
+					}
+					if($tab == $sub['route']) {
+						$activeSub = 'active mm-active';
+						// $icon = 'caret-down';
+					}
 					$sidebar .= '
 						<li class="'.$activeSub.'">
 							<a href="'.baseUri().'/'.strtolower($sub['route']).'">
-								<i class="bi caret bi-caret-right"></i>
+								<i class="bi caret bi-'.strtolower($icon).'"></i>
 								'.$sub['name'].'
 							</a>
 						</li>';

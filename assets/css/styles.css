@@ -20,6 +20,9 @@
 	min-height: 80vh;
 	margin: 20px 0px;
 }
+.page.content.header {
+	min-height: 30px;
+}
 
 .info-tooltip {
 	position: relative;
@@ -91,6 +94,7 @@
 
 * {
 	font-family: osr, "Noto Sans", sans-serif;
+	font-size: 14px;
 }
 
 .ff-osl {
@@ -389,7 +393,7 @@ img.profile-img {
 	display: none;
 }
 
-button.btn.dropdown-toggle{
+button.btn.dropdown-toggle:not(.actions){
 	background-color: var(--bs-body-bg);
 	color: var(--bs-body-color);
 	height: 46px;
@@ -408,11 +412,15 @@ button.btn.dropdown-toggle{
 
 
 .sidebar-wrapper .sidebar-nav .metismenu a .parent-icon .bi {
-	font-size: 20px;
+	font-size: 17px;
 	font-weight: bold;
 }
+.sidebar-wrapper .sidebar-nav .metismenu ul a {
+	font-size: 14px;
+}
 .sidebar-wrapper .sidebar-nav .metismenu ul a i {
-	font-size: 0.7em;;
+	font-size: 13px;
+	margin-right: 10px;
 }
 .sidebar-wrapper .sidebar-nav .metismenu ul {
 	padding-left: 25px;
