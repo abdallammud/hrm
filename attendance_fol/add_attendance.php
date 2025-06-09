@@ -133,6 +133,9 @@
         height: 20px;
         margin-right: 10px;;
     }
+    #attendanceTable .form-control {
+        padding: .3rem .75rem;
+    }
 </style>
 
 <?php 

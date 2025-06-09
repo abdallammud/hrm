@@ -151,9 +151,16 @@
 }
 .close.modal-close {
 	background: transparent;
-    border: 0px;
-    font-size: 2em;
-    color: #d39898;
+	border: 0px;
+	font-size: 13em !important;
+	color: #d39898;
+	display: flex;
+	align-items: center;
+	height: 50px;
+	/* font-size: 20px; */
+}
+.close.modal-close span {
+	font-size: 20px;
 }
 .modal-body {
 	padding-top: 0px;
@@ -397,6 +404,7 @@ button.btn.dropdown-toggle:not(.actions){
 	background-color: var(--bs-body-bg);
 	color: var(--bs-body-color);
 	height: 46px;
+	line-height: 35px;
 	border: var(--bs-border-width) solid var(--bs-border-color);
 }
 

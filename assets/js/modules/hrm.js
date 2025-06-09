@@ -1586,13 +1586,13 @@ function loadAwards() {
             { title: "Date", data: "award_date", render: function(data) {
                 return formatDate(data);
             }},
-            { title: "Status", data: "status", render: function(data) {
-                return `<span class="badge badge-${data === 'Active' ? 'success' : 'danger'}">${data}</span>`;
-            }},
+           
+
+
+            // <span data-id="${row.id}" class="fa edit-award smt-5 cursor smr-10 fa-pencil"></span>
             { title: "Actions", data: null, render: function(data, type, row) {
-                return `<div class="btn-group">
-                    <button type="button" class="btn btn-sm btn-info edit-award" data-id="${row.id}" data-toggle="modal" data-target="#edit_award"><i class="fas fa-edit"></i></button>
-                    <button type="button" class="btn btn-sm btn-danger delete-award" data-id="${row.id}"><i class="fas fa-trash"></i></button>
+                return `<div class="btn-group sflex scenter-items">
+            		<span data-id="${row.id}" class="fa delete-award smt-5 cursor fa-trash"></span>
                 </div>`;
             }}
         ],
@@ -1747,37 +1747,38 @@ async function handleEditAwardForm(form) {
 
 // Delete Award
 async function deleteAward(awardId) {
-    if (!confirm('Are you sure you want to delete this award?')) {
-        return;
-    }
-    
-    try {
-        const response = await send_hrmPost('delete award', { id: awardId });
-        const res = JSON.parse(response);
-        
-        if (res.error) {
-            toaster.warning(res.msg || 'Failed to delete award', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
-        } else {
-            toaster.success(res.msg || 'Award deleted successfully', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
-                loadAwards();
-            });
+    // Use swall for confirmation
+    swal({
+        title: "Are you sure?",
+        text: "You are going to delete this award.",
+        icon: "warning",
+        className: 'warning-swal',
+        buttons: ["Cancel", "Yes, delete"],
+    }).then(async (confirm) => {
+        if (confirm) {
+            let data = { id: awardId };
+            try {
+                let response = await send_hrmPost('delete award', data);
+                if (response) {
+                    let res = JSON.parse(response);
+                    if (res.error) {
+                        toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                    } else {
+                        toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 2000 }).then(() => {
+                            loadAwards();
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error('Error occurred:', err);
+            }
         }
-    } catch (err) {
-        console.error('Error occurred during award deletion:', err);
-        toaster.error('An unexpected error occurred. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
-    }
+    });
+
+    return;
+
+
 }
 
-// Helper function to format date
-function formatDate(dateString) {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
-}
 
-// Helper function to show validation errors
-function showError(selector, message) {
-    $(selector).addClass('is-invalid');
-    $(selector).next('.form-error').text(message).show();
-}
 

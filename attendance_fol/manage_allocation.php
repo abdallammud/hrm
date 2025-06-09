@@ -31,7 +31,7 @@ if(isset($_GET['id'])) {
 			<div class="card">
 				<form id="add_allocationForm" class="card-body">
                     <div class="row">
-                        <div class="col col-sm-12 col-md-3 col-lg-3">
+                        <div class="col col-sm-12 col-md-4 col-lg-4">
                             <div class="form-group ">
                                 <label class="label required" for="searchEmployee">Employee</label>
                                 <input type="hidden" name="" class="prevMonth" id="prevMonth" value="<?=$month;?>">
@@ -57,7 +57,7 @@ if(isset($_GET['id'])) {
                             </div>
                         </div>
 
-                        <div class="col col-sm-12 col-md-3 col-lg-3">
+                        <div class="col col-sm-12 col-md-4 col-lg-4">
                             <div class="form-group ">
                                 <label class="label required" for="searchSupervisor">Supervisor</label>
                                 <select class="my-select searchSupervisor" name="searchSupervisor" id="searchSupervisor" data-live-search="true" title="Search and select empoyee">
@@ -82,7 +82,7 @@ if(isset($_GET['id'])) {
                             </div>
                         </div>
 
-                        <div class="col col-sm-12 col-md-2 col-lg-2">
+                        <div class="col col-sm-12 col-md-3 col-lg-3">
                             <div class="form-group">
                                 <label class="label required" for="rsaMonth">Timesheet month</label>
                                 <input type="month"  class="form-control cursor rsaMonth " id="rsaMonth" value="<?php echo $month; ?>" name="rsaMonth">

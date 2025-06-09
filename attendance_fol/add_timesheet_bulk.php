@@ -139,6 +139,9 @@
     .time_in {
         margin-right: 10px;
     }
+    #attendanceTable .form-control {
+        padding: .3rem .75rem;
+    }
 </style>
 
 <?php 
