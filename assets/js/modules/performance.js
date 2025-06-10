@@ -294,45 +294,13 @@ async function handle_editIndicatorsForm(form) {
 }
 
 function handleAppraisals() {
-    $('#slcDepartment').on('change', function() {
-        let department_id = $(this).val();
-        let formData = {department_id:department_id}
+    $('#slcDepartment, #slcDesignation').on('change', function() {
+        let department_id = $('#slcDepartment').val();
+        let designation_id = $('#slcDesignation').val();
+        let formData = {department_id:department_id, designation_id:designation_id}
         try {
             send_performancePost('get indicator4Appraisals', formData).then(response => {
-                if (response) {
-                    let res = JSON.parse(response);
-                    if (!res.error && res.data) {
-                        // Get the indicator data
-                        let indicator = res.data;
-                        let attributes = JSON.parse(indicator.attributes);
-                        
-                        // Update each indicator rating based on the returned data
-                        if (attributes.business_pro) {
-                            $(`input[name="indicator_business_pro"][value="${attributes.business_pro}"]`).prop('checked', true);
-                        }
-                        if (attributes.oral_com) {
-                            $(`input[name="indicator_oral_com"][value="${attributes.oral_com}"]`).prop('checked', true);
-                        }
-                        if (attributes.leadership) {
-                            $(`input[name="indicator_leadership"][value="${attributes.leadership}"]`).prop('checked', true);
-                        }
-                        if (attributes.project_mgt) {
-                            $(`input[name="indicator_project_mgt"][value="${attributes.project_mgt}"]`).prop('checked', true);
-                        }
-                        if (attributes.res_allocating) {
-                            $(`input[name="indicator_res_allocating"][value="${attributes.res_allocating}"]`).prop('checked', true);
-                        }
-                        
-                        // Show a notification that indicators have been loaded
-                        toaster.info('Indicators loaded for selected department', 'Info', { top: '20%', right: '20px', hide: true, duration: 2000 });
-                    } else if (res.error) {
-                        // Reset all indicators if no data found or there's an error
-                        $('input[name^="indicator_"]').prop('checked', false);
-                        if (res.msg) {
-                            toaster.info(res.msg, 'Info', { top: '20%', right: '20px', hide: true, duration: 2000 });
-                        }
-                    }
-                }
+                console.log(response);
             });
         } catch (err) {
             console.error('Error occurred during indicator search:', err);

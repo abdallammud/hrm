@@ -10,7 +10,7 @@
             <div class="modal-body">
                 <div>
                     <div class="row">
-                        <div class="col col-xs-12 col-md-12 col-lg-6">
+                        <div class="col col-xs-12 col-md-12 col-lg-5">
                             <div class="form-group">
                                 <label class="label required" for="slcDepartment">Department</label>
                                 <select type="text"  class="form-control validate slcDepartment" data-msg="Please select department" name="slcDepartment" id="slcDepartment">
@@ -20,7 +20,17 @@
                                 <span class="form-error text-danger">This is error</span>
                             </div>
                         </div>
-                        <div class="col col-xs-12 col-md-12 col-lg-6">
+                        <div class="col col-xs-12 col-md-12 col-lg-4">
+                            <div class="form-group">
+                                <label class="label required" for="slcDesignation">Designation</label>
+                                <select type="text"  class="form-control validate slcDesignation" data-msg="Please select designation" name="slcDesignation" id="slcDesignation">
+                                    <option value="All"> All</option>
+                                    <?php select_active('designations');?>
+                                </select>
+                                <span class="form-error text-danger">This is error</span>
+                            </div>
+                        </div>
+                        <div class="col col-xs-12 col-md-12 col-lg-3">
                             <div class="form-group">
                                 <label class="label required" for="txtMonth">Month</label>
                                 <input type="month" class="form-control validate" value="<?php echo date('Y-m'); ?>" data-msg="Please enter month" name="txtMonth" id="txtMonth">

@@ -248,30 +248,11 @@ if(isset($_GET['action'])) {
 						'project_mgt' => 0,
 						'res_allocating' => 0
 					];
+
 					
-					// Extract ratings from the attributes
-					foreach($attributes_array as $category => $items) {
-						foreach($items as $item) {
-							if($item['name'] == 'Business Process') {
-								$simplified_attributes['business_pro'] = $item['rating'];
-							} else if($item['name'] == 'Oral Communication') {
-								$simplified_attributes['oral_com'] = $item['rating'];
-							} else if($item['name'] == 'Leadership') {
-								$simplified_attributes['leadership'] = $item['rating'];
-							} else if($item['name'] == 'Project Management') {
-								$simplified_attributes['project_mgt'] = $item['rating'];
-							} else if($item['name'] == 'Allocating Resources') {
-								$simplified_attributes['res_allocating'] = $item['rating'];
-							}
-						}
-					}
-					
-					// Update the indicator with simplified attributes
-					$indicator['attributes'] = json_encode($simplified_attributes);
 					
 					$result['error'] = false;
 					$result['msg'] = 'Indicators found';
-					$result['data'] = $indicator;
 				}
 				
 				echo json_encode($result);

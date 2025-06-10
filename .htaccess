@@ -17,26 +17,13 @@ RewriteRule ^documents/([0-9-]+)$ index.php?menu=hrm&tab=documents&action=show&i
 
 RewriteRule ^awards/?$ index.php?menu=hrm&tab=awards [NC,L]
 
-
 RewriteRule ^contracts/?$ index.php?menu=hrm&tab=contracts [NC,L]
 RewriteRule ^contracts/add/?$ index.php?menu=hrm&tab=contracts&action=add [NC,L]
 RewriteRule ^contracts/([0-9-]+)$ index.php?menu=hrm&tab=contracts&action=show&id=$1 [NC,L]
 
-
 RewriteRule ^payroll/?$ index.php?menu=payroll&tab=payroll [NC,L]
 RewriteRule ^transactions/?$ index.php?menu=payroll&tab=transactions [NC,L]
 RewriteRule ^payroll/([0-9-]+)$ index.php?menu=payroll&tab=payroll&action=show&payroll_id=$1 [NC,L]
-
-
-
-
-
-
-
-
-
-
-
 
 RewriteRule ^system_setup/?$ index.php?menu=system_setup [NC,L]
 RewriteRule ^system_setup/show?$ index.php?menu=system_setup&action=show [NC,L]
@@ -45,14 +32,14 @@ RewriteRule ^branches/?$ index.php?menu=system_setup&tab=branches [NC,L]
 RewriteRule ^offices/?$ index.php?menu=system_setup&tab=branches [NC,L]
 RewriteRule ^warehouses/?$ index.php?menu=system_setup&tab=branches [NC,L]
 
-RewriteRule ^chart/?$ index.php?menu=system_setup&tab=chart [NC,L]
-
 RewriteRule ^locations/?$ index.php?menu=system_setup&tab=locations [NC,L]
 RewriteRule ^currency/?$ index.php?menu=system_setup&tab=currency [NC,L]
 RewriteRule ^banks/?$ index.php?menu=system_setup&tab=banks [NC,L]
 RewriteRule ^misc/?$ index.php?menu=system_setup&tab=misc [NC,L]
 
-
+RewriteRule ^appraisals/?$ index.php?menu=performance&tab=appraisals [NC,L]
+RewriteRule ^indicators/?$ index.php?menu=performance&tab=indicators [NC,L]
+RewriteRule ^tracking/?$ index.php?menu=performance&tab=tracking [NC,L]
 
 
 
