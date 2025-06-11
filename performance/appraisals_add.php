@@ -1,4 +1,4 @@
-<div class="modal show fade" style="display: block;"   data-bs-focus="false" id="add_appraisals" tabindex="-1" role="dialog" aria-labelledby="addAppraisalsLabel" aria-hidden="true">
+<div class="modal  fade"   data-bs-focus="false" id="add_appraisals" tabindex="-1" role="dialog" aria-labelledby="addAppraisalsLabel" aria-hidden="true">
     <div class="modal-dialog" role="transaction"style="min-width:700px; width: 700px; max-width: 700px;">
         <form class="modal-content" id="addAppraisalsForm" style="border-radius: 14px 14px 0px 0px; margin-top: -15px;">
             <div class="modal-header">
@@ -14,6 +14,7 @@
                             <div class="form-group">
                                 <label class="label required" for="slcDepartment">Department</label>
                                 <select type="text"  class="form-control validate slcDepartment" data-msg="Please select department" name="slcDepartment" id="slcDepartment">
+                                    <option value="">Select Department</option>
                                     <option value="All"> All</option>
                                     <?php select_active('branches');?>
                                 </select>
@@ -24,6 +25,7 @@
                             <div class="form-group">
                                 <label class="label required" for="slcDesignation">Designation</label>
                                 <select type="text"  class="form-control validate slcDesignation" data-msg="Please select designation" name="slcDesignation" id="slcDesignation">
+                                    <option value="">Select Designation</option>
                                     <option value="All"> All</option>
                                     <?php select_active('designations');?>
                                 </select>
@@ -64,6 +66,16 @@
 
                                     ?>
                                 </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col col-xs-12">
+                            <div class="form-group">
+                                <label class="label required" for="txtRemarks">Remarks</label>
+                                <textarea name="txtRemarks" id="txtRemarks" class="form-control"></textarea>
+                                <span class="form-error text-danger">This is error</span>
                             </div>
                         </div>
                     </div>

@@ -386,11 +386,10 @@ if(isset($_GET['action'])) {
 				try {
 				    // Prepare data from POST request
 				    $post = escapePostData($_POST);
-				    check_auth('add_goal_types');
+				    check_auth('create_goal_types');
 				    $data = array(
-				        'name' => $post['goalTypeName'],
-				        'status' => 'Active',
-				        'created_date' => date('Y-m-d H:i:s')
+				        'name' => $post['name'],
+				        'added_by' => $_SESSION['user_id']
 				    );
 
 				    // Create the goal type

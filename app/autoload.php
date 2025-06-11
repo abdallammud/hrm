@@ -488,14 +488,6 @@ function get_menu_config() {
                         'show' => ['file' => 'attendance_show', 'auth' => 'manage_attendance'],
                     ],
                 ],
-                'leave' => [
-                    'default' => 'leave_mgt',
-                    'auth' => 'manage_leave',
-                    'route' => 'leave',
-                    'name' => 'Manage Leave',
-                    'icon' => 'calendar-range',
-                ],
-                
                 'allocation' => [
                     'default' => 'res_allocation',
                     'name' => 'Timesheet Allocation',
@@ -506,6 +498,16 @@ function get_menu_config() {
                         'add' => ['file' => 'manage_allocation', 'auth' => 'create_allocation'],
                     ],
                 ],
+                
+                'leave' => [
+                    'default' => 'leave_mgt',
+                    'auth' => 'manage_leave',
+                    'route' => 'leave',
+                    'name' => 'Manage Leave',
+                    'icon' => 'calendar-range',
+                ],
+                
+                
             ],
         ],
 
@@ -534,11 +536,10 @@ function get_menu_config() {
                     'auth' => 'manage_indicators',
                     'icon' => 'speedometer2',
                 ],
-                'goal_tracking' => [
+                'tracking' => [
                     'default' => 'goal_tracking',
-                    'folder' => 'goal_tracking',
                     'name' => 'Goal Tracking',
-                    'route' => 'goal_tracking',
+                    'route' => 'tracking',
                     'auth' => 'manage_goal_tracking',
                     'icon' => 'bullseye',
                 ],
