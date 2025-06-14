@@ -557,24 +557,24 @@ function get_menu_config() {
             'sub' => [
                 'accounts' => [
                     'default' => 'accounts',
-                    'folder' => 'accounts',
                     'name' => 'Manage Accounts',
                     'route' => 'accounts',
                     'auth' => 'manage_accounts',
+                    'icon' => 'currency-dollar',
                 ],
                 'payroll_payment' => [
                     'default' => 'payroll_payment',
-                    'folder' => 'payroll_payment',
                     'name' => 'Payroll Payment',
                     'route' => 'payroll_payment',
                     'auth' => 'manage_payroll_payments',
+                    'icon' => 'calculator',
                 ],
                 'expenses' => [
                     'default' => 'expenses',
-                    'folder' => 'expenses',
                     'name' => 'Other Expenses',
                     'route' => 'expenses',
                     'auth' => 'manage_expenses',
+                    'icon' => 'coin',
                 ],
             ],
         ],

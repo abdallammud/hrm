@@ -63,7 +63,7 @@
                                 <label class="label required" for="transStatus4Edit">Status</label>
                                 <select  class="form-control validate" data-msg="leave type name is required" id="transStatus4Edit" name="transStatus4Edit">
                                     <option value="Request">Request</option>
-                                    <?php if(check_session('approve_employee_transactions')) { ?>
+                                    <?php if(check_session('manage_payroll_transactions')) { ?>
                                         <option value="Approved">Approved</option>
                                     <?php } ?>
                                 </select>

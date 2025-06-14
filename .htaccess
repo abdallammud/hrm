@@ -37,26 +37,6 @@ RewriteRule ^currency/?$ index.php?menu=system_setup&tab=currency [NC,L]
 RewriteRule ^banks/?$ index.php?menu=system_setup&tab=banks [NC,L]
 RewriteRule ^misc/?$ index.php?menu=system_setup&tab=misc [NC,L]
 
-RewriteRule ^appraisals/?$ index.php?menu=performance&tab=appraisals [NC,L]
-RewriteRule ^indicators/?$ index.php?menu=performance&tab=indicators [NC,L]
-RewriteRule ^tracking/?$ index.php?menu=performance&tab=tracking [NC,L]
-
-
-
-
-
-
-
-
-
-RewriteRule ^designations/?$ index.php?menu=hrm&tab=designations [NC,L]
-
-
-
-
-
-
-
 RewriteRule ^attendance/?$ index.php?menu=attendance&tab=attendance [NC,L]
 RewriteRule ^attendance/add/?$ index.php?menu=attendance&tab=attendance&action=add [NC,L]
 RewriteRule ^leave/?$ index.php?menu=attendance&tab=leave [NC,L]
@@ -66,9 +46,21 @@ RewriteRule ^allocation/?$ index.php?menu=attendance&tab=allocation [NC,L]
 RewriteRule ^allocation/add/?$ index.php?menu=attendance&tab=allocation&action=add [NC,L]
 RewriteRule ^allocation/edit/([0-9-]+)/?$ index.php?menu=attendance&tab=allocation&action=add&id=$1  [NC,L]
 
+RewriteRule ^appraisals/?$ index.php?menu=performance&tab=appraisals [NC,L]
+RewriteRule ^indicators/?$ index.php?menu=performance&tab=indicators [NC,L]
+RewriteRule ^tracking/?$ index.php?menu=performance&tab=tracking [NC,L]
+
+RewriteRule ^accounts/?$ index.php?menu=finance&tab=accounts [NC,L]
+RewriteRule ^payroll_payment/?$ index.php?menu=finance&tab=payroll_payment [NC,L]
+RewriteRule ^expenses/?$ index.php?menu=finance&tab=expenses [NC,L]
 
 
 
+
+
+
+
+RewriteRule ^designations/?$ index.php?menu=hrm&tab=designations [NC,L]
 
 RewriteRule ^payments/?$ index.php?menu=payments&tab=payments [NC,L]
 

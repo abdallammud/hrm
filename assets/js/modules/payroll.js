@@ -551,7 +551,7 @@ function load_showPayroll(payroll_id, month) {
 	    // "searching": false,  
 	    "info": false,
 	    "columnDefs": [
-	        { "orderable": false, "searchable": false,  "targets": [7] }  // Disable search on first and last columns
+	        { "orderable": false, "searchable": false,  "targets": [0] }  // Disable search on first and last columns
 	    ],
 
 	    "serverMethod": 'post',
@@ -572,7 +572,6 @@ function load_showPayroll(payroll_id, month) {
 	    	// $(row).addClass('table-row ' +data.status.toLowerCase());
 	    	// $('#showpayrollDT_wrapper').find('td').css('display', 'none')
 	    	//
-
 	    	tableColumns.map((column) => {
 	    		// $('#showpayrollDT_wrapper').find('td.'+column).css('display', 'flex')
 	    		// $('#showpayrollDT_wrapper').find('th.'+column).css('display', 'flex')
@@ -580,15 +579,24 @@ function load_showPayroll(payroll_id, month) {
 	    },
 	    "drawCallback": function(settings) {
 	    	$('#showpayrollDT_wrapper').find('td').css('display', 'none');
-	    	 $('#showpayrollDT_wrapper').find('th').css('display', 'none')
-	    	 tableColumns.map((column) => {
-	    		$('#showpayrollDT_wrapper').find('td.'+column).css('display', 'table-cell')
-	    		$('#showpayrollDT_wrapper').find('th.'+column).css('display', 'table-cell')
-	    	})
+	    	$('#showpayrollDT_wrapper').find('th').css('display', 'none');
+	    	tableColumns.map((column) => {
+	    		$('#showpayrollDT_wrapper').find('td.'+column).css('display', 'table-cell');
+	    		$('#showpayrollDT_wrapper').find('th.'+column).css('display', 'table-cell');
+	    	});
+	    	// Always show the checkbox column
+	    	$('#showpayrollDT_wrapper').find('td.bulk-checkbox').css('display', 'table-cell');
+	    	$('#showpayrollDT_wrapper').find('th:first-child').css('display', 'table-cell');
 	    },
 	    columns: [
 
-	    	{ title: `Staff No. `, data: null,  className: "staff_no", render: function(data, type, row) {
+	    	{ title: `<input type="checkbox" class="select-all-checkbox">`, data: null, className: "bulk-checkbox", render: function(data, type, row) {
+	            return `<div> 
+	            		<input type="checkbox" class="row-checkbox" data-id="${row.id}" data-emp_id="${row.emp_id}" data-payroll_id="${row.payroll_id}" >
+	                </div>`;
+	        }},
+	        
+			{ title: `Staff No. `, data: null,  className: "staff_no", render: function(data, type, row) {
 	            return `<div> 
 	            		<span>${row.staff_no} </span>
 	                </div>`;
@@ -702,6 +710,12 @@ function load_showPayroll(payroll_id, month) {
                 </div>`;
 	        }},
 	    ]
+	});
+
+	// Add event handlers for bulk action checkboxes
+	$(document).on('change', '.select-all-checkbox', function() {
+		const isChecked = $(this).prop('checked');
+		$('.row-checkbox').prop('checked', isChecked);
 	});
 
 	return false;
@@ -828,40 +842,17 @@ function handlePayroll() {
 	$(document).on('click', '.approve_payrollBtn', async (e) => {
 	    let id = $(e.currentTarget).data('recid');
 	    let emp_id = $(e.currentTarget).data('emp_id');
-	    swal({
-	        title: "Are you sure?",
-	        text: `You are going to approve this payroll  record.`,
-	        icon: "warning",
-	        // className: 'warning-swal',
-	        buttons: ["Cancel", "Yes, approve"],
-	    }).then(async (confirm) => {
-	        if (confirm) {
-	            let data = { id: id, emp_id:emp_id };
-	            try {
-	                let response = await send_payrollPost('update approvePayroll', data);
-	                console.log(response)
-	                if (response) {
-	                    let res = JSON.parse(response);
-	                    if (res.error) {
-	                        toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 3000 }).then(() => {
-			            		location.reload();
-			            	});;
-	                    } else {
-	                        toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
-	                            location.reload();
-	                            // load_branches();
-	                        });
-	                        console.log(res);
-	                    }
-	                } else {
-	                    console.log('Failed to edit state.' + response);
-	                }
-
-	            } catch (err) {
-	                console.error('Error occurred during form submission:', err);
-	            }
-	        }
-	    });
+		swal({
+			title: "Are you sure?",
+			text: `You are going to approve this payroll  record.`,
+			icon: "warning",
+			// className: 'warning-swal',
+			buttons: ["Cancel", "Yes, approve"],
+		}).then(async (confirm) => {
+			if (confirm) {
+				approve_payroll(id, emp_id)
+			}
+		})
 	});
 
 	// Pay payroll
@@ -937,30 +928,7 @@ function handlePayroll() {
 	        buttons: ["Cancel", "Yes, delete"],
 	    }).then(async (confirm) => {
 	        if (confirm) {
-	            let data = { id: id };
-	            try {
-	                let response = await send_payrollPost('delete payrollDetail', data);
-	                console.log(response)
-	                if (response) {
-	                    let res = JSON.parse(response);
-	                    if (res.error) {
-	                        toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 3000 }).then(() => {
-			            		location.reload();
-			            	});;
-	                    } else {
-	                        toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
-	                            location.reload();
-	                            // load_branches();
-	                        });
-	                        console.log(res);
-	                    }
-	                } else {
-	                    console.log('Failed to edit state.' + response);
-	                }
-
-	            } catch (err) {
-	                console.error('Error occurred during form submission:', err);
-	            }
+				delete_payrollDetail(id)
 	        }
 	    });
 	});
@@ -1020,6 +988,143 @@ function handlePayroll() {
 		});
 	});
 
+	// 	Bulk actions
+	$('#bulk_actions').on('change', (e) => {
+		let action = $(e.target).val();
+		if(action) {
+			let ids = [];
+			let emp_ids = [];
+			let payroll_ids = [];
+			$('.row-checkbox:checked').each(function() {
+				ids.push($(this).data('id'));
+				emp_ids.push($(this).data('emp_id'));
+				payroll_ids.push($(this).data('payroll_id'));
+			});
+			if(ids.length > 0) {
+				if(action == 'approve') {
+					swal({
+						title: "Are you sure?",
+						text: `You are going to approve selected payroll  records.`,
+						icon: "warning",
+						// className: 'warning-swal',
+						buttons: ["Cancel", "Yes, approve"],
+					}).then(async (confirm) => {
+						if (confirm) {
+							let autoreload = false;
+							ids.map((id, index) => {
+								if(id == ids[ids.length - 1]) autoreload = true;
+								approve_payroll(payroll_ids[index], emp_ids[index], autoreload);
+							})
+						}
+					})
+				} else if(action == 'request') {
+					swal({
+						title: "Are you sure?",
+						text: `You are going to change status request to selected payroll  records.`,
+						icon: "warning",
+						// className: 'warning-swal',
+						buttons: ["Cancel", "Yes, change status to request"],
+					}).then(async (confirm) => {
+						if (confirm) {
+							let autoreload = false;
+							ids.map((id, index) => {
+								if(id == ids[ids.length - 1]) autoreload = true;
+								approve_payroll(payroll_ids[index], emp_ids[index], 'Pending', autoreload);
+							})
+						}
+					})
+				} else if(action == 'reject') {
+					swal({
+						title: "Are you sure?",
+						text: `You are going to reject selected payroll  records.`,
+						icon: "warning",
+						// className: 'warning-swal',
+						buttons: ["Cancel", "Yes, reject"],
+					}).then(async (confirm) => {
+						if (confirm) {
+							let autoreload = false;
+							ids.map((id, index) => {
+								if(id == ids[ids.length - 1]) autoreload = true;
+								approve_payroll(payroll_ids[index], emp_ids[index], 'Rejected', autoreload);
+							})
+						}
+					})
+				} else if(action == 'delete') {
+					swal({
+						title: "Are you sure?",
+						text: `You are going to delete selected payroll  records.`,
+						icon: "warning",
+						// className: 'warning-swal',
+						buttons: ["Cancel", "Yes, delete"],
+					}).then(async (confirm) => {
+						if (confirm) {
+							let autoreload = false;
+							ids.map((id, index) => {
+								if(id == ids[ids.length - 1]) autoreload = true;
+								delete_payrollDetail(id, autoreload);
+							})
+						}
+					})
+				}
+			}
+		}
+	})
+
+}
+
+async function approve_payroll(id, emp_id, status = 'Approved', autoreload = true) {
+	let data = { id: id, emp_id:emp_id, status:status };
+	try {
+		let response = await send_payrollPost('update approvePayroll', data);
+		console.log(response)
+		if (response) {
+			let res = JSON.parse(response);
+			if (res.error) {
+				toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 3000 }).then(() => {
+					if(autoreload) location.reload();
+				});;
+			} else {
+				toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+					if(autoreload) location.reload();
+					// load_branches();
+				});
+				console.log(res);
+			}
+		} else {
+			console.log('Failed to edit state.' + response);
+		}
+
+	} catch (err) {
+		console.error('Error occurred during form submission:', err);
+	}
+		
+}
+
+async function delete_payrollDetail(id, autoreload = true) {
+	let data = { id: id };
+	try {
+		let response = await send_payrollPost('delete payrollDetail', data);
+		console.log(response)
+		if (response) {
+			let res = JSON.parse(response);
+			if (res.error) {
+				toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 3000 }).then(() => {
+					if(autoreload) location.reload();
+				});;
+			} else {
+				toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+					if(autoreload) location.reload();
+					// load_branches();
+				});
+				console.log(res);
+			}
+		} else {
+			console.log('Failed to edit state.' + response);
+		}
+
+	} catch (err) {
+		console.error('Error occurred during form submission:', err);
+	}
 }
 
 async function handle_generatePayrollForm(form) {

@@ -6,8 +6,8 @@
 				<div class="col-lg-12 d-flex">
 					<div class="card-body">
 						<img src="assets/images/<?=get_logo_name_from_url();?>" class="mb-4" width="145" alt="">
-						<h4 class="fw-bold">Get Started Now</h4>
-						<p class="mb-0">Enter your credentials to login your account</p>
+						<h4 class="fw-bold">Login</h4>
+						<p class="mb-0">Please login to continue to your account</p>
 
 						<div class="form-body mt-4">
 							<form class="row g-3" id="userLoginForm">
@@ -38,7 +38,7 @@
 								</div>
 								<div class="col-12 mt-2">
 									<div class="d-grid">
-										<button type="submit" class="btn btn-primary">Login</button>
+										<button type="submit" class="btn btn-primary" style="padding: 12px; font-weight: 600;">Login</button>
 									</div>
 								</div>
 						

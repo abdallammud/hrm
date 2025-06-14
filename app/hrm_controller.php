@@ -198,9 +198,10 @@ if(isset($_GET['action'])) {
 				                }
 
 				                // Process each entity and handle creation or retrieval
+								$location_id = checkAndCreateEntity('locations', $location, $myUserId, $locationsClass);
 				                $branch_id = checkAndCreateEntity('branches', $branch, $myUserId, $branchClass);
 				                $state_id = checkAndCreateEntity('states', $state, $myUserId, $statesClass);
-				                $location_id = checkAndCreateEntity('locations', $location, $myUserId, $locationsClass);
+				                
 				                $designation_id = checkAndCreateEntity('designations', $designation, $myUserId, $designationsClass);
 				                $contract_type_id = checkAndCreateEntity('contract_types', $contract_type, $myUserId, $contractTypesClass);
 								

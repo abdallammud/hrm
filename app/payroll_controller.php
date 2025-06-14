@@ -377,7 +377,7 @@ if(isset($_GET['action'])) {
 			    	check_auth('edit_payroll_transactions');
 
 			    	if($post['status'] == 'Approved') {
-			    		check_auth('approve_employee_transactions');
+			    		check_auth('manage_payroll_transactions');
 			    	}
 
 			    	$result['id'] = $employeeTransactionsClass->update($transaction_id, $data);
@@ -402,7 +402,7 @@ if(isset($_GET['action'])) {
 			} else if($_GET['endpoint'] == 'approvePayroll') {
 				try {
 					$post = escapePostData($_POST);
-					$status = 'Approved';
+					$status = $post['status'];
 					$payrollId = $post['id']; 
 					$emp_id = isset($post['emp_id']) ? $post['emp_id'] : ''; 
 				   	$data = array(
@@ -427,7 +427,7 @@ if(isset($_GET['action'])) {
 
 				    // If the branch is created successfully, return a success message
 				    if($result['id']) {
-				        $result['msg'] = 'Payroll approved successfully successfully';
+				        $result['msg'] = 'Payroll status changed successfully';
 				        $result['error'] = false;
 				    } else {
 				        $result['msg'] = 'Something went wrong, please try again';

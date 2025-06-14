@@ -22,6 +22,8 @@
 }
 .page.content.header {
 	min-height: 30px;
+	padding: 25px;
+	border-top: 3px solid #0d6efd;
 }
 
 .info-tooltip {
