@@ -53,23 +53,17 @@ RewriteRule ^tracking/?$ index.php?menu=performance&tab=tracking [NC,L]
 RewriteRule ^accounts/?$ index.php?menu=finance&tab=accounts [NC,L]
 RewriteRule ^payroll_payment/?$ index.php?menu=finance&tab=payroll_payment [NC,L]
 RewriteRule ^expenses/?$ index.php?menu=finance&tab=expenses [NC,L]
-
-
-
-
-
-
+RewriteRule ^income/?$ index.php?menu=finance&tab=income [NC,L]
 
 RewriteRule ^designations/?$ index.php?menu=hrm&tab=designations [NC,L]
-
 RewriteRule ^payments/?$ index.php?menu=payments&tab=payments [NC,L]
-
-
-
-
 
 RewriteRule ^reports/?$ index.php?menu=reports&tab=reports [NC,L]
 RewriteRule ^reports/([a-zA-Z0-9-]+)$ index.php?menu=reports&action=show&report=$1 [NC,L]
+
+RewriteRule ^trainers/?$ index.php?menu=training&tab=trainers [NC,L]
+RewriteRule ^training/?$ index.php?menu=training&tab=training [NC,L]
+
 
 
 
