@@ -143,7 +143,7 @@ require('./customize_table.php');
     }
     #showpayrollDT_filter {
         position: absolute;
-        top: 4.5%;
+        top: 6%;
     }
 
     @media (max-width: 980px) {

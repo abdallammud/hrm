@@ -443,6 +443,108 @@ if(isset($_GET['action'])) {
 
 				// Return the result as a JSON response (for example in an API)
 				echo json_encode($result);
+			} else if($_GET['endpoint'] == 'financial_account') {
+				try {
+				    // Prepare data from POST request
+				    $post = escapePostData($_POST);
+				    check_auth('create_financial_accounts');
+				    $data = array(
+				        'name' => $post['financialAccountName'],
+				        'type' => $post['accountType'],
+				        'status' => 'Active',
+				        'added_by' => $_SESSION['user_id'],
+				        'added_date' => date('Y-m-d H:i:s')
+				    );
+
+				    check_exists('financial_accounts', ['name' => $post['financialAccountName']]);
+
+				    // Call the create method
+				    $result['id'] = $financialAccountsClass->create($data);
+
+				    // If the financial account is created successfully, return a success message
+				    if($result['id']) {
+				        $result['msg'] = 'Financial account created successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+
+				} catch (Exception $e) {
+				    // Catch any exceptions from the create method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
+			} else if($_GET['endpoint'] == 'training_options') {
+				try {
+				    // Prepare data from POST request
+				    $post = escapePostData($_POST);
+				    check_auth('create_training_options');
+				    $data = array(
+				        'name' => $post['name'],
+				        'added_by' => $_SESSION['user_id']
+				    );
+
+				    check_exists('training_options', ['name' => $post['name']]);
+
+				    // Call the create method
+				    $result['id'] = $trainingOptionsClass->create($data);
+
+				    // If the training option is created successfully, return a success message
+				    if($result['id']) {
+				        $result['msg'] = 'Training option created successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+
+				} catch (Exception $e) {
+				    // Catch any exceptions from the create method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
+			} else if($_GET['endpoint'] == 'training_types') {
+				try {
+				    // Prepare data from POST request
+				    $post = escapePostData($_POST);
+				    check_auth('create_training_types');
+				    $data = array(
+				        'name' => $post['name'],
+				        'added_by' => $_SESSION['user_id']
+				    );
+
+				    check_exists('training_types', ['name' => $post['name']]);
+
+				    // Call the create method
+				    $result['id'] = $trainingTypesClass->create($data);
+
+				    // If the training type is created successfully, return a success message
+				    if($result['id']) {
+				        $result['msg'] = 'Training type created successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+
+				} catch (Exception $e) {
+				    // Catch any exceptions from the create method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
 			}
 
 			exit();
@@ -920,7 +1022,115 @@ if(isset($_GET['action'])) {
 
 				// Return the result as a JSON response (for example in an API)
 				echo json_encode($result);
+			} else if($_GET['endpoint'] == 'financial_account') {
+				try {
+				    // Prepare data from POST request
+				    $post = escapePostData($_POST);
+				    $data = array(
+				        'name' => $post['financialAccountName4Edit'], 
+				        'type' => $post['accountType4Edit'],
+				        'status' => isset($post['slcStatus4Edit']) ? $post['slcStatus4Edit']: "Active" ,
+				        'updated_by' => $_SESSION['user_id'],
+				        'updated_date' => $updated_date
+				    );
+
+				    check_exists('financial_accounts', ['name' => $post['financialAccountName4Edit']], ['id' => $post['financialAccount_id']]);
+				    check_auth('edit_financial_accounts');
+
+				    // Call the update method
+				    $result['id'] = $financialAccountsClass->update($post['financialAccount_id'], $data);
+
+				    // If the financial account is edited successfully, return a success message
+				    if($result['id']) {
+				        $result['msg'] = 'Financial account info edited successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+
+				} catch (Exception $e) {
+				    // Catch any exceptions from the update method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
+			} else if($_GET['endpoint'] == 'training_options') {
+				try {
+				    // Prepare data from POST request
+				    $post = escapePostData($_POST);
+				    $data = array(
+				        'name' => $post['name'], 
+				        'status' => isset($post['status']) ? $post['status']: "Active" ,
+				        'updated_by' => $_SESSION['user_id'],
+				        'updated_date' => $updated_date
+				    );
+
+				    check_exists('training_options', ['name' => $post['name']], ['id' => $post['id']]);
+				    check_auth('edit_training_options');
+
+				    // Call the update method
+				    $result['id'] = $trainingOptionsClass->update($post['id'], $data);
+
+				    // If the training option is edited successfully, return a success message
+				    if($result['id']) {
+				        $result['msg'] = 'Training option info edited successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+
+				} catch (Exception $e) {
+				    // Catch any exceptions from the update method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
+			} else if($_GET['endpoint'] == 'training_types') {
+				try {
+				    // Prepare data from POST request
+				    $post = escapePostData($_POST);
+				    $data = array(
+				        'name' => $post['name'], 
+				        'status' => isset($post['status']) ? $post['status']: "Active" ,
+				        'updated_by' => $_SESSION['user_id'],
+				        'updated_date' => $updated_date
+				    );
+
+				    check_exists('training_types', ['name' => $post['name']], ['id' => $post['id']]);
+				    check_auth('edit_training_types');
+
+				    // Call the update method
+				    $result['id'] = $trainingTypesClass->update($post['id'], $data);
+
+				    // If the training type is edited successfully, return a success message
+				    if($result['id']) {
+				        $result['msg'] = 'Training type info edited successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+
+				} catch (Exception $e) {
+				    // Catch any exceptions from the update method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
 			}
+
+			exit();
 		}
 
 
@@ -1014,7 +1224,7 @@ if(isset($_GET['action'])) {
 			    // Count total records for pagination
 			    $countQuery = "SELECT COUNT(*) as total FROM `branches` WHERE `id` IS NOT NULL";
 			    if ($searchParam) {
-			        $countQuery .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%' OR `contact_phone` LIKE '%" . escapeStr($searchParam) . "%' OR `contact_email` LIKE '%" . escapeStr($searchParam) . "%' OR `address` LIKE '%" . escapeStr($searchParam) . "%')";
+			        $query .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%' OR `contact_phone` LIKE '%" . escapeStr($searchParam) . "%' OR `contact_email` LIKE '%" . escapeStr($searchParam) . "%' OR `address` LIKE '%" . escapeStr($searchParam) . "%')";
 			    }
 
 			    // Execute count query
@@ -1482,6 +1692,129 @@ if(isset($_GET['action'])) {
 			    } else {
 			        $result['msg'] = "No records found";
 			    }
+			} else if ($_GET['endpoint'] === 'financial_accounts') {
+				if (isset($_POST['order']) && isset($_POST['order'][0])) {
+				    $orderColumnMap = ['name', 'type', 'status'];
+				    $orderByIndex = (int)$_POST['order'][0]['column'];
+				    $orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
+				    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+				}
+			    // Base query
+			    $query = "SELECT * FROM `financial_accounts` WHERE `id` IS NOT NULL";
+
+			    // Add search functionality
+			    if ($searchParam) {
+			        $query .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%' OR `type` LIKE '%" . escapeStr($searchParam) . "%')";
+			    }
+
+			    // Add ordering
+			    $query .= " ORDER BY `$orderBy` $order LIMIT $start, $length";
+
+			    // Execute query
+			    $financial_accounts = $GLOBALS['conn']->query($query);
+
+			    // Count total records for pagination
+			    $countQuery = "SELECT COUNT(*) as total FROM `financial_accounts` WHERE `id` IS NOT NULL";
+			    if ($searchParam) {
+			        $countQuery .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%' OR `type` LIKE '%" . escapeStr($searchParam) . "%')";
+			    }
+
+			    // Execute count query
+			    $totalRecordsResult = $GLOBALS['conn']->query($countQuery);
+			    $totalRecords = $totalRecordsResult->fetch_assoc()['total'];
+
+			    if ($financial_accounts->num_rows > 0) {
+			        while ($row = $financial_accounts->fetch_assoc()) {
+			            $result['data'][] = $row;
+			        }
+			        $result['iTotalRecords'] = $totalRecords;
+			        $result['iTotalDisplayRecords'] = $totalRecords;
+			        $result['msg'] = $financial_accounts->num_rows . " records were found.";
+			    } else {
+			        $result['msg'] = "No records found";
+			    }
+			} else if ($_GET['endpoint'] === 'training_options') {
+				if (isset($_POST['order']) && isset($_POST['order'][0])) {
+				    $orderColumnMap = ['name'];
+				    $orderByIndex = (int)$_POST['order'][0]['column'];
+				    $orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
+				    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+				}
+			    // Base query
+			    $query = "SELECT * FROM `training_options` WHERE `id` IS NOT NULL";
+
+			    // Add search functionality
+			    if ($searchParam) {
+			        $query .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%')";
+			    }
+
+			    // Add ordering
+			    $query .= " ORDER BY `$orderBy` $order LIMIT $start, $length";
+
+			    // Execute query
+			    $training_options = $GLOBALS['conn']->query($query);
+
+			    // Count total records for pagination
+			    $countQuery = "SELECT COUNT(*) as total FROM `training_options` WHERE `id` IS NOT NULL";
+			    if ($searchParam) {
+			        $query .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%')";
+			    }
+
+			    // Execute count query
+			    $totalRecordsResult = $GLOBALS['conn']->query($countQuery);
+			    $totalRecords = $totalRecordsResult->fetch_assoc()['total'];
+
+			    if ($training_options->num_rows > 0) {
+			        while ($row = $training_options->fetch_assoc()) {
+			            $result['data'][] = $row;
+			        }
+			        $result['iTotalRecords'] = $totalRecords;
+			        $result['iTotalDisplayRecords'] = $totalRecords;
+			        $result['msg'] = $training_options->num_rows . " records were found.";
+			    } else {
+			        $result['msg'] = "No records found";
+			    }
+			} else if ($_GET['endpoint'] === 'training_types') {
+				if (isset($_POST['order']) && isset($_POST['order'][0])) {
+				    $orderColumnMap = ['name'];
+				    $orderByIndex = (int)$_POST['order'][0]['column'];
+				    $orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
+				    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+				}
+			    // Base query
+			    $query = "SELECT * FROM `training_types` WHERE `id` IS NOT NULL";
+
+			    // Add search functionality
+			    if ($searchParam) {
+			        $query .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%')";
+			    }
+
+			    // Add ordering
+			    $query .= " ORDER BY `$orderBy` $order LIMIT $start, $length";
+
+			    // Execute query
+			    $training_types = $GLOBALS['conn']->query($query);
+
+			    // Count total records for pagination
+			    $countQuery = "SELECT COUNT(*) as total FROM `training_types` WHERE `id` IS NOT NULL";
+			    if ($searchParam) {
+			        $query .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%')";
+			    }
+
+			    // Execute count query
+			    $totalRecordsResult = $GLOBALS['conn']->query($countQuery);
+			    $totalRecords = $totalRecordsResult->fetch_assoc()['total'];
+
+			    if ($training_types->num_rows > 0) {
+			        while ($row = $training_types->fetch_assoc()) {
+			            $result['data'][] = $row;
+			        }
+			        $result['iTotalRecords'] = $totalRecords;
+			        $result['iTotalDisplayRecords'] = $totalRecords;
+			        $result['msg'] = $training_types->num_rows . " records were found.";
+			    } else {
+			        $result['msg'] = "No records found";
+			    }
 			}
 
 			echo json_encode($result);
@@ -1552,6 +1885,12 @@ if(isset($_GET['action'])) {
 				json(get_data('goal_types', array('id' => $_POST['id'])));
 			} else if ($_GET['endpoint'] === 'award_type') {
 				json(get_data('award_types', array('id' => $_POST['id'])));
+			} else if ($_GET['endpoint'] === 'financial_account') {
+				json(get_data('financial_accounts', array('id' => $_POST['id'])));
+			} else if ($_GET['endpoint'] === 'training_options') {
+				json(get_data('training_options', array('id' => $_POST['id'])));
+			} else if ($_GET['endpoint'] === 'training_types') {
+				json(get_data('training_types', array('id' => $_POST['id'])));
 			}
 
 			exit();
@@ -1881,6 +2220,81 @@ if(isset($_GET['action'])) {
 
 				} catch (Exception $e) {
 				    // Catch any exceptions from the create method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
+			} else if ($_GET['endpoint'] === 'financial_account') {
+				try {
+				    // Delete financial account
+				    $post = escapePostData($_POST);
+				    check_auth('delete_financial_accounts');
+				    $deleted = $financialAccountsClass->delete($post['id']);
+
+				    // Financial account deleted
+				    if($deleted) {
+				        $result['msg'] = 'Financial account has been deleted successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+
+				} catch (Exception $e) {
+				    // Catch any exceptions from the delete method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
+			} else if ($_GET['endpoint'] === 'training_options') {
+				try {
+				    // Delete training option
+				    $post = escapePostData($_POST);
+				    check_auth('delete_training_options');
+				    $deleted = $trainingOptionsClass->delete($post['id']);
+
+				    // Training option deleted
+				    if($deleted) {
+				        $result['msg'] = 'Training option has been deleted successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+
+				} catch (Exception $e) {
+				    // Catch any exceptions from the delete method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
+			} else if ($_GET['endpoint'] === 'training_types') {
+				try {
+				    // Delete training type
+				    $post = escapePostData($_POST);
+				    check_auth('delete_training_types');
+				    $deleted = $trainingTypesClass->delete($post['id']);
+
+				    // Training type deleted
+				    if($deleted) {
+				        $result['msg'] = 'Training type has been deleted successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+
+				} catch (Exception $e) {
+				    // Catch any exceptions from the delete method and return an error message
 				    $result['msg'] = 'Error: Something went wrong';
 				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
 				    $result['error'] = true;

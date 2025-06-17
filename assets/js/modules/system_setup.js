@@ -458,7 +458,7 @@ async function handle_editBranchForm(form) {
             	console.log(res)
             }
         } else {
-            console.log('Failed to edit company.' + response);
+            console.log('Failed to save branch.' + response);
         }
 
     } catch (err) {
@@ -587,50 +587,6 @@ function handleStates() {
 	    // console.log(data)
 	    if(data) {
 	    	let res = JSON.parse(data)[0];
-	    	if(res.tax_grid) {
-		    	let tax = JSON.parse(res.tax_grid);
-		    	let tax_gridRows = '';
-		    	if(tax.length > 0) {
-		    		tax_gridRows += `<div class="row tax-grid-row" style="margin-top: 2px;">
-	                    <div class="col-sm-4">
-	                    	<label class="label required">Min amount</label>
-	                    	<input type="text" value="${tax[0].min}" onkeypress="return isNumberKey(event)" class="form-control min-amount col-sm-4 col-lg-4">
-	                    </div>
-	                    <div class="col-sm-4">
-	                    	<label class="label required">Max amount</label>
-	                    	<input type="text" value="${tax[0].max}" onkeypress="return isNumberKey(event)" class="form-control max-amount col-sm-4 col-lg-4">
-	                    </div>
-	                    <div class="col-sm-3">
-	                    	<label class="label required">Rate</label>
-	                    	<input type="text" value="${tax[0].rate}" onkeypress="return isNumberKey(event)" class="form-control rate col-sm-4 col-lg-4">
-	                    	
-	                    </div>
-	                    <div class="col-sm-1">
-	                    	<label class="label required">&nbsp;</label>
-	                    	<i class="fa fa-trash-alt remove-tax-grid-row cursor mt-2"></i>
-	                    </div>
-	                </div>`
-		    	}
-
-		    	for (var i = 1; i < tax.length; i++) {
-		    		tax_gridRows += `<div class="row tax-grid-row" style="margin-top: 5px;">
-			            <div class="col-sm-4">
-			            	<input type="text" value="${tax[i].min}" onkeypress="return isNumberKey(event)"  class="form-control min-amount col-sm-4 col-lg-4">
-			            </div>
-			            <div class="col-sm-4">
-			            	<input type="text" value="${tax[i].max}" onkeypress="return isNumberKey(event)"  class="form-control max-amount col-sm-4 col-lg-4 validate">
-			            </div>
-			            <div class="col-sm-3">
-			            	<input type="text" value="${tax[i].rate}" onkeypress="return isNumberKey(event)"  class="form-control rate col-sm-4 col-lg-4 validate">
-			            </div>
-			            <div class="col-sm-1">
-			            	<i class="fa fa-trash-alt remove-tax-grid-row cursor mt-2"></i>
-			            </div>
-			        </div>`
-		    	}
-
-		    	$('.tax-gridRows').html(tax_gridRows)
-		    }
 
 	    	$(modal).find('#state_id').val(id);
 	    	$(modal).find('#stateName').val(res.name);
@@ -772,7 +728,7 @@ async function handle_editStateForm(form) {
     if (error) return false;
 
     let formData = {
-    	id: id,
+    	id:id,
         name: name,
         status: slcStatus,
         country: country,
@@ -1045,237 +1001,7 @@ async function get_location(id) {
 }
 
 
-// Banks
-function load_banks() {
-	var datatable = $('#banksDT').DataTable({
-		// let datatable = new DataTable('#companyDT', {
-	    "processing": true,
-	    "serverSide": true,
-	    "bDestroy": true,
-	    "searching": false,  
-	    "info": false,
-	    "columnDefs": [
-	        { "orderable": false, "searchable": false, "targets": [4] }  // Disable search on first and last columns
-	    ],
-	    "serverMethod": 'post',
-	    "ajax": {
-	        "url": "./app/org_controller.php?action=load&endpoint=bank_accounts",
-	        "method": "POST",
-		    // dataFilter: function(data) {
-			// 	console.log(data)
-			// }
-	    },
-	    
-	    "createdRow": function(row, data, dataIndex) { 
-	    	// Add your custom class to the row 
-	    	$(row).addClass('table-row ' +data.status.toLowerCase());
-	    },
-	    columns: [
-	        { title: `Bank name`, data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.bank_name}</span>
-	                </div>`;
-	        }},
 
-	        { title: `Account number`, data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.account}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Current balance`, data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${formatMoney(row.balance)}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Status`, data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.status}</span>
-	                </div>`;
-	        }},
-
-	        { title: "Action", data: null, render: function(data, type, row) {
-	            return `<div class="sflex scenter-items">
-            		<span data-recid="${row.id}" class="fa edit_bankInfo smt-5 cursor smr-10 fa-pencil"></span>
-            		<span data-recid="${row.id}" class="fa delete_bank smt-5 cursor fa-trash"></span>
-                </div>`;
-	        }},
-	    ]
-	});
-
-	return false;
-}
-
-function handleBanks() {
-	$('#addBankForm').on('submit', (e) => {
-		handle_addBankForm(e.target);
-		return false
-	})
-
-	load_banks();
-
-	// Edit location
-	$(document).on('click', '.edit_bankInfo', async (e) => {
-	    let id = $(e.currentTarget).data('recid');
-	    let modal = $('#edit_bank');
-
-	    let data = await get_bank_account(id);
-	    console.log(data)
-	    if(data) {
-	    	let res = JSON.parse(data)[0];
-	    	console.log(res)
-	    	$(modal).find('#bank_account_id').val(id);
-	    	$(modal).find('#bankName4Edit').val(res.bank_name);
-	    	$(modal).find('#account4Edit').val(res.account);
-	    	$(modal).find('#balance4Edit').val(res.balance) ;
-	    	$(modal).find('#slcStatus').val(res.status);
-	    }
-
-	    $(modal).modal('show');
-	});
-
-	// Edit location info form
-	$('#editBankForm').on('submit', (e) => {
-		handle_editBankForm(e.target);
-		return false
-	})
-
-	// Delete location
-	$(document).on('click', '.delete_bank', async (e) => {
-	    let id = $(e.currentTarget).data('recid');
-	    swal({
-	        title: "Are you sure?",
-	        text: `You are going to delete this bank account.`,
-	        icon: "warning",
-	        className: 'warning-swal',
-	        buttons: ["Cancel", "Yes, delete"],
-	    }).then(async (confirm) => {
-	        if (confirm) {
-	            let data = { id: id };
-	            try {
-	                let response = await send_orgPost('delete bank_account', data);
-	                console.log(response)
-	                if (response) {
-	                    let res = JSON.parse(response);
-	                    if (res.error) {
-	                        toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
-	                    } else {
-	                        toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
-	                            location.reload();
-	                            // load_branches();
-	                        });
-	                        console.log(res);
-	                    }
-	                } else {
-	                    console.log('Failed to edit state.' + response);
-	                }
-
-	            } catch (err) {
-	                console.error('Error occurred during form submission:', err);
-	            }
-	        }
-	    });
-	});
-}
-
-async function handle_addBankForm(form) {
-    clearErrors();
-    let error = validateForm(form)
-
-    let name 	= $(form).find('#bankName').val();
-    let account 	= $(form).find('#account').val();
-    let balance 	= $(form).find('#balance').val();
-
-    if (error) return false;
-
-    let formData = {
-        name: name,
-        account: account,
-        balance: balance,
-    };
-
-    form_loading(form);
-
-    try {
-        let response = await send_orgPost('save bank_account', formData);
-        console.log(response)
-        if (response) {
-            let res = JSON.parse(response)
-            $('#add_bank').modal('hide');
-            if(res.error) {
-            	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
-            } else {
-            	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
-            		form_loadingUndo(form);
-            		location.reload();
-            		// load_banks();
-            	});
-            	console.log(res)
-            }
-        } else {
-            console.log('Failed to save state.' + response);
-        }
-
-    } catch (err) {
-        console.error('Error occurred during form submission:', err);
-    }
-}
-
-async function handle_editBankForm(form) {
-    clearErrors();
-    let error = validateForm(form)
-
-    console.log(form)
-
-    let id 	= $(form).find('#bank_account_id').val();
-   	let name 	= $(form).find('#bankName4Edit').val();
-    let account 	= $(form).find('#account4Edit').val();
-    let balance 	= $(form).find('#balance4Edit').val();
-    let slcStatus 	= $(form).find('#slcStatus').val();
-
-    if (error) return false;
-
-    let formData = {
-    	id:id,
-        name: name,
-        account: account,
-        balance: balance,
-        slcStatus:slcStatus
-    };
-
-    form_loading(form);
-
-    try {
-        let response = await send_orgPost('update bank_account', formData);
-        console.log(response)
-        if (response) {
-            let res = JSON.parse(response)
-            $('#edit_bank').modal('hide');
-            if(res.error) {
-            	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
-            } else {
-            	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
-            		form_loadingUndo(form);
-            		location.reload();
-            		// load_banks();
-            	});
-            	console.log(res)
-            }
-        } else {
-            console.log('Failed to save state.' + response);
-        }
-
-    } catch (err) {
-        console.error('Error occurred during form submission:', err);
-    }
-}
-
-async function get_bank_account(id) {
-	let data = {id};
-	let response = await send_orgPost('get bank_account', data);
-	return response;
-}
 
 // Designation
 function load_designations() {
@@ -2678,7 +2404,6 @@ function handleGoalTypes() {
     });
 }
 
-
 async function processDeleteGoalType(id) {
     let data = { id: id };
     try {
@@ -2705,6 +2430,7 @@ async function processDeleteGoalType(id) {
                 toaster.success(res.msg || 'Goal type deleted successfully.', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
                     load_goalTypes(); // Reload the DataTable
                 });
+                console.log(res);
             }
         } else {
             console.log('Failed to delete goal type. Empty response from server.');
@@ -2712,11 +2438,9 @@ async function processDeleteGoalType(id) {
         }
     } catch (err) {
         console.error('Error occurred during goal type deletion:', err);
-        toaster.error('An unexpected error occurred while deleting. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        toaster.error('An unexpected error occurred. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
     }
 }
-
-
 
 async function handle_addGoalTypeForm(form) {
     // Ensure necessary helper functions are available
@@ -2777,7 +2501,7 @@ async function handle_addGoalTypeForm(form) {
                 toaster.success(res.msg || 'Goal type saved successfully.', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
                     form_loadingUndo(form);
                     load_goalTypes(); // Reload the DataTable
-                    $(form).trigger('reset'); // Reset the form fields
+                    $(form)[0].reset(); // Reset the form
                 });
             }
         } else {
@@ -2787,11 +2511,10 @@ async function handle_addGoalTypeForm(form) {
         }
     } catch (err) {
         console.error('Error occurred during add goal type form submission:', err);
-        toaster.error('An unexpected error occurred. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        toaster.error('An unexpected error occurred while adding. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
         form_loadingUndo(form);
     }
 }
-
 
 async function handle_editGoalTypeForm(form) {
      if (typeof clearErrors !== 'function' || typeof validateForm !== 'function' || typeof form_loading !== 'function' || typeof send_orgPost !== 'function' || typeof form_loadingUndo !== 'function' || typeof toaster === 'undefined') {
@@ -2834,17 +2557,10 @@ async function handle_editGoalTypeForm(form) {
                 res = JSON.parse(response);
             } catch (parseError) {
                 console.error("Failed to parse edit response:", parseError, response);
-                toaster.warning('Received an invalid response from the server after edit attempt.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                toaster.warning('Received an invalid response from the server.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
                 form_loadingUndo(form);
                 return;
             }
-
-            if ($.fn.modal) {
-                $('#edit_goalType').modal('hide'); // Hide the Edit Goal Type modal
-            } else {
-                 document.getElementById('edit_goalType').style.display = 'none';
-            }
-
 
             if (res.error) {
                 toaster.warning(res.msg || 'Could not update goal type.', 'Update Failed', { top: '30%', right: '20px', hide: true, duration: 5000 });
@@ -2990,7 +2706,7 @@ function handleAwardTypes() {
 
     // Handle Delete Award Type action
     $(document).on('click', '.delete_awardType', async function(e) {
-        let id = $(this).data('recid');
+        let id = $(e.currentTarget).data('recid');
         if (!id) {
             console.error("Delete action: Award Type ID is missing.");
             return;
@@ -2999,8 +2715,8 @@ function handleAwardTypes() {
         // Ensure swal is available
         if (typeof swal === 'undefined') {
             console.error('SweetAlert (swal) is not loaded. Cannot show delete confirmation.');
-            if (confirm(`Are you sure you want to delete this award type? This action cannot be undone.`)) {
-                await processDeleteAwardType(id);
+            if (confirm(`Are you sure you want to delete this award type? This action cannot be undone.`)) { // Fallback to native confirm
+                 await processDeleteAwardType(id);
             }
             return;
         }
@@ -3024,6 +2740,7 @@ async function processDeleteAwardType(id) {
     let data = { id: id };
     try {
         let response = await send_orgPost('delete award_type', data);
+        console.log(response)
         if (response) {
             let res;
             try {
@@ -3043,6 +2760,7 @@ async function processDeleteAwardType(id) {
                 toaster.success(res.msg || 'Award type deleted successfully.', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
                     load_awardTypes(); // Reload the DataTable
                 });
+                console.log(res);
             }
         } else {
             console.log('Failed to delete award type. Empty response from server.');
@@ -3079,7 +2797,7 @@ async function handle_addAwardTypeForm(form) {
             try {
                 res = JSON.parse(response);
             } catch (parseError) {
-                console.error("Failed to parse response:", parseError, response);
+                console.error("Failed to parse add response:", parseError, response);
                 toaster.warning('Received an invalid response from the server.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
                 form_loadingUndo(form);
                 return;
@@ -3186,12 +2904,779 @@ async function get_awardType(id) {
     }
 }
 
+// Financial Accounts Management Functions
+function load_financialAccounts() {
+    $('#financialAccountsDT').DataTable({
+        destroy: true,
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: 'app/org_controller.php?action=load&endpoint=financial_accounts',
+            type: 'POST',
+            error: function(xhr, error, code) {
+                console.log('Error:', error, code);
+                toaster.error('Failed to load financial accounts. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            }
+        },
+        columns: [
+            { data: 'name', title: 'Account Name' },
+            { data: 'type', title: 'Type' },
+            { data: 'status', title: 'Status' },
+            {
+                data: null,
+                title: 'Actions',
+                orderable: false,
+                render: function(data, type, row) {
+                    return `
+                        <button class="btn btn-sm btn-primary me-1" onclick="get_financialAccount(${row.id})" title="Edit">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="delete_financialAccount(${row.id})" title="Delete">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    `;
+                }
+            }
+        ],
+        order: [[0, 'asc']],
+        pageLength: 25,
+        responsive: true
+    });
+}
+
+function handleFinancialAccounts() {
+    load_financialAccounts();
+
+    // Handle add form submission
+    $('#addFinancialAccountForm').on('submit', function(e) {
+        e.preventDefault();
+        handle_addFinancialAccountForm(this);
+    });
+
+    // Handle edit form submission
+    $('#editFinancialAccountForm').on('submit', function(e) {
+        e.preventDefault();
+        handle_editFinancialAccountForm(this);
+    });
+}
+
+async function delete_financialAccount(id) {
+    const result = await swal({
+        title: "Are you sure?",
+        text: "Once deleted, you will not be able to recover this financial account!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+    });
+
+    if (!result) return;
+
+    let data = { id: id };
+
+    try {
+        let response = await send_orgPost('delete financial_account', data);
+
+        if (response) {
+            let res;
+            try {
+                res = JSON.parse(response);
+            } catch (parseError) {
+                console.error("Failed to parse delete response:", parseError, response);
+                toaster.warning('Received an invalid response from the server after delete attempt.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                return;
+            }
+
+            if (res.error) {
+                toaster.warning(res.msg || 'Failed to delete financial account.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                if (res.sql_error) {
+                    console.error('SQL Error:', res.sql_error);
+                }
+            } else {
+                toaster.success(res.msg || 'Financial account deleted successfully.', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                    load_financialAccounts(); // Reload the DataTable
+                });
+            }
+        } else {
+            console.log('Failed to delete financial account. Empty response from server.');
+            toaster.error('Failed to delete financial account. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        }
+    } catch (err) {
+        console.error('Error occurred during delete financial account operation:', err);
+        toaster.error('An unexpected error occurred while deleting. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+    }
+}
+
+async function handle_addFinancialAccountForm(form) {
+    clearErrors();
+
+    let financialAccountName = $(form).find('#financialAccountName').val();
+    let accountType = $(form).find('#accountType').val();
+
+    // Input validation
+    let error = false;
+    error = !validateField(financialAccountName, "Account name is required", 'financialAccountName') || error;
+    error = !validateField(accountType, "Account type is required", 'accountType') || error;
+
+    if (error) return false;
+
+    let formData = {
+        financialAccountName: financialAccountName,
+        accountType: accountType
+    };
+
+    form_loading(form);
+
+    try {
+        let response = await send_orgPost('save financial_account', formData);
+
+        if (response) {
+            let res;
+            try {
+                res = JSON.parse(response);
+            } catch (parseError) {
+                console.error("Failed to parse response:", parseError, response);
+                toaster.warning('Received an invalid response from the server.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                form_loadingUndo(form);
+                return;
+            }
+
+            if (res.error) {
+                toaster.warning(res.msg || 'Failed to add financial account.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                if (res.sql_error) {
+                    console.error('SQL Error:', res.sql_error);
+                }
+                form_loadingUndo(form);
+            } else {
+                toaster.success(res.msg || 'Financial account added successfully.', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                    $('#add_financialAccount').modal('hide');
+                    form_loadingUndo(form);
+                    $(form)[0].reset(); // Reset the form
+                    load_financialAccounts(); // Reload the DataTable
+                });
+            }
+        } else {
+            console.log('Failed to add financial account. Empty response from server.');
+            toaster.error('Failed to add financial account. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            form_loadingUndo(form);
+        }
+    } catch (err) {
+        console.error('Error occurred during add financial account form submission:', err);
+        toaster.error('An unexpected error occurred while adding. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        form_loadingUndo(form);
+    }
+}
+
+async function handle_editFinancialAccountForm(form) {
+    clearErrors();
+
+    let id = $(form).find('#financialAccount_id').val();
+    let name = $(form).find('#financialAccountName4Edit').val();
+    let type = $(form).find('#accountType4Edit').val();
+    let status = $(form).find('#slcStatus4Edit').val();
+
+    // Input validation
+    let error = false;
+    error = !validateField(name, "Account name is required", 'financialAccountName4Edit') || error;
+    error = !validateField(type, "Account type is required", 'accountType4Edit') || error;
+
+    if (error) return false;
+
+    let formData = {
+        financialAccount_id: id,
+        financialAccountName4Edit: name,
+        accountType4Edit: type,
+        slcStatus4Edit: status
+    };
+
+    form_loading(form);
+
+    try {
+        let response = await send_orgPost('update financial_account', formData);
+
+        if (response) {
+            let res;
+            try {
+                res = JSON.parse(response);
+            } catch (parseError) {
+                console.error("Failed to parse response:", parseError, response);
+                toaster.warning('Received an invalid response from the server.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                form_loadingUndo(form);
+                return;
+            }
+
+            if (res.error) {
+                toaster.warning(res.msg || 'Failed to update financial account.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                if (res.sql_error) {
+                    console.error('SQL Error:', res.sql_error);
+                }
+                form_loadingUndo(form);
+            } else {
+                toaster.success(res.msg || 'Financial account updated successfully.', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                    $('#edit_financialAccount').modal('hide');
+                    form_loadingUndo(form);
+                    load_financialAccounts(); // Reload the DataTable
+                });
+            }
+        } else {
+            console.log('Failed to update financial account. Empty response from server.');
+            toaster.error('Failed to update financial account. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            form_loadingUndo(form);
+        }
+    } catch (err) {
+        console.error('Error occurred during edit financial account form submission:', err);
+        toaster.error('An unexpected error occurred while updating. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        form_loadingUndo(form);
+    }
+}
+
+async function get_financialAccount(id) {
+    let data = { id: id };
+
+    try {
+        let response = await send_orgPost('get financial_account', data);
+
+        if (response) {
+            let res;
+            try {
+                res = JSON.parse(response);
+            } catch (parseError) {
+                console.error("Failed to parse response:", parseError, response);
+                toaster.warning('Received an invalid response from the server.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                return;
+            }
+
+            if (res.length > 0) {
+                let financialAccount = res[0];
+                $('#financialAccount_id').val(financialAccount.id);
+                $('#financialAccountName4Edit').val(financialAccount.name);
+                $('#accountType4Edit').val(financialAccount.type);
+                $('#slcStatus4Edit').val(financialAccount.status);
+                $('#edit_financialAccount').modal('show');
+            } else {
+                toaster.warning('Financial account not found.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            }
+        } else {
+            console.log('Failed to get financial account. Empty response from server.');
+            toaster.error('Failed to get financial account. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        }
+    } catch (err) {
+        console.error('Error occurred while fetching financial account:', err);
+        toaster.error('An unexpected error occurred while fetching. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+    }
+}
+
+// Training Options Management Functions
+function load_trainingOptions() {
+    $('#trainingOptionsDT').DataTable({
+        destroy: true,
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: 'app/org_controller.php?action=load&endpoint=training_options',
+            type: 'POST',
+            error: function(xhr, error, code) {
+                console.log('Error:', error, code);
+                toaster.error('Failed to load training options. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            }
+        },
+        columns: [
+            { data: 'name', title: 'Training Option Name' },
+            { data: 'status', title: 'Status' },
+            {
+                data: null,
+                title: 'Actions',
+                orderable: false,
+                render: function(data, type, row) {
+                    return `
+                        <button class="btn btn-sm btn-primary me-1" onclick="get_trainingOption(${row.id})" title="Edit">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="delete_trainingOption(${row.id})" title="Delete">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    `;
+                }
+            }
+        ],
+        order: [[0, 'asc']],
+        pageLength: 25,
+        responsive: true
+    });
+}
+
+function handleTrainingOptions() {
+    load_trainingOptions();
+
+    // Handle add form submission
+    $('#addTrainingOptionForm').on('submit', function(e) {
+        e.preventDefault();
+        handle_addTrainingOptionForm(this);
+    });
+
+    // Handle edit form submission
+    $('#editTrainingOptionForm').on('submit', function(e) {
+        e.preventDefault();
+        handle_editTrainingOptionForm(this);
+    });
+}
+
+async function delete_trainingOption(id) {
+    const result = await swal({
+        title: "Are you sure?",
+        text: "Once deleted, you will not be able to recover this training option!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+    });
+
+    if (!result) return;
+
+    let data = { id: id };
+
+    try {
+        let response = await send_orgPost('delete training_options', data);
+
+        if (response) {
+            let res;
+            try {
+                res = JSON.parse(response);
+            } catch (parseError) {
+                console.error("Failed to parse delete response:", parseError, response);
+                toaster.warning('Received an invalid response from the server after delete attempt.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                return;
+            }
+
+            if (res.error) {
+                toaster.warning(res.msg || 'Failed to delete training option.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                if (res.sql_error) {
+                    console.error('SQL Error:', res.sql_error);
+                }
+            } else {
+                toaster.success(res.msg || 'Training option deleted successfully.', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                    load_trainingOptions(); // Reload the DataTable
+                });
+            }
+        } else {
+            console.log('Failed to delete training option. Empty response from server.');
+            toaster.error('Failed to delete training option. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        }
+    } catch (err) {
+        console.error('Error occurred during delete training option operation:', err);
+        toaster.error('An unexpected error occurred while deleting. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+    }
+}
+
+async function handle_addTrainingOptionForm(form) {
+    clearErrors();
+
+    let trainingOptionName = $(form).find('#trainingOptionName').val();
+
+    // Input validation
+    let error = false;
+    error = !validateField(trainingOptionName, "Training option name is required", 'trainingOptionName') || error;
+
+    if (error) return false;
+
+    let formData = {
+        name: trainingOptionName
+    };
+
+    form_loading(form);
+
+    try {
+        let response = await send_orgPost('save training_options', formData);
+
+        if (response) {
+            let res;
+            try {
+                res = JSON.parse(response);
+            } catch (parseError) {
+                console.error("Failed to parse response:", parseError, response);
+                toaster.warning('Received an invalid response from the server.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                form_loadingUndo(form);
+                return;
+            }
+
+            if (res.error) {
+                toaster.warning(res.msg || 'Failed to add training option.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                if (res.sql_error) {
+                    console.error('SQL Error:', res.sql_error);
+                }
+                form_loadingUndo(form);
+            } else {
+                toaster.success(res.msg || 'Training option added successfully.', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                    $('#add_trainingOption').modal('hide');
+                    form_loadingUndo(form);
+                    $(form)[0].reset(); // Reset the form
+                    load_trainingOptions(); // Reload the DataTable
+                });
+            }
+        } else {
+            console.log('Failed to add training option. Empty response from server.');
+            toaster.error('Failed to add training option. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            form_loadingUndo(form);
+        }
+    } catch (err) {
+        console.error('Error occurred during add training option form submission:', err);
+        toaster.error('An unexpected error occurred while adding. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        form_loadingUndo(form);
+    }
+}
+
+async function handle_editTrainingOptionForm(form) {
+    clearErrors();
+
+    let id = $(form).find('#trainingOption_id').val();
+    let name = $(form).find('#trainingOptionName4Edit').val();
+    let status = $(form).find('#slcStatus4EditTrainingOption').val();
+
+    // Input validation
+    let error = false;
+    error = !validateField(name, "Training option name is required", 'trainingOptionName4Edit') || error;
+
+    if (error) return false;
+
+    let formData = {
+        id: id,
+        name: name,
+        status: status
+    };
+
+    form_loading(form);
+
+    try {
+        let response = await send_orgPost('update training_options', formData);
+
+        if (response) {
+            let res;
+            try {
+                res = JSON.parse(response);
+            } catch (parseError) {
+                console.error("Failed to parse response:", parseError, response);
+                toaster.warning('Received an invalid response from the server.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                form_loadingUndo(form);
+                return;
+            }
+
+            if (res.error) {
+                toaster.warning(res.msg || 'Failed to update training option.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                if (res.sql_error) {
+                    console.error('SQL Error:', res.sql_error);
+                }
+                form_loadingUndo(form);
+            } else {
+                toaster.success(res.msg || 'Training option updated successfully.', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                    $('#edit_trainingOption').modal('hide');
+                    form_loadingUndo(form);
+                    load_trainingOptions(); // Reload the DataTable
+                });
+            }
+        } else {
+            console.log('Failed to update training option. Empty response from server.');
+            toaster.error('Failed to update training option. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            form_loadingUndo(form);
+        }
+    } catch (err) {
+        console.error('Error occurred during edit training option form submission:', err);
+        toaster.error('An unexpected error occurred while updating. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        form_loadingUndo(form);
+    }
+}
+
+async function get_trainingOption(id) {
+    let data = { id: id };
+
+    try {
+        let response = await send_orgPost('get training_options', data);
+
+        if (response) {
+            let res;
+            try {
+                res = JSON.parse(response);
+            } catch (parseError) {
+                console.error("Failed to parse response:", parseError, response);
+                toaster.warning('Received an invalid response from the server.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                return;
+            }
+
+            if (res.length > 0) {
+                let trainingOption = res[0];
+                $('#trainingOption_id').val(trainingOption.id);
+                $('#trainingOptionName4Edit').val(trainingOption.name);
+                $('#slcStatus4EditTrainingOption').val(trainingOption.status);
+                $('#edit_trainingOption').modal('show');
+            } else {
+                toaster.warning('Training option not found.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            }
+        } else {
+            console.log('Failed to get training option. Empty response from server.');
+            toaster.error('Failed to get training option. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        }
+    } catch (err) {
+        console.error('Error occurred while fetching training option:', err);
+        toaster.error('An unexpected error occurred while fetching. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+    }
+}
+
+// Training Types Management Functions
+function load_trainingTypes() {
+    $('#trainingTypesDT').DataTable({
+        destroy: true,
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: 'app/org_controller.php?action=load&endpoint=training_types',
+            type: 'POST',
+            error: function(xhr, error, code) {
+                console.log('Error:', error, code);
+                toaster.error('Failed to load training types. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            }
+        },
+        columns: [
+            { data: 'name', title: 'Training Type Name' },
+            { data: 'status', title: 'Status' },
+            {
+                data: null,
+                title: 'Actions',
+                orderable: false,
+                render: function(data, type, row) {
+                    return `
+                        <button class="btn btn-sm btn-primary me-1" onclick="get_trainingType(${row.id})" title="Edit">
+                            <i class="fa fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="delete_trainingType(${row.id})" title="Delete">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    `;
+                }
+            }
+        ],
+        order: [[0, 'asc']],
+        pageLength: 25,
+        responsive: true
+    });
+}
+
+function handleTrainingTypes() {
+    load_trainingTypes();
+
+    // Handle add form submission
+    $('#addTrainingTypeForm').on('submit', function(e) {
+        e.preventDefault();
+        handle_addTrainingTypeForm(this);
+    });
+
+    // Handle edit form submission
+    $('#editTrainingTypeForm').on('submit', function(e) {
+        e.preventDefault();
+        handle_editTrainingTypeForm(this);
+    });
+}
+
+async function delete_trainingType(id) {
+    const result = await swal({
+        title: "Are you sure?",
+        text: "Once deleted, you will not be able to recover this training type!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+    });
+
+    if (!result) return;
+
+    let data = { id: id };
+
+    try {
+        let response = await send_orgPost('delete training_types', data);
+
+        if (response) {
+            let res;
+            try {
+                res = JSON.parse(response);
+            } catch (parseError) {
+                console.error("Failed to parse delete response:", parseError, response);
+                toaster.warning('Received an invalid response from the server after delete attempt.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                return;
+            }
+
+            if (res.error) {
+                toaster.warning(res.msg || 'Failed to delete training type.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                if (res.sql_error) {
+                    console.error('SQL Error:', res.sql_error);
+                }
+            } else {
+                toaster.success(res.msg || 'Training type deleted successfully.', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                    load_trainingTypes(); // Reload the DataTable
+                });
+            }
+        } else {
+            console.log('Failed to delete training type. Empty response from server.');
+            toaster.error('Failed to delete training type. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        }
+    } catch (err) {
+        console.error('Error occurred during delete training type operation:', err);
+        toaster.error('An unexpected error occurred while deleting. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+    }
+}
+
+async function handle_addTrainingTypeForm(form) {
+    clearErrors();
+
+    let trainingTypeName = $(form).find('#trainingTypeName').val();
+
+    // Input validation
+    let error = false;
+    error = !validateField(trainingTypeName, "Training type name is required", 'trainingTypeName') || error;
+
+    if (error) return false;
+
+    let formData = {
+        name: trainingTypeName
+    };
+
+    form_loading(form);
+
+    try {
+        let response = await send_orgPost('save training_types', formData);
+
+        if (response) {
+            let res;
+            try {
+                res = JSON.parse(response);
+            } catch (parseError) {
+                console.error("Failed to parse response:", parseError, response);
+                toaster.warning('Received an invalid response from the server.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                form_loadingUndo(form);
+                return;
+            }
+
+            if (res.error) {
+                toaster.warning(res.msg || 'Failed to add training type.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                if (res.sql_error) {
+                    console.error('SQL Error:', res.sql_error);
+                }
+                form_loadingUndo(form);
+            } else {
+                toaster.success(res.msg || 'Training type added successfully.', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                    $('#add_trainingType').modal('hide');
+                    form_loadingUndo(form);
+                    $(form)[0].reset(); // Reset the form
+                    load_trainingTypes(); // Reload the DataTable
+                });
+            }
+        } else {
+            console.log('Failed to add training type. Empty response from server.');
+            toaster.error('Failed to add training type. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            form_loadingUndo(form);
+        }
+    } catch (err) {
+        console.error('Error occurred during add training type form submission:', err);
+        toaster.error('An unexpected error occurred while adding. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        form_loadingUndo(form);
+    }
+}
+
+async function handle_editTrainingTypeForm(form) {
+    clearErrors();
+
+    let id = $(form).find('#trainingType_id').val();
+    let name = $(form).find('#trainingTypeName4Edit').val();
+    let status = $(form).find('#slcStatus4EditTrainingType').val();
+
+    // Input validation
+    let error = false;
+    error = !validateField(name, "Training type name is required", 'trainingTypeName4Edit') || error;
+
+    if (error) return false;
+
+    let formData = {
+        id: id,
+        name: name,
+        status: status
+    };
+
+    form_loading(form);
+
+    try {
+        let response = await send_orgPost('update training_types', formData);
+
+        if (response) {
+            let res;
+            try {
+                res = JSON.parse(response);
+            } catch (parseError) {
+                console.error("Failed to parse response:", parseError, response);
+                toaster.warning('Received an invalid response from the server.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                form_loadingUndo(form);
+                return;
+            }
+
+            if (res.error) {
+                toaster.warning(res.msg || 'Failed to update training type.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                if (res.sql_error) {
+                    console.error('SQL Error:', res.sql_error);
+                }
+                form_loadingUndo(form);
+            } else {
+                toaster.success(res.msg || 'Training type updated successfully.', 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                    $('#edit_trainingType').modal('hide');
+                    form_loadingUndo(form);
+                    load_trainingTypes(); // Reload the DataTable
+                });
+            }
+        } else {
+            console.log('Failed to update training type. Empty response from server.');
+            toaster.error('Failed to update training type. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            form_loadingUndo(form);
+        }
+    } catch (err) {
+        console.error('Error occurred during edit training type form submission:', err);
+        toaster.error('An unexpected error occurred while updating. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        form_loadingUndo(form);
+    }
+}
+
+async function get_trainingType(id) {
+    let data = { id: id };
+
+    try {
+        let response = await send_orgPost('get training_types', data);
+
+        if (response) {
+            let res;
+            try {
+                res = JSON.parse(response);
+            } catch (parseError) {
+                console.error("Failed to parse response:", parseError, response);
+                toaster.warning('Received an invalid response from the server.', 'Server Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                return;
+            }
+
+            if (res.length > 0) {
+                let trainingType = res[0];
+                $('#trainingType_id').val(trainingType.id);
+                $('#trainingTypeName4Edit').val(trainingType.name);
+                $('#slcStatus4EditTrainingType').val(trainingType.status);
+                $('#edit_trainingType').modal('show');
+            } else {
+                toaster.warning('Training type not found.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            }
+        } else {
+            console.log('Failed to get training type. Empty response from server.');
+            toaster.error('Failed to get training type. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+        }
+    } catch (err) {
+        console.error('Error occurred while fetching training type:', err);
+        toaster.error('An unexpected error occurred while fetching. Please try again.', 'Error', { top: '30%', right: '20px', hide: true, duration: 5000 });
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function() {
     handleOrg();
     handleBranches();
     handleStates();
     handleLocations();
-    handleBanks();
+    // handleBanks();
     handleDesignations();
     handleProjects();
     handleContractTypes();
@@ -3200,4 +3685,7 @@ document.addEventListener("DOMContentLoaded", function() {
     handleSubTypes();
     handleGoalTypes();
     handleAwardTypes();
+    handleFinancialAccounts();
+    handleTrainingOptions();
+    handleTrainingTypes();
 });

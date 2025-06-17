@@ -23,7 +23,7 @@
 						<button class="nav-link <?php if($active == 'budgetCodes') echo 'active';?>" id="budgetCodes-tab" data-bs-toggle="tab" data-bs-target="#budgetCodes" type="button" role="tab" aria-controls="budgetCodes" aria-selected="false">Budget Codes</button>
 					</li>
 				<?php } ?>
-				<?php if(check_session('manage_banks')) { if(!$active) $active = 'banks';  ?>
+				<?php if(check_session('manage_bank_accounts')) { if(!$active) $active = 'banks';  ?>
 					<li class="nav-item" role="presentation">
 						<button class="nav-link <?php if($active == 'banks') echo 'active';?>" id="banks-tab" data-bs-toggle="tab" data-bs-target="#banks" type="button" role="tab" aria-controls="banks" aria-selected="false">Banks</button>
 					</li>
@@ -40,24 +40,18 @@
 					<li class="nav-item" role="presentation">
 						<button class="nav-link <?php if($active == 'awardTypes') echo 'active';?>" id="awardTypes-tab" data-bs-toggle="tab" data-bs-target="#awardTypes" type="button" role="tab" aria-controls="awardTypes" aria-selected="false">Award Types</button>
 					</li>
+				<?php } if(check_session('manage_financial_accounts')) { if(!$active) $active = 'financialAccounts';  ?>
+					<li class="nav-item" role="presentation">
+						<button class="nav-link <?php if($active == 'financialAccounts') echo 'active';?>" id="financialAccounts-tab" data-bs-toggle="tab" data-bs-target="#financialAccounts" type="button" role="tab" aria-controls="financialAccounts" aria-selected="false">Financial Accounts</button>
+					</li>
+				<?php } ?>
+				<?php if(check_session('manage_training_options') || check_session('manage_training_types')) { if(!$active) $active = 'training';  ?>
+					<li class="nav-item" role="presentation">
+						<button class="nav-link <?php if($active == 'training') echo 'active';?>" id="training-tab" data-bs-toggle="tab" data-bs-target="#training" type="button" role="tab" aria-controls="training" aria-selected="false">Training</button>
+					</li>
 				<?php } ?>
 				
-				<!-- <li class="nav-item" role="presentation">
-					<button class="nav-link" id="projects-tab" data-bs-toggle="tab" data-bs-target="#projects" type="button" role="tab" aria-controls="projects" aria-selected="false">Projects</button>
-				</li>
-				<li class="nav-item" role="presentation">
-					<button class="nav-link" id="contractTypes-tab" data-bs-toggle="tab" data-bs-target="#contractTypes" type="button" role="tab" aria-controls="contractTypes" aria-selected="false">Contract Types</button>
-				</li>
-
-				<li class="nav-item" role="presentation">
-					<button class="nav-link" id="budgetCodes-tab" data-bs-toggle="tab" data-bs-target="#budgetCodes" type="button" role="tab" aria-controls="budgetCodes" aria-selected="false">Budget Codes</button>
-				</li>
-				<li class="nav-item" role="presentation">
-					<button class="nav-link" id="banks-tab" data-bs-toggle="tab" data-bs-target="#banks" type="button" role="tab" aria-controls="banks" aria-selected="false">Banks</button>
-				</li>
-				<li class="nav-item" role="presentation">
-					<button class="nav-link" id="transactionSubtypes-tab" data-bs-toggle="tab" data-bs-target="#transactionSubtypes" type="button" role="tab" aria-controls="transactionSubtypes" aria-selected="false">Transaction Subtypes</button>
-				</li> -->
+				
 			</ul>
 			<div class="tab-content" id="myTabContent">
 				<?php if(check_session('manage_designations')) { ?>
@@ -151,7 +145,7 @@
 						</div>
 					</div>
 				<?php } ?>
-				<?php if(check_session('manage_banks')) { ?>
+				<?php if(check_session('manage_bank_accounts')) { ?>
 					<div class="tab-pane fade <?php if($active == 'banks') echo 'active show';?> " id="banks" role="tabpanel" aria-labelledby="banks-tab">
 						<div class="page-breadcrumb mt-3 d-sm-flex align-items-center mb-3">
 							<h5 class="">Banks</h5>
@@ -240,134 +234,75 @@
 							</div>
 						</div>
 					</div>
+				<?php } if(check_session('manage_financial_accounts')) { ?>
+					<div class="tab-pane fade <?php if($active == 'financialAccounts') echo 'active show';?> " id="financialAccounts" role="tabpanel" aria-labelledby="financialAccounts-tab">
+						<div class="page-breadcrumb mt-3 d-sm-flex align-items-center mb-3">
+							<h5 class="">Financial Accounts</h5>
+							<div class="ms-auto d-sm-flex">
+								<div class="btn-group smr-10">
+									<button type="button" data-bs-toggle="modal" data-bs-target="#add_financialAccount"  class="btn btn-primary">Add Financial Account</button>
+								</div>
+							</div>
+						</div>
+						<hr>
+						
+						<div class="card">
+							<div class="card-body">
+								<div class="table-responsive">
+									<table id="financialAccountsDT" class="table table-striped table-bordered" style="width:100%">
+										
+									</table> 
+								</div>
+							</div>
+						</div>
+					</div>
 				<?php } ?>
-
-				<!-- <div class="tab-pane fade show active" id="designations" role="tabpanel" aria-labelledby="home-tab">
-					<div class="page-breadcrumb mt-3 d-sm-flex align-items-center mb-3">
-						<h5 class="">Designations</h5>
-						<div class="ms-auto d-sm-flex">
-							<div class="btn-group smr-10">
-								<button type="button" data-bs-toggle="modal" data-bs-target="#add_designation"  class="btn btn-primary">Add Designation</button>
+				<?php if(check_session('manage_training_options') || check_session('manage_training_types')) { ?>
+					<div class="tab-pane fade <?php if($active == 'training') echo 'active show';?> " id="training" role="tabpanel" aria-labelledby="training-tab">
+						<div class="page-breadcrumb mt-3 d-sm-flex align-items-center mb-3">
+							<h5 class="">Training</h5>
+						</div>
+						<hr>
+						
+						<div class="row">
+							<?php if(check_session('manage_training_options')) { ?>
+							<div class="col-md-6">
+								<div class="card">
+									<div class="card-header d-flex justify-content-between align-items-center">
+										<h6 class="mb-0">Training Options</h6>
+										<button type="button" data-bs-toggle="modal" data-bs-target="#add_trainingOption" class="btn btn-primary btn-sm">Add Training Option</button>
+									</div>
+									<div class="card-body">
+										<div class="table-responsive">
+											<table id="trainingOptionsDT" class="table table-striped table-bordered" style="width:100%">
+												
+											</table> 
+										</div>
+									</div>
+								</div>
 							</div>
+							<?php } ?>
+							
+							<?php if(check_session('manage_training_types')) { ?>
+							<div class="col-md-6">
+								<div class="card">
+									<div class="card-header d-flex justify-content-between align-items-center">
+										<h6 class="mb-0">Training Types</h6>
+										<button type="button" data-bs-toggle="modal" data-bs-target="#add_trainingType" class="btn btn-primary btn-sm">Add Training Type</button>
+									</div>
+									<div class="card-body">
+										<div class="table-responsive">
+											<table id="trainingTypesDT" class="table table-striped table-bordered" style="width:100%">
+												
+											</table> 
+										</div>
+									</div>
+								</div>
+							</div>
+							<?php } ?>
 						</div>
 					</div>
-					<hr>
-					
-					<div class="card">
-						<div class="card-body">
-							<div class="table-responsive">
-								<table id="designationsDT" class="table table-striped table-bordered" style="width:100%">
-									
-								</table> 
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="tab-pane fade " id="projects" role="tabpanel" aria-labelledby="home-tab">
-					<div class="page-breadcrumb mt-3 d-sm-flex align-items-center mb-3">
-						<h5 class="">Projects</h5>
-						<div class="ms-auto d-sm-flex">
-							<div class="btn-group smr-10">
-								<button type="button" data-bs-toggle="modal" data-bs-target="#add_project"  class="btn btn-primary">Add Project</button>
-							</div>
-						</div>
-					</div>
-					<hr>
-					
-					<div class="card">
-						<div class="card-body">
-							<div class="table-responsive">
-								<table id="projectsDT" class="table table-striped table-bordered" style="width:100%">
-									
-								</table> 
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="tab-pane fade " id="contractTypes" role="tabpanel" aria-labelledby="home-tab">
-					<div class="page-breadcrumb mt-3 d-sm-flex align-items-center mb-3">
-						<h5 class="">Contract Types</h5>
-						<div class="ms-auto d-sm-flex">
-							<div class="btn-group smr-10">
-								<button type="button" data-bs-toggle="modal" data-bs-target="#add_contractType"  class="btn btn-primary">Add Contract Type</button>
-							</div>
-						</div>
-					</div>
-					<hr>
-					
-					<div class="card">
-						<div class="card-body">
-							<div class="table-responsive">
-								<table id="contractTypesDT" class="table table-striped table-bordered" style="width:100%">
-									
-								</table> 
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="tab-pane fade " id="budgetCodes" role="tabpanel" aria-labelledby="home-tab">
-					<div class="page-breadcrumb mt-3 d-sm-flex align-items-center mb-3">
-						<h5 class="">Budget codes</h5>
-						<div class="ms-auto d-sm-flex">
-							<div class="btn-group smr-10">
-								<button type="button" data-bs-toggle="modal" data-bs-target="#add_budgetCode"  class="btn btn-primary">Add Budget Code</button>
-							</div>
-						</div>
-					</div>
-					<hr>
-					
-					<div class="card">
-						<div class="card-body">
-							<div class="table-responsive">
-								<table id="budgetCodesDT" class="table table-striped table-bordered" style="width:100%">
-									
-								</table> 
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="tab-pane fade " id="banks" role="tabpanel" aria-labelledby="home-tab">
-					<div class="page-breadcrumb mt-3 d-sm-flex align-items-center mb-3">
-						<h5 class="">Banks</h5>
-						<div class="ms-auto d-sm-flex">
-							<div class="btn-group smr-10">
-								<button type="button" data-bs-toggle="modal" data-bs-target="#add_bank"  class="btn btn-primary">Add Bank</button>
-							</div>
-						</div>
-					</div>
-					<hr>
-					
-					<div class="card">
-						<div class="card-body">
-							<div class="table-responsive">
-								<table id="allBanksDT" class="table table-striped table-bordered" style="width:100%">
-									
-								</table> 
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="tab-pane fade " id="transactionSubtypes" role="tabpanel" aria-labelledby="home-tab">
-					<div class="page-breadcrumb mt-3 d-sm-flex align-items-center mb-3">
-						<h5 class="">Transaction subtypes</h5>
-						<div class="ms-auto d-sm-flex">
-							<div class="btn-group smr-10">
-								<button type="button" data-bs-toggle="modal" data-bs-target="#add_subtype"  class="btn btn-primary">Add Subtype</button>
-							</div>
-						</div>
-					</div>
-					<hr>
-					
-					<div class="card">
-						<div class="card-body">
-							<div class="table-responsive">
-								<table id="subTypesDT" class="table table-striped table-bordered" style="width:100%">
-									
-								</table> 
-							</div>
-						</div>
-					</div>
-				</div> -->
+				<?php } ?>
 			</div>
 		</div>
 	</div>

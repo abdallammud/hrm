@@ -560,7 +560,7 @@ function get_menu_config() {
                     'name' => 'Manage Accounts',
                     'route' => 'accounts',
                     'auth' => 'manage_accounts',
-                    'icon' => 'currency-dollar',
+                    'icon' => 'save',
                 ],
                 'payroll_payment' => [
                     'default' => 'payroll_payment',
@@ -575,6 +575,14 @@ function get_menu_config() {
                     'route' => 'expenses',
                     'auth' => 'manage_expenses',
                     'icon' => 'coin',
+                ],
+
+                'income' => [
+                    'default' => 'income',
+                    'name' => 'Other Income',
+                    'route' => 'income',
+                    'auth' => 'manage_expenses',
+                    'icon' => 'currency-dollar',
                 ],
             ],
         ],
@@ -601,19 +609,19 @@ function get_menu_config() {
             'menu' => 'training',
             'auth' => 'manage_training',
             'sub' => [
-                'list' => [
-                    'default' => 'training_list',
-                    'folder' => 'training_list',
-                    'name' => 'Training List',
-                    'route' => 'training_list',
+                'training' => [
+                    'default' => 'training',
+                    'name' => 'Training',
+                    'route' => 'training',
                     'auth' => 'manage_training',
+                    'icon' => 'book',
                 ],
                 'trainers' => [
                     'default' => 'trainers',
-                    'folder' => 'trainers',
                     'name' => 'Trainers',
                     'route' => 'trainers',
                     'auth' => 'manage_trainers',
+                    'icon' => 'person-workspace',
                 ],
             ],
         ],
@@ -633,6 +641,7 @@ function get_menu_config() {
                     'name' => 'Resignations',
                     'route' => 'resignations',
                     'auth' => 'manage_resignations',
+                    'icon' => 'x-octagon',
                 ],
                 'transfers' => [
                     'default' => 'transfers',
@@ -640,6 +649,7 @@ function get_menu_config() {
                     'name' => 'Transfers',
                     'route' => 'transfers',
                     'auth' => 'manage_transfers',
+                    'icon' => 'arrow-repeat',
                 ],
                 'promotions' => [
                     'default' => 'promotions',
@@ -647,6 +657,7 @@ function get_menu_config() {
                     'name' => 'Promotions',
                     'route' => 'promotions',
                     'auth' => 'manage_promotions',
+                    'icon' => 'person-fill-up',
                 ],
                 'complaints' => [
                     'default' => 'complaints',
@@ -654,6 +665,7 @@ function get_menu_config() {
                     'name' => 'Complaints',
                     'route' => 'complaints',
                     'auth' => 'manage_complaints',
+                    'icon' => 'info-circle',
                 ],
                 'warnings' => [
                     'default' => 'warnings',
@@ -661,6 +673,7 @@ function get_menu_config() {
                     'name' => 'Warnings',
                     'route' => 'warnings',
                     'auth' => 'manage_warnings',
+                    'icon' => 'exclamation-circle',
                 ],
                 'terminations' => [
                     'default' => 'terminations',
@@ -668,6 +681,7 @@ function get_menu_config() {
                     'name' => 'Terminations',
                     'route' => 'terminations',
                     'auth' => 'manage_terminations',
+                    'icon' => 'x-circle',
                 ],
             ],
         ],
@@ -696,12 +710,14 @@ function get_menu_config() {
                     'name' => 'Organization',
                     'route' => 'system_setup',
                     'auth' => 'manage_organization',
+                    'icon' => 'house',
                     'actions' => [
                         // 'show' => ['file' => 'chart_show', 'auth' => 'view_chart']
                     ],
                 ],
                 'branches' => [
                     'default' => 'branches',
+                    'icon' => 'building',
                     'auth' => 'manage_departments',
                     'route' => $GLOBALS['branch_keyword']['plu'],
                     'name' => $GLOBALS['branch_keyword']['plu'],
@@ -714,6 +730,7 @@ function get_menu_config() {
                     'name' => 'Duty Locations',
                     'route' => 'locations',
                     'auth' => 'manage_duty_locations',
+                    'icon' => 'geo-alt',
                     'actions' => [
                         'show' => ['file' => 'chart_show', 'auth' => 'view_chart']
                     ],
@@ -723,6 +740,7 @@ function get_menu_config() {
                     'default' => 'misc',
                     'name' => 'HRM System Setup',
                     'route' => 'misc',
+                    'icon' => 'tools',
                     'auth' => ['manage_designations', 'manage_projects', 'manage_budget_codes', 'manage_contract_types', 'manage_transaction_subtypes', 'manage_gaol_types'],
                 ],
                 // Add other submenus here
@@ -753,6 +771,7 @@ function get_menu_config() {
                     'folder' => 'users',
                     'name' => 'Users',
                     'route' => 'user',
+                    'icon' => 'person',
                     'auth' => 'manage_users',
                 ],
                 'roles' => [
@@ -760,6 +779,7 @@ function get_menu_config() {
                     'folder' => 'roles',
                     'name' => 'Roles',
                     'route' => 'roles',
+                    'icon' => 'person-badge',
                     'auth' => 'manage_roles',
                 ],
             ],

@@ -688,7 +688,7 @@ function load_showPayroll(payroll_id, month) {
 
 	        { title: `Status `, data: null, className: "status", render: function(data, type, row) {
 	            return `<div>
-	            		<span>${row.status} </span>
+	            		<span>${row.txtStatus} </span>
 	                </div>`;
 	        }},
 
@@ -1013,7 +1013,7 @@ function handlePayroll() {
 							let autoreload = false;
 							ids.map((id, index) => {
 								if(id == ids[ids.length - 1]) autoreload = true;
-								approve_payroll(payroll_ids[index], emp_ids[index], autoreload);
+								approve_payroll(payroll_ids[index], emp_ids[index], 'Approved', autoreload);
 							})
 						}
 					})

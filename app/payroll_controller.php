@@ -740,7 +740,7 @@ if(isset($_GET['action'])) {
 			        	$paid_by = $userClass->get_emp($paid_by);
 			        	if(count($paid_by) > 0) $paid_by = $paid_by['full_name'];
 
-
+						$row['txtStatus'] = $row['status'];
 			        	$row['taxRate'] = $taxPercentage;
 			        	$row['paid_by'] = $paid_by;
 			        	$row['month'] = $month;

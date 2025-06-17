@@ -282,3 +282,106 @@
         </form>
     </div>
 </div>
+
+<!-- Add financial account -->
+<div class="modal  fade"  data-bs-focus="false" id="add_financialAccount" tabindex="-1" role="dialog" aria-labelledby="add_financialAccountLabel" aria-hidden="true">
+    <div class="modal-dialog" role="financialAccount" style="width:500px;">
+        <form class="modal-content" id="addFinancialAccountForm" style="border-radius: 14px 14px 0px 0px; margin-top: -15px;">
+        	<div class="modal-header">
+                <h5 class="modal-title">Add financial account</h5>
+                <button type="button" class="close modal-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <div class="row">
+                        <div class="col col-xs-12">
+                            <div class="form-group">
+                                <label class="label required" for="financialAccountName">Account Name</label>
+                                <input type="text"  class="form-control validate" data-msg="Account name is required" id="financialAccountName" name="financialAccountName">
+                                <span class="form-error text-danger">This is error</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col col-xs-12">
+                            <div class="form-group">
+                                <label class="label required" for="accountType">Account Type</label>
+                                <select class="form-control validate" data-msg="Account type is required" id="accountType" name="accountType">
+                                	<option value="">Select account type</option>
+                                	<option value="Income">Income</option>
+                                	<option value="Expense">Expense</option>
+                                </select>
+                                <span class="form-error text-danger">This is error</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary cursor " data-bs-dismiss="modal" aria-label="Close" style="min-width: 100px;">Cancel</button>
+                <button type="submit" class="btn btn-primary cursor" style="min-width: 100px;">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Training Option Modal -->
+<div class="modal fade" id="add_trainingOption" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="exampleModalLabel">Add Training Option</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<form id="addTrainingOptionForm" action="#" method="post">
+				<div class="modal-body">
+					<div class="row">
+						<div class="col-md-12">
+							<div class="mb-3">
+								<label for="trainingOptionName" class="form-label required">Training Option Name</label>
+								<input type="text" class="form-control validate" id="trainingOptionName" name="trainingOptionName" placeholder="Enter training option name">
+								<span class="error-msg" id="trainingOptionName-error"></span>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+					<button type="submit" class="btn btn-primary">Save</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<!-- Training Type Modal -->
+<div class="modal fade" id="add_trainingType" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="exampleModalLabel">Add Training Type</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<form id="addTrainingTypeForm" action="#" method="post">
+				<div class="modal-body">
+					<div class="row">
+						<div class="col-md-12">
+							<div class="mb-3">
+								<label for="trainingTypeName" class="form-label required">Training Type Name</label>
+								<input type="text" class="form-control validate" id="trainingTypeName" name="trainingTypeName" placeholder="Enter training type name">
+								<span class="error-msg" id="trainingTypeName-error"></span>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+					<button type="submit" class="btn btn-primary">Save</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>

@@ -25,11 +25,8 @@
                         <!-- <a class="dropdown-item cursor " href="<?=baseUri();?>/pdf.php?print=employees" target="_blank"> Download PDF</a> -->
                     </div>
                 </div>
-            </div>
-
-            
+            </div> 
         </div>
-
     </div>
 </div>
 <div class="page content">

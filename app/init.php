@@ -16,12 +16,13 @@ require('SalaryClass.php');
 require('EducationClass.php');
 require('StatesClass.php');
 require('LocationsClass.php');
-require('BanksClass.php');
 require('MiscClass.php');
 require('SettingsClass.php');
 require('AttendanceClass.php');
 require('PayrollClass.php');
 require('performanceClass.php');
+require('financeClass.php');
+require('trainingClass.php');
 
 
 

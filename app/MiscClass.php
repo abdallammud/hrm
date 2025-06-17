@@ -67,3 +67,25 @@ class AwardTypesClass extends Model {
 }
 
 $GLOBALS['awardTypesClass'] = $awardTypesClass = new AwardTypesClass();
+
+class FinancialAccountsClass extends Model {
+    public function __construct() {
+        parent::__construct('financial_accounts');
+    }
+}
+
+class TrainingOptionsClass extends Model {
+    public function __construct() {
+        parent::__construct('training_options');
+    }
+}
+
+class TrainingTypesClass extends Model {
+    public function __construct() {
+        parent::__construct('training_types');
+    }
+}
+
+$GLOBALS['financialAccountsClass'] = $financialAccountsClass = new FinancialAccountsClass();
+$GLOBALS['trainingOptionsClass'] = $trainingOptionsClass = new TrainingOptionsClass();
+$GLOBALS['trainingTypesClass'] = $trainingTypesClass = new TrainingTypesClass();
