@@ -64,6 +64,12 @@ RewriteRule ^reports/([a-zA-Z0-9-]+)$ index.php?menu=reports&action=show&report=
 RewriteRule ^trainers/?$ index.php?menu=training&tab=trainers [NC,L]
 RewriteRule ^training/?$ index.php?menu=training&tab=training [NC,L]
 
+RewriteRule ^promotions/?$ index.php?menu=management&tab=promotions [NC,L]
+RewriteRule ^transfers/?$ index.php?menu=management&tab=transfers [NC,L]
+RewriteRule ^warnings/?$ index.php?menu=management&tab=warnings [NC,L]
+RewriteRule ^resignations/?$ index.php?menu=management&tab=resignations [NC,L]
+RewriteRule ^terminations/?$ index.php?menu=management&tab=terminations [NC,L]
+
 
 
 
