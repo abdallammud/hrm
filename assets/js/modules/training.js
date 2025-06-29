@@ -2,7 +2,7 @@
 async function send_trainingPost(str, data) {
     let [action, endpoint] = str.split(' ');
     try {
-        const response = await $.post(`./app/training_controller.php?action=${action}&endpoint=${endpoint}`, data);
+        const response = await $.post(`${base_url}/app/training_controller.php?action=${action}&endpoint=${endpoint}`, data);
         return response;
     } catch (error) {
         console.error('Error occurred during the request:', error);
@@ -243,13 +243,13 @@ function load_training() {
                 return `<div><span>${row.trainer_name}</span><br><small class="text-muted">${row.trainer_phone}</small></div>`;
             }},
             { title: `Cost`, data: null, render: function(data, type, row) {
-                return `<div><span>${row.cost || '0'}</span></div>`;
+                return `<div><span>${formatMoney(row.cost || '0')}</span></div>`;
             }},
             { title: `Start Date`, data: null, render: function(data, type, row) {
-                return `<div><span>${row.start_date}</span></div>`;
+                return `<div><span>${formatDate(row.start_date)}</span></div>`;
             }},
             { title: `End Date`, data: null, render: function(data, type, row) {
-                return `<div><span>${row.end_date}</span></div>`;
+                return `<div><span>${formatDate(row.end_date)}</span></div>`;
             }},
             { title: `Status`, data: null, render: function(data, type, row) {
                 let statusClass = row.status === 'Active' ? 'success' : 
@@ -259,12 +259,12 @@ function load_training() {
             }},
             { title: "Action", data: null, render: function(data, type, row) {
                 return `<div class="sflex scenter-items">
-                    <button class="btn btn-sm btn-outline-primary edit-training" data-id="${row.id}" data-bs-toggle="modal" data-bs-target="#edit_training">
-                        <i class="fa fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger delete-training" data-id="${row.id}">
+                    <span class="cursor smr-10 btn-outline-primary edit-training" data-id="${row.id}" data-bs-toggle="modal" data-bs-target="#edit_training">
+                        <i class="fa fa-pencil"></i>
+                    </span>
+                    <span class="cursor btn-outline-danger delete-training" data-id="${row.id}">
                         <i class="fa fa-trash"></i>
-                    </button>
+                    </span>
                 </div>`;
             }}
         ]
@@ -283,10 +283,7 @@ async function handle_addTrainingForm(form) {
     data['end_date'] = $('#end_date').val();
     data['description'] = $('#description').val();
 
-    let error = validateForm(form);
-    if(error) {
-        return;
-    }
+    
 
     if(employee_id.length == 0) {
         toaster.error('Please select at least one employee', 'Error', { top: '20%', right: '20px', hide: true, duration: 1000 });
@@ -301,17 +298,17 @@ async function handle_addTrainingForm(form) {
     try {
         const response = await send_trainingPost('save training', data);
         console.log(response);
-        // let res = JSON.parse(response);
-        // if (!res.error) {
-        //     toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
-        //         $('#add_training').modal('hide');
-        //         form.reset();
-        //         $('.my-select').selectpicker('refresh');
-        //         load_training();
-        //     });
-        // } else {
-        //     toaster.error(res.msg, 'Error', { top: '20%', right: '20px', hide: true, duration: 1000 });
-        // }
+        let res = JSON.parse(response);
+        if (!res.error) {
+            toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                $('#add_training').modal('hide');
+                form.reset();
+                $('.my-select').selectpicker('refresh');
+                load_training();
+            });
+        } else {
+            toaster.error(res.msg, 'Error', { top: '20%', right: '20px', hide: true, duration: 1000 });
+        }
     } catch (err) {
         console.error('Error occurred during form submission:', err);
         toaster.error('An error occurred while saving the training', 'Error', { top: '20%', right: '20px', hide: true, duration: 1000 });
@@ -321,7 +318,6 @@ async function handle_addTrainingForm(form) {
 async function handle_editTrainingForm(form) {
     let data = {};
     data['id'] = $('#edit_training_id').val();
-    data['employee_id'] = $('#edit_employee_id').val();
     data['type_id'] = $('#edit_type_id').val();
     data['option_id'] = $('#edit_option_id').val();
     data['trainer_id'] = $('#edit_trainer_id').val();
@@ -329,28 +325,33 @@ async function handle_editTrainingForm(form) {
     data['start_date'] = $('#edit_start_date').val();
     data['end_date'] = $('#edit_end_date').val();
     data['description'] = $('#edit_description').val();
-    data['status'] = $('#edit_status').val();
+    data['status'] = $('#edit_training_status').val();
+
+    console.log(data);
+    // return;
     
     try {
-        let response = await send_trainingPost('update training', formData);
+        let response = await send_trainingPost('update training', data);
         let res = JSON.parse(response);
         
         if (!res.error) {
-            toastr.success(res.msg);
-            $('#edit_training').modal('hide');
-            load_training();
+            toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                $('#edit_training').modal('hide');
+                load_training();
+            });
         } else {
-            toastr.error(res.msg);
+            toaster.error(res.msg, 'Error', { top: '20%', right: '20px', hide: true, duration: 1000 });
         }
     } catch (err) {
         console.error('Error occurred during form submission:', err);
-        toastr.error('An error occurred while updating the training');
+        toaster.error('An error occurred while updating the training', 'Error', { top: '20%', right: '20px', hide: true, duration: 1000 });
     }
 }
 
 async function get_training(id) {
     try {
         let response = await send_trainingPost('get training', {id: id});
+        console.log(response)
         let res = JSON.parse(response);
         
         if (!res.error && res.data) {
@@ -359,9 +360,9 @@ async function get_training(id) {
             // Populate form fields
             $('#edit_training_id').val(training.id);
             $('#edit_employee_info').val(training.full_name + ' - ' + training.staff_no);
-            $('#edit_training_type').val(training.type_id);
-            $('#edit_training_options').val(training.option_id);
-            $('#edit_trainer').val(training.trainer_id);
+            $('#edit_type_id').val(training.type_id);
+            $('#edit_option_id').val(training.option_id);
+            $('#edit_trainer_id').val(training.trainer_id);
             $('#edit_cost').val(training.cost);
             $('#edit_start_date').val(training.start_date.split(' ')[0]); // Extract date part
             $('#edit_end_date').val(training.end_date.split(' ')[0]); // Extract date part
@@ -369,38 +370,36 @@ async function get_training(id) {
             $('#edit_training_status').val(training.status);
             
         } else {
-            toastr.error(res.msg || 'Failed to load training data');
+            toaster.error(res.msg || 'Failed to load training data', 'Error', { top: '20%', right: '20px', hide: true, duration: 1000 });
         }
     } catch (err) {
         console.error('Error occurred while fetching training:', err);
-        toastr.error('An error occurred while loading the training data');
+        toaster.error('An error occurred while loading the training data', 'Error', { top: '20%', right: '20px', hide: true, duration: 1000 });
     }
 }
 
 function delete_training(id) {
-    Swal.fire({
+    swal({
         title: 'Are you sure?',
         text: "You won't be able to revert this!",
         icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, delete it!'
+        buttons: ['Cancel', 'Yes, delete it!']
     }).then(async (result) => {
-        if (result.isConfirmed) {
+        if (result) {
             try {
                 let response = await send_trainingPost('delete training', {id: id});
                 let res = JSON.parse(response);
                 
                 if (!res.error) {
-                    toastr.success(res.msg);
-                    load_training();
+                    toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                        load_training();
+                    });
                 } else {
-                    toastr.error(res.msg);
+                    toaster.error(res.msg, 'Error', { top: '20%', right: '20px', hide: true, duration: 1000 });
                 }
             } catch (err) {
                 console.error('Error occurred during deletion:', err);
-                toastr.error('An error occurred while deleting the training');
+                toaster.error('An error occurred while deleting the training', 'Error', { top: '20%', right: '20px', hide: true, duration: 1000 });
             }
         }
     });

@@ -635,13 +635,12 @@ function get_menu_config() {
             'menu' => 'management',
             'auth' => ['manage_hrm', 'manage_resignations', 'manage_transfers', 'manage_promotion', 'manage_complaints', 'manage_warning', 'manage_termination'],
             'sub' => [
-                'resignations' => [
-                    'default' => 'resignations',
-                    'folder' => 'resignations',
-                    'name' => 'Resignations',
-                    'route' => 'resignations',
-                    'auth' => 'manage_resignations',
-                    'icon' => 'x-octagon',
+                'promotions' => [
+                    'default' => 'promotions',
+                    'name' => 'Promotions',
+                    'route' => 'promotions',
+                    'auth' => 'manage_promotions',
+                    'icon' => 'person-fill-up',
                 ],
                 'transfers' => [
                     'default' => 'transfers',
@@ -651,29 +650,21 @@ function get_menu_config() {
                     'auth' => 'manage_transfers',
                     'icon' => 'arrow-repeat',
                 ],
-                'promotions' => [
-                    'default' => 'promotions',
-                    'folder' => 'promotions',
-                    'name' => 'Promotions',
-                    'route' => 'promotions',
-                    'auth' => 'manage_promotions',
-                    'icon' => 'person-fill-up',
-                ],
-                'complaints' => [
-                    'default' => 'complaints',
-                    'folder' => 'complaints',
-                    'name' => 'Complaints',
-                    'route' => 'complaints',
-                    'auth' => 'manage_complaints',
-                    'icon' => 'info-circle',
-                ],
                 'warnings' => [
                     'default' => 'warnings',
                     'folder' => 'warnings',
                     'name' => 'Warnings',
                     'route' => 'warnings',
                     'auth' => 'manage_warnings',
-                    'icon' => 'exclamation-circle',
+                    'icon' => 'exclamation-octagon',
+                ],
+                'resignations' => [
+                    'default' => 'resignations',
+                    'folder' => 'resignations',
+                    'name' => 'Resignations',
+                    'route' => 'resignations',
+                    'auth' => 'manage_resignations',
+                    'icon' => 'x-octagon',
                 ],
                 'terminations' => [
                     'default' => 'terminations',
@@ -681,8 +672,9 @@ function get_menu_config() {
                     'name' => 'Terminations',
                     'route' => 'terminations',
                     'auth' => 'manage_terminations',
-                    'icon' => 'x-circle',
+                    'icon' => 'x-octagon',
                 ],
+                
             ],
         ],
 

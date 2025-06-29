@@ -39,38 +39,37 @@ if(isset($_GET['action'])) {
                     $result['sql_error'] = $e->getMessage();
                 }
                 echo json_encode($result); exit();
-            }
-            if($_GET['endpoint'] == 'training') {
+            } else if($_GET['endpoint'] == 'training') {
                 $result = ['error' => true, 'msg' => ''];
                 try {
                     $post = escapePostData($_POST);
-                    if(empty($post['searchEmployee']) || empty($post['training_type']) || empty($post['training_options']) || empty($post['trainer'])) {
-                        $result['msg'] = 'Employee, training type, training options and trainer are required';
+                    if(empty($post['type_id']) || empty($post['option_id']) || empty($post['trainer_id'])) {
+                        $result['msg'] = 'Training type, training options and trainer are required';
                         echo json_encode($result); exit();
                     }
                     
                     check_auth('create_training');
                     
                     // Get training type details
-                    $trainingType = get_data('training_types', ['id' => $post['training_type']]);
-                    $trainingOption = get_data('training_options', ['id' => $post['training_options']]);
-                    $trainer = get_data('trainers', ['id' => $post['trainer']]);
+                    $trainingType = get_data('training_types', ['id' => $post['type_id']])[0];
+                    $trainingOption = get_data('training_options', ['id' => $post['option_id']])[0];
+                    $trainer = get_data('trainers', ['id' => $post['trainer_id']])[0];
                     
-                    $employees = $post['searchEmployee'];
+                    $employees = $post['employee_id'];
                     if(!is_array($employees)) {
                         $employees = [$employees];
                     }
                     
                     $successCount = 0;
                     foreach($employees as $emp_id) {
-                        $employee = get_data('employees', ['employee_id' => $emp_id]);
+                        $employee = get_data('employees', ['employee_id' => $emp_id])[0];
                         if($employee) {
                             $data = [
-                                'type_id' => $post['training_type'],
+                                'type_id' => $post['type_id'],
                                 'type_name' => $trainingType['name'] ?? '',
-                                'option_id' => $post['training_options'],
+                                'option_id' => $post['option_id'],
                                 'option_name' => $trainingOption['name'] ?? '',
-                                'trainer_id' => $post['trainer'],
+                                'trainer_id' => $post['trainer_id'],
                                 'trainer_name' => $trainer['full_name'] ?? '',
                                 'trainer_phone' => $trainer['phone'] ?? '',
                                 'trainer_email' => $trainer['email'] ?? '',
@@ -107,6 +106,9 @@ if(isset($_GET['action'])) {
                     $result['msg'] = 'Error: Something went wrong';
                     $result['sql_error'] = $e->getMessage();
                 }
+                echo json_encode($result); exit();
+            } else {
+                $result['msg'] = 'Invalid endpoint';
                 echo json_encode($result); exit();
             }
         }
@@ -146,29 +148,28 @@ if(isset($_GET['action'])) {
                     $result['sql_error'] = $e->getMessage();
                 }
                 echo json_encode($result); exit();
-            }
-            if($_GET['endpoint'] == 'training') {
+            } else if($_GET['endpoint'] == 'training') {
                 $result = ['error' => true, 'msg' => ''];
                 try {
                     $post = escapePostData($_POST);
-                    if(empty($post['id']) || empty($post['training_type']) || empty($post['training_options']) || empty($post['trainer'])) {
-                        $result['msg'] = 'ID, training type, training options and trainer are required';
+                    if(empty($post['type_id']) || empty($post['option_id']) || empty($post['trainer_id'])) {
+                        $result['msg'] = 'Training type, training options and trainer are required';
                         echo json_encode($result); exit();
                     }
                     
                     check_auth('edit_training');
                     
                     // Get training type details
-                    $trainingType = get_data('training_types', ['id' => $post['training_type']]);
-                    $trainingOption = get_data('training_options', ['id' => $post['training_options']]);
-                    $trainer = get_data('trainers', ['id' => $post['trainer']]);
+                    $trainingType = get_data('training_types', ['id' => $post['type_id']])[0];
+                    $trainingOption = get_data('training_options', ['id' => $post['option_id']])[0];
+                    $trainer = get_data('trainers', ['id' => $post['trainer_id']])[0];
                     
                     $data = [
-                        'type_id' => $post['training_type'],
+                        'type_id' => $post['type_id'],
                         'type_name' => $trainingType['name'] ?? '',
-                        'option_id' => $post['training_options'],
+                        'option_id' => $post['option_id'],
                         'option_name' => $trainingOption['name'] ?? '',
-                        'trainer_id' => $post['trainer'],
+                        'trainer_id' => $post['trainer_id'],
                         'trainer_name' => $trainer['full_name'] ?? '',
                         'trainer_phone' => $trainer['phone'] ?? '',
                         'trainer_email' => $trainer['email'] ?? '',
@@ -181,7 +182,7 @@ if(isset($_GET['action'])) {
                         'updated_date' => date('Y-m-d H:i:s')
                     ];
                     
-                    $updated = $trainingListClass->update($data, ['id' => $post['id']]);
+                    $updated = $trainingListClass->update($post['id'], $data);
                     if($updated) {
                         $result['msg'] = 'Training updated successfully';
                         $result['error'] = false;
@@ -192,6 +193,9 @@ if(isset($_GET['action'])) {
                     $result['msg'] = 'Error: Something went wrong';
                     $result['sql_error'] = $e->getMessage();
                 }
+                echo json_encode($result); exit();
+            } else {
+                $result['msg'] = 'Invalid action';
                 echo json_encode($result); exit();
             }
         }
@@ -260,8 +264,7 @@ if(isset($_GET['action'])) {
 			    } else {
 			        $result['msg'] = "No records found";
 			    }
-			} 
-            if ($_GET['endpoint'] === 'training') {
+			} else if ($_GET['endpoint'] === 'training') {
 				if (isset($_POST['order']) && isset($_POST['order'][0])) {
 				    $orderColumnMap = ['full_name', 'type_name', 'option_name', 'trainer_name', 'cost', 'start_date', 'end_date', 'status'];
 				    $orderColumnIndex = $_POST['order'][0]['column'];
@@ -302,6 +305,10 @@ if(isset($_GET['action'])) {
 
 				echo json_encode($response);
 				exit();
+			} else {
+				$result['msg'] = 'Invalid endpoint';
+				echo json_encode($result);
+				exit();
 			}
             // Return the result as a JSON response
 			echo json_encode($result);
@@ -326,8 +333,7 @@ if(isset($_GET['action'])) {
                     $result['msg'] = 'Trainer not found';
                 }
                 echo json_encode($result); exit();
-            }
-            if($_GET['endpoint'] == 'training') {
+            } else if($_GET['endpoint'] == 'training') {
                 $id = isset($_POST['id']) ? $_POST['id'] : null;
                 $result = ['error' => true, 'msg' => '', 'data' => null];
                 if(!$id) {
@@ -341,6 +347,9 @@ if(isset($_GET['action'])) {
                 } else {
                     $result['msg'] = 'Training not found';
                 }
+                echo json_encode($result); exit();
+            } else {
+                $result['msg'] = 'Invalid endpoint';
                 echo json_encode($result); exit();
             }
         }
@@ -402,8 +411,7 @@ if(isset($_GET['action'])) {
                     $result['msg'] = 'Failed to delete trainer';
                 }
                 echo json_encode($result); exit();
-            }
-            if($_GET['endpoint'] == 'training') {
+            } else if($_GET['endpoint'] == 'training') {
                 $id = isset($_POST['id']) ? $_POST['id'] : null;
                 $result = [ 'error' => true, 'msg' => '' ];
                 if(!$id) {
@@ -418,6 +426,9 @@ if(isset($_GET['action'])) {
                 } else {
                     $result['msg'] = 'Failed to delete training';
                 }
+                echo json_encode($result); exit();
+            } else {
+                $result['msg'] = 'Invalid endpoint';
                 echo json_encode($result); exit();
             }
         }

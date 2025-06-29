@@ -23,6 +23,8 @@ require('PayrollClass.php');
 require('performanceClass.php');
 require('financeClass.php');
 require('trainingClass.php');
+require('management_classes.php');
+
 
 
 

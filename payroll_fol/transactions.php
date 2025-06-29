@@ -3,22 +3,23 @@
         <h5 class="spy-10">Transactions</h5>
         <div class="ms-auto d-sm-flex">
 			<div class="btn-group smr-10">
-				<button type="button" data-bs-toggle="modal" data-bs-target="#download_transactionUploadFile"  class="btn btn-secondary">Download Transactions Upload File</button>
-			</div>
-
-			<div class="btn-group smr-10">
-				<button type="button" data-bs-toggle="modal" data-bs-target="#transaction_upload"  class="btn btn-primary">
-					<i class="bi bi-upload"></i>
-					Bulk
-				</button>
-			</div>
-
-			<div class="btn-group smr-10">
 	            <button type="button" data-bs-toggle="modal" data-bs-target="#add_transaction"  class="btn btn-primary">
                     <i class="bi bi-plus"></i>
                     Add
                 </button>
 	        </div>
+			<div class="btn-group smr-10">
+				<button type="button" data-bs-toggle="modal" data-bs-target="#download_transactionUploadFile"  class="btn btn-outline-secondary">Transaction Template</button>
+			</div>
+
+			<div class="btn-group smr-10">
+				<button type="button" data-bs-toggle="modal" data-bs-target="#transaction_upload"  class="btn btn-outline-secondary">
+					<i class="bi bi-upload"></i>
+					Bulk
+				</button>
+			</div>
+
+			
         </div>
     </div>
 </div>

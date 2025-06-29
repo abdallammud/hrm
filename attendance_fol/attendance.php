@@ -3,26 +3,27 @@
 		<h5 class="">Attendance </h5>
 		<div class="ms-auto d-sm-flex">
 			<div class="btn-group smr-10">
-				<button type="button" data-bs-toggle="modal" data-bs-target="#download_attendanceUploadFile"  class="btn btn-secondary">Download Attendance Upload File</button>
+				<button type="button" data-bs-toggle="modal" data-bs-target="#add_attendance"  class="btn btn-primary">
+					<i class="bi bi-plus"></i>
+					Add
+				</button>
+			</div>
+			<div class="btn-group smr-10">
+				<button type="button" data-bs-toggle="modal" data-bs-target="#download_attendanceUploadFile"  class="btn btn-outline-secondary">Attendance Template</button>
 			</div>
 
 			<div class="btn-group smr-10">
-				<button type="button" data-bs-toggle="modal" data-bs-target="#attendance_upload"  class="btn btn-primary">
+				<button type="button" data-bs-toggle="modal" data-bs-target="#attendance_upload"  class="btn btn-outline-secondary">
 					<i class="bi bi-upload"></i>
 					Upload
 				</button>
 			</div>
 
 
-			<div class="btn-group smr-10">
-				<button type="button" data-bs-toggle="modal" data-bs-target="#add_attendance"  class="btn btn-primary">
-					<i class="bi bi-plus"></i>
-					Add
-				</button>
-			</div>
+			
 
 			<div class="btn-group smr-10">
-				<a type="button" href="<?=baseUri();?>/attendance/add"  class="btn btn-primary">
+				<a type="button" href="<?=baseUri();?>/attendance/add"  class="btn btn-outline-secondary">
 					<i class="bi bi-plus"></i>
 					Bulk add
 				</a>

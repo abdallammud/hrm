@@ -24,8 +24,8 @@
                     <div class="row">
                         <div class="col col-lg-6">
                             <div class="form-group">
-                                <label class="label" for="edit_training_type">Training Type</label>
-                                <select class="form-control validate" data-msg="Training type is required" id="edit_training_type" name="edit_training_type">
+                                <label class="label" for="edit_type_id">Training Type</label>
+                                <select class="form-control validate" data-msg="Training type is required" id="edit_type_id" name="edit_type_id">
                                     <option value="">Select Training Type</option>
                                     <?php echo select_active('training_types');?>
                                 </select>
@@ -34,8 +34,8 @@
                         </div>
                         <div class="col col-lg-6">
                             <div class="form-group">
-                                <label class="label" for="edit_training_options">Training Options</label>
-                                <select class="form-control validate" data-msg="Training options is required" id="edit_training_options" name="edit_training_options">
+                                <label class="label" for="edit_option_id">Training Options</label>
+                                <select class="form-control validate" data-msg="Training options is required" id="edit_option_id" name="edit_option_id">
                                     <option value="">Select Training Options</option>
                                     <?php echo select_active('training_options');?>
                                 </select>
@@ -47,8 +47,8 @@
                     <div class="row">
                         <div class="col col-lg-8">
                             <div class="form-group">
-                                <label class="label" for="edit_trainer">Trainer</label>
-                                <select class="form-control validate" data-msg="Trainer is required" id="edit_trainer" name="edit_trainer">
+                                <label class="label" for="edit_trainer_id">Trainer</label>
+                                <select class="form-control validate" data-msg="Trainer is required" id="edit_trainer_id" name="edit_trainer_id">
                                     <option value="">Select Trainer</option>
                                     <?php echo select_active('trainers', ['id' => 'id', 'text' => 'full_name']);?>
                                 </select>
@@ -99,7 +99,6 @@
                                 <label class="label" for="edit_training_status">Status</label>
                                 <select class="form-control" id="edit_training_status" name="edit_training_status">
                                     <option value="Active">Active</option>
-                                    <option value="Suspended">Suspended</option>
                                     <option value="Completed">Completed</option>
                                     <option value="Cancelled">Cancelled</option>
                                 </select>
