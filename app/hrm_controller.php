@@ -30,16 +30,16 @@ if(isset($_GET['action'])) {
 
 					$data['project_id'] = $data['project'] =  $data['budget_code'] = '';
 					if(isset($post['project_id']) && is_array($post['project_id'])) {
-						foreach ($post['project_id'] as $id) {
-							$data['project_id'] .= $id.', ';;
-							$data['project'] .= get_data('projects', ['id' => $id])[0]['name'].', ';
-					    }
+						// foreach ($post['project_id'] as $id) {
+						// 	$data['project_id'] .= $id.', ';;
+						// 	$data['project'] .= get_data('projects', ['id' => $id])[0]['name'].', ';
+					    // }
 					}
 
 					if(isset($post['budget_code']) && is_array($post['budget_code'])) {
-						foreach ($post['budget_code'] as $code) {
-							$data['budget_code'] .= $code .', ';
-						}
+						// foreach ($post['budget_code'] as $code) {
+						// 	$data['budget_code'] .= $code .', ';
+						// }
 					}
 
 
@@ -55,6 +55,14 @@ if(isset($_GET['action'])) {
 
 				    // Call the create method for employee
 				    $result['id'] = $employeeClass->create($data);
+					$emp_id = $result['id'];
+					if(isset($post['project_id']) && is_array($post['project_id'])) {
+						$employeeClass->assignProjects($emp_id, $post['project_id']);
+					}
+
+					if(isset($post['budget_code']) && is_array($post['budget_code'])) {
+						$employeeClass->assignBudgetCodes($emp_id, $post['budget_code']);
+					}
 
 				    // If the employee was created successfully, handle salary and education
 				    if ($result['id']) {
@@ -130,169 +138,182 @@ if(isset($_GET['action'])) {
 
 				// Return the result as a JSON response
 				echo json_encode($result);
-			} else if($_GET['endpoint'] == 'upload_employees') {
-				try {
-				    // Begin a transaction
-				    $GLOBALS['conn']->begin_transaction();
+			} elseif ($_GET['endpoint'] == 'upload_employees') {
+				/* -------------------------------------------------------------
+				*  1.  Helper functions (procedural scope – no classes)
+				* -----------------------------------------------------------*/
+				
 
-				    $result = ['error' => false, 'msg' => '', 'errors' => ''];
-
-				    check_auth('create_employees'); // Authorization check
-
-				    if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
-				        $fileTmpPath = $_FILES['file']['tmp_name'];
-				        $fileName = $_FILES['file']['name'];
-				        $fileSize = $_FILES['file']['size'];
-				        $fileType = $_FILES['file']['type'];
-
-				        // Validate file type and size
-				        if ($fileType != 'text/csv' ) { // File size limit: 5MB
-				        	// || $fileSize > 5 * 1024 * 1024
-				            $result['error'] = true;
-				            $result['msg'] = "Invalid file type or size. Please upload a valid CSV file.";
-				            echo json_encode($result);
-				            exit();
-				        }
-
-				        if (($file = fopen($fileTmpPath, 'r')) !== false) {
-				            $row = 0;
-
-				            while (($line = fgetcsv($file, 1000, ',')) !== false) {
-				                $row++;
-				                if ($row == 1) continue; // Skip header row
-
-				                // Ensure the row has the correct number of columns
-				                if (count($line) < 27) {
-				                    $result['errors'] .= "Skipping invalid row at line $row: ";
-				                    continue;
-				                }
-
-				                list(
-				                    $staff_no, $full_name, $phone_number, $email, $gender,
-				                    $national_id, $date_of_birth, $city, $address,
-				                    $payment_bank, $payment_account, $branch, 
-				                    $designation, $state, $location, $hire_date,
-				                    $contract_start, $contract_end, $contract_type, $salary,
-				                    $tax_exempt, $budget_code, $moh_contract, $work_days,
-				                    $work_hours, $grade, $seniority
-				                ) = array_map('escapeStr', $line);
-
-				                $position = $designation;
-
-				                // Check for missing required fields
-				                if (!$full_name || !$phone_number || !$gender || !$email || !$branch) {
-				                    $result['errors'] .= " Missing required fields at line $row.";
-				                    continue;
-				                }
-
-				                $date_of_birth 	= date('Y-m-d', strtotime($date_of_birth));
-				                $hire_date 		= date('Y-m-d', strtotime($hire_date));
-				                $contract_start = date('Y-m-d', strtotime($contract_start));
-				                $contract_end 	= date('Y-m-d', strtotime($contract_end));
-
-				                $check_sql = "SELECT * FROM `employees` WHERE `full_name` = '$full_name' AND `phone_number` = '$phone_number'";
-				                $check_exists = $GLOBALS['conn']->query($check_sql);
-				                if($check_exists->num_rows > 0) {
-				                	$result['errors'] .= " Record already exits at line $row.";
-				                	continue;
-				                }
-
-				                // Process each entity and handle creation or retrieval
-								$location_id = checkAndCreateEntity('locations', $location, $myUserId, $locationsClass);
-				                $branch_id = checkAndCreateEntity('branches', $branch, $myUserId, $branchClass);
-				                $state_id = checkAndCreateEntity('states', $state, $myUserId, $statesClass);
-				                
-				                $designation_id = checkAndCreateEntity('designations', $designation, $myUserId, $designationsClass);
-				                $contract_type_id = checkAndCreateEntity('contract_types', $contract_type, $myUserId, $contractTypesClass);
-								
-								$bduget_codes = explode(',', $budget_code);
-								$budget_code_id = '';
-								foreach ($bduget_codes as $code) {
-									$budget_code_id .= checkAndCreateEntity('budget_codes', $code, $myUserId, $budgetCodesClass) . ', ';
-								}
-								$budget_code_id = rtrim($budget_code_id, ', ');
-
-				                // Prepare employee data
-				                $employeeData = [
-				                    'full_name' => $full_name,
-				                    'phone_number' => $phone_number,
-				                    'email' => $email,
-				                    'gender' => $gender,
-				                    'staff_no' => $staff_no,
-				                    'national_id' => $national_id,
-				                    'date_of_birth' => $date_of_birth,
-				                    'state_id' => $state_id,
-				                    'state' => $state,
-				                    'city' => $city,
-				                    'address' => $address,
-				                    'branch_id' => $branch_id,
-				                    'branch' => $branch,
-				                    'location_id' => $location_id,
-				                    'location_name' => $location,
-				                    'position' => $position,
-				                    'designation' => $designation,
-				                    'hire_date' => $hire_date,
-				                    'contract_start' => $contract_start,
-				                    'contract_end' => $contract_end,
-				                    'work_days' => $work_days,
-				                    'work_hours' => $work_hours,
-				                    'contract_type' => $contract_type,
-				                    'salary' => $salary,
-				                    'budget_code' => $budget_code,
-				                    'moh_contract' => $moh_contract,
-				                    'payment_bank' => $payment_bank,
-				                    'payment_account' => $payment_account,
-				                    'grade' => $grade,
-				                    'tax_exempt' => $tax_exempt,
-				                    'seniority' => $seniority,
-				                ];
-
-				                $result['id'] = $employeeClass->create($employeeData);
-
-				                if ($result['id']) {
-				                    // Handle staff number
-				                    if (!isset($staff_no) || $staff_no == return_setting('staff_prefix')) {
-				                        $staff_no = return_setting('staff_prefix') . $result['id'];
-				                        $employeeClass->update($result['id'], ['staff_no' => $staff_no]);
-				                    }
-
-				                    // Create user
-				                    $password = password_hash($phone_number, PASSWORD_DEFAULT);
-				                    $userData = [
-				                        'full_name' => $full_name,
-				                        'phone' => $phone_number,
-				                        'email' => $email,
-				                        'emp_id' => $result['id'],
-				                        'branch_id' => $branch_id,
-				                        'username' => usernameFromEmail($email),
-				                        'password' => $password,
-				                        'role' => 'employee',
-				                        'added_by' => $_SESSION['user_id']
-				                    ];
-				                    // $userClass->create($userData);
-				                } else {
-				                    $GLOBALS['conn']->rollback();
-				                    throw new Exception("Failed to create employee at line $row.");
-				                }
-				            }
-
-				            fclose($file);
-				            $GLOBALS['conn']->commit();
-				            $result['msg'] = "Employees uploaded successfully.";
-				        } else {
-				            throw new Exception("File read error.");
-				        }
-				    } else {
-				        throw new Exception("Please select a file.");
-				    }
-				} catch (Exception $e) {
-				    $GLOBALS['conn']->rollback();
-				    $result['error'] = true;
-				    $result['msg'] = $e->getMessage();
-				    error_log($e->getMessage());
+				function getOrCreateCached(
+					string $table,
+					string $rawName,
+					int    $userId,
+						$class,
+					array  &$cache
+				): int {
+					$key = mb_strtolower(trim($rawName));
+					if ($key === '') {
+						throw new RuntimeException("Empty name for $table");
+					}
+					if (isset($cache[$table][$key])) {
+						return $cache[$table][$key];
+					}
+					$id = checkAndCreateEntity($table, $rawName, $userId, $class);
+					$cache[$table][$key] = $id;
+					return $id;
 				}
 
-				echo json_encode($result);
+				try {
+					check_auth('create_employees');
+
+					if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+						throw new RuntimeException('Please select a valid CSV file.');
+					}
+
+					$f = $_FILES['file'];
+					if ($f['type'] !== 'text/csv') {
+						throw new RuntimeException('Invalid file type. Only CSV allowed.');
+					}
+
+					$conn = $GLOBALS['conn'];
+					$conn->begin_transaction();
+
+					/* ---------- Cache + classes ---------- */
+					$cache = [
+						'locations'      => [],
+						'branches'       => [],
+						'states'         => [],
+						'designations'   => [],
+						'contract_types' => [],
+						'budget_codes'   => [],
+						'projects'       => [],
+					];
+					// Pre-load existing names
+					foreach (array_keys($cache) as $tbl) {
+						$res = $conn->query("SELECT id, name FROM `$tbl`");
+						while ($r = $res->fetch_assoc()) {
+							$cache[$tbl][mb_strtolower($r['name'])] = (int)$r['id'];
+						}
+					}
+
+					/* ---------- Prepared statements ---------- */
+					$empStmt = $conn->prepare(
+						"INSERT INTO employees (
+							staff_no, full_name, phone_number, email, gender, national_id,
+							date_of_birth, city, address, payment_bank, payment_account,
+							branch_id, branch, state_id, state, location_id, location_name,
+							position, designation, hire_date, contract_start, contract_end,
+							work_days, work_hours, contract_type, salary, budget_code,
+							moh_contract, grade, tax_exempt, seniority, added_by
+						) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+					);
+
+					$projStmt = $conn->prepare("INSERT INTO employee_projects (emp_id, project_id) VALUES (?,?)");
+					$bcStmt   = $conn->prepare("INSERT INTO employee_budget_codes (emp_id, budget_code_id) VALUES (?,?)");
+
+					$fp    = fopen($f['tmp_name'], 'r');
+					$rowNo = 0;
+					$batch = 0;
+					$errors = [];
+
+					while (($line = fgetcsv($fp, 0, ',')) !== false) {
+						++$rowNo;
+						if ($rowNo === 1) continue; // header
+
+						if (count($line) < 27) {
+							$errors[$rowNo] = 'Column count mismatch';
+							continue;
+						}
+
+						[
+							0  => $staff_no,        1 => $full_name,      2 => $phone,
+							3  => $email,           4 => $gender,         5 => $national_id,
+							6  => $dob,             7 => $city,           8 => $address,
+							9  => $payment_bank,   10 => $payment_acc,   11 => $branch,
+							12 => $designation,    13 => $state,         14 => $location,
+							15 => $hire_date,      16 => $contract_start,17 => $contract_end,
+							18 => $contract_type,  19 => $salary,        20 => $tax_exempt,
+							21 => $budget_code,    22 => $moh_contract,  23 => $work_days,
+							24 => $work_hours,     25 => $grade,         26 => $seniority
+						] = array_map('trim', $line);
+
+						if (!$full_name || !$phone || !$email || !$branch) {
+							$errors[$rowNo] = 'Missing required fields';
+							continue;
+						}
+
+						/* ---------- Foreign-key resolution ---------- */
+						$branch_id        = getOrCreateCached('branches',       $branch,        $_SESSION['user_id'], $branchClass,       $cache);
+						$state_id         = getOrCreateCached('states',         $state,         $_SESSION['user_id'], $statesClass,       $cache);
+						$location_id      = getOrCreateCached('locations',      $location,      $_SESSION['user_id'], $locationsClass,    $cache);
+						$designation_id   = getOrCreateCached('designations',   $designation,   $_SESSION['user_id'], $designationsClass, $cache);
+						$contract_type_id = getOrCreateCached('contract_types', $contract_type, $_SESSION['user_id'], $contractTypesClass,$cache);
+
+						/* ---------- Insert employee ---------- */
+						$dob = date('Y-m-d', strtotime($dob));
+						$hire_date = date('Y-m-d', strtotime($hire_date));
+						$contract_start = date('Y-m-d', strtotime($contract_start));
+						$contract_end = date('Y-m-d', strtotime($contract_end));
+
+						$empStmt->bind_param(
+							'ssssssssssssssssssssssssssssssss',
+							$staff_no, $full_name, $phone, $email, $gender, $national_id,
+							$dob, $city, $address,
+							$payment_bank, $payment_acc, $branch_id, $branch,
+							$state_id, $state, $location_id, $location,
+							$designation, 
+							$hire_date,
+							$contract_start,
+							$contract_end,
+							$work_days, $work_hours, $contract_type,
+							$salary, $budget_code, $moh_contract,
+							$grade, $tax_exempt, $seniority, $_SESSION['user_id']
+						);
+						if (!$empStmt->execute()) {
+							$errors[$rowNo] = $empStmt->error;
+							continue;
+						}
+						$empId = $conn->insert_id;
+
+						/* Auto staff_no */
+						if (!$staff_no || $staff_no === return_setting('staff_prefix')) {
+							$staff_no = return_setting('staff_prefix') . $empId;
+							$conn->query("UPDATE employees SET staff_no='$staff_no' WHERE employee_id=$empId");
+						}
+
+						/* Projects */
+						foreach (array_filter(array_map('trim', explode(',', $line[27] ?? ''))) as $pName) {
+							$pid = getOrCreateCached('projects', $pName, $_SESSION['user_id'], $projectsClass, $cache);
+							$projStmt->bind_param('ii', $empId, $pid);
+							$projStmt->execute();
+						}
+
+						/* Budget codes */
+						foreach (array_filter(array_map('trim', explode(',', $budget_code))) as $bcName) {
+							$bcid = getOrCreateCached('budget_codes', $bcName, $_SESSION['user_id'], $budgetCodesClass, $cache);
+							$bcStmt->bind_param('ii', $empId, $bcid);
+							$bcStmt->execute();
+						}
+
+						/* Batch commit */
+						if (++$batch % 200 === 0) {
+							$conn->commit();
+							$conn->begin_transaction();
+						}
+					}
+					fclose($fp);
+
+					$conn->commit();
+					echo json_encode([
+						'error'  => false,
+						'msg'    => 'Upload completed. ' . ($rowNo - 1) . ' rows processed.',
+						'errors' => $errors
+					]);
+
+				} catch (Throwable $e) {
+					$GLOBALS['conn']->rollback();
+					echo json_encode(['error' => true, 'msg' => $e->getMessage()]);
+				}
 			} else if($_GET['endpoint'] == 'folder') {
 				try {
 					$GLOBALS['conn']->begin_transaction();
@@ -1759,6 +1780,12 @@ if(isset($_GET['action'])) {
 		}
 
 	}
+}
+
+// Helper function for upload
+function getIdCached(array &$cache, string $name): ?int
+{
+    return $cache[mb_strtolower(trim($name))] ?? null;
 }
 
 ?>

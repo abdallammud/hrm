@@ -192,7 +192,7 @@
                                     <div class="form-group">
                                         <label class="label " for="budgetCode">Budget code</label>
                                         <select class="my-select budgetCode" name="budgetCode" multiple id="budgetCode" data-live-search="true" title="Select budget codes">
-                                          <?=select_active('budget_codes', ['value' => 'name']);?>
+                                          <?=select_active('budget_codes');?>
                                         </select>
                                         <span class="form-error text-danger">This is error</span>
                                     </div>
