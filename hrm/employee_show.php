@@ -1,7 +1,12 @@
 <?php 
 $employee_id = $_GET['employee_id'];
-$employee = $GLOBALS['employeeClass']->read($employee_id);
-// var_dump($employee);
+$employee = $GLOBALS['employeeClass']->getFullProfile($employee_id);
+$projects = $GLOBALS['employeeClass']->getProjectsAsString($employee_id);
+$budget_codeNames = $GLOBALS['employeeClass']->getBudgetCodeNamesAsString($employee_id);
+
+// var_dump($budget_codeNames);
+$employee['project'] = $projects;
+$employee['budget_code'] = $budget_codeNames;
 
 if(!$employee['avatar']) {
 	if(strtolower($employee['gender']) == 'female')  {
@@ -12,10 +17,10 @@ if(!$employee['avatar']) {
 }
 
 $border_color = '#6c757d';
-$user = $GLOBALS['employeeClass']->get_user($employee_id);
-if($user) {
-	if(ucwords($user[0]['is_logged']) == 'Yes') $border_color = '#80ff83';
-}
+// $user = $GLOBALS['employeeClass']->get_user($employee_id);
+// if($user) {
+// 	if(ucwords($user[0]['is_logged']) == 'Yes') $border_color = '#80ff83';
+// }
 
 
 ?>
@@ -266,7 +271,7 @@ if($user) {
 				<h5 class="">Education</h5>
 			</div>
 			<?php 
-			$education = $GLOBALS['employeeClass']->get_education($employee_id);
+			$education = $GLOBALS['employeeClass']->getEducation($employee_id);
 			if($education) {
 			?>
 			<div class="card">

@@ -214,226 +214,171 @@ document.addEventListener("DOMContentLoaded", function() {
     handleAddAwards();
 });	
 
+
 function load_employees(department = '', state = '', location = '', status = '') {
-	var datatable = $('#employeesDT').DataTable({
-		// let datatable = new DataTable('#companyDT', {
-	    "processing": true,
-	    "serverSide": true,
-	    "bDestroy": true,
-	    "searching": true,  
-	    "info": true,
-	    "columnDefs": [
-	        { "orderable": false, "searchable": false, "targets": [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,25,26,27,28] }  // Disable search on first and last columns
-	    ],
-	    "serverMethod": 'post',
-	    "ajax": {
-	        "url": "./app/hrm_controller.php?action=load&endpoint=employees",
-	        "method": "POST",
-	         "data": {
-	            "department": department,
-	            "state": state,
-	            "location": location,
-	            "status": status,
-	        },
-		    // dataFilter: function(data) {
-			// 	console.log(data)
-			// }
-	    },
-	    
-	    "createdRow": function(row, data, dataIndex) { 
-	    	// Add your custom class to the row 
-	    	$(row).addClass('table-row ' +data.status.toLowerCase());
-	    },
-	    "drawCallback": function(settings) {
-	    	$('#employeesDT_wrapper').find('td').css('display', 'none');
-	    	 $('#employeesDT_wrapper').find('th').css('display', 'none')
-	    	 tableColumns.map((column) => {
-	    		$('#employeesDT_wrapper').find('td.'+column).css('display', 'table-cell')
-	    		$('#employeesDT_wrapper').find('th.'+column).css('display', 'table-cell')
-	    	})
-	    },
-	    columns: [
-	    	{ title: `Staff No.`, className: "staff_no", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.staff_no}</span>
-	                </div>`;
-	        }},
+  const dt = $('#employeesDT').DataTable({
+    processing: true,
+    serverSide: true,
+    destroy: true,
+    searching: true,
+    info: true,
+    serverMethod: 'POST',
+    ajax: {
+      url: './app/hrm_controller.php?action=load&endpoint=employees',
+      data: function (d) {
+        d.department = department;
+        d.state = state;
+        d.location = location;
+        d.status = status;
+      }
+    },
 
-	        { title: `Full name`, className: "full_name", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.full_name}</span>
-	                </div>`;
-	        }},
+    createdRow: function (row, data) {
+      $(row).addClass('table-row ' + (data.status || '').toLowerCase());
+    },
 
-	        { title: `Phone Number`, className: "phone_number", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.phone_number}</span>
-	                </div>`;
-	        }},
+    columns: [
+      { // Checkbox column
+        title: `<input type="checkbox" id="select-all">`,
+        data: 'employee_id',
+        name: 'select',
+        orderable: false,
+        searchable: false,
+        className: 'select-checkbox',
+        render: (data) => `<input type="checkbox" class="row-select" value="${data}">`
+      },
+      { title: 'Staff No.',       data: 'staff_no',       name: 'staff_no',       className: 'staff_no',       defaultContent: '' },
+      { title: 'Full name',       data: 'full_name',      name: 'full_name',      className: 'full_name',      defaultContent: '' },
+      { title: 'Phone Number',    data: 'phone_number',   name: 'phone_number',   className: 'phone_number',   defaultContent: '' },
+      { title: 'Email',           data: 'email',          name: 'email',          className: 'email',          defaultContent: '' },
+      { title: 'Gender',          data: 'gender',         name: 'gender',         className: 'gender',         defaultContent: '' },
+      { title: 'DOB',             data: 'date_of_birth',  name: 'date_of_birth',  className: 'date_of_birth',  render: d => formatDate(d) },
+      { title: 'State',           data: 'state',          name: 'state',          className: 'state',          defaultContent: '' },
+      { title: 'City',            data: 'city',           name: 'city',           className: 'city',           defaultContent: '' },
+      { title: 'Address',         data: 'address',        name: 'address',        className: 'address',        defaultContent: '' },
+      { title: 'Department',      data: 'branch',         name: 'branch',         className: 'department',     defaultContent: '' },
+      { title: 'Duty Location',   data: 'location_name',  name: 'location_name',  className: 'location_name',  defaultContent: '' },
+      { title: 'Position',        data: 'position',       name: 'position',       className: 'position',       defaultContent: '' },
+      { title: 'Project',         data: 'project',        name: 'project',        className: 'project',        defaultContent: '' },
+      { title: 'Designation',     data: 'designation',    name: 'designation',    className: 'designation',    defaultContent: '' },
+      { title: 'Hire date',       data: 'hire_date',      name: 'hire_date',      className: 'hire_date',      render: d => formatDate(d) },
+      { title: 'Contract start',  data: 'contract_start', name: 'contract_start', className: 'contract_start', render: d => formatDate(d) },
+      { title: 'Contract end',    data: 'contract_end',   name: 'contract_end',   className: 'contract_end',   render: d => formatDate(d) },
+      { title: 'Work days',       data: 'work_days',      name: 'work_days',      className: 'work_days',      render: d => `${d} days/week` },
+      { title: 'Work hours',      data: 'work_hours',     name: 'work_hours',     className: 'work_hours',     render: d => `${d} hours/day` },
+      { title: 'Budget code',     data: 'budget_code',    name: 'budget_code',    className: 'budget_code',    defaultContent: '' },
+      { title: 'Salary',          data: 'salary',         name: 'salary',         className: 'salary',         render: d => formatMoney(d) },
+      { title: 'MoH Contract',    data: 'moh_contract',   name: 'moh_contract',   className: 'moh_contract',   defaultContent: '' },
+      { title: 'Bank',            data: 'payment_bank',   name: 'payment_bank',   className: 'bank',           defaultContent: '' },
+      { title: 'Account number',  data: 'payment_account',name: 'payment_account',className: 'account_number', defaultContent: '' },
+      { title: 'Grade',           data: 'grade',          name: 'grade',          className: 'grade',          defaultContent: '' },
+      { title: 'Tax exempt',      data: 'tax_exempt',     name: 'tax_exempt',     className: 'tax_exempt',     defaultContent: '' },
+      { title: 'Seniority',       data: 'seniority',      name: 'seniority',      className: 'seniority',      defaultContent: '' },
+      { title: 'Status',          data: 'status',         name: 'status',         className: 'status',         defaultContent: '' },
+      {
+        title: 'Action',
+        data: null,
+        name: 'action',
+        className: 'action',
+        orderable: false,
+        searchable: false,
+        render: (data, type, row) => `
+          <div class="sflex scenter-items">
+            <a href="${base_url}/employees/show/${row.employee_id}" class="fa smt-5 cursor smr-10 fa-eye" title="View"></a>
+            <a href="${base_url}/employees/edit/${row.employee_id}" class="fa smt-5 cursor smr-10 fa-pencil" title="Edit"></a>
+            <span data-recid="${row.employee_id}" class="fa delete_employee smt-5 cursor fa-trash" title="Delete"></span>
+          </div>`
+      }
+    ],
 
-	        { title: `Email`, className: "email", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.email}</span>
-	                </div>`;
-	        }},
+    columnDefs: [
+      { targets: [0, -1], orderable: false, searchable: false }
+    ],
 
-	        { title: `Gender`, className: "gender", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.gender}</span>
-	                </div>`;
-	        }},
+    initComplete: function () {
+      applyColumnVisibility(this.api());
+      bindBulkActions();
+    }
+  });
 
-	        { title: `DOB`, className: "date_of_birth", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${formatDate(row.date_of_birth)}</span>
-	                </div>`;
-	        }},
+  function applyColumnVisibility(api) {
+    if (!Array.isArray(window.tableColumns)) return;
+    const columns = api.settings()[0].aoColumns;
+    const map = {};
+    columns.forEach((col, idx) => { map[col.data] = idx; });
 
-	        { title: `State`, className: "state", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.state}</span>
-	                </div>`;
-	        }},
+    // Hide all except checkbox & action
+    columns.forEach((col, idx) => {
+      if (col.data !== null) api.column(idx).visible(false, false);
+    });
 
-	        { title: `City`, className: "city", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.city}</span>
-	                </div>`;
-	        }},
+    window.tableColumns.forEach(key => {
+      if (map[key] !== undefined) {
+        api.column(map[key]).visible(true, false);
+      }
+    });
 
-	        { title: `Address`, className: "address", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.address}</span>
-	                </div>`;
-	        }},
+    // Always show checkbox and action
+    api.column(0).visible(true, false);
+    api.column(columns.length - 1).visible(true, false);
+    api.columns.adjust().draw(false);
+  }
 
-	        { title: `Department`, className: "department", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.branch}</span>
-	                </div>`;
-	        }},
+  function bindBulkActions() {
+    $(document).on('click', '#applyBulk', (e) => {
+        // console.log(e)
+        let value = $("#bulkAction").val();
+        const ids = $('.row-select:checked').map(function () {
+            return $(this).val();
+        }).get();
 
-	        { title: `Duty Location`, className: "location_name", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.location_name}</span>
-	                </div>`;
-	        }},
+        if (ids.length === 0) {
+            swal('Sorry', 'No employees selected', 'error');
+            return;
+        }
 
-	        { title: `Position`, className: "position", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.position}</span>
-	                </div>`;
-	        }},
+        // console.log(ids)
+        if(value == 'delete') {
+            $(e.target).html('Please wait...')
+            $(e.target).attr('disabled', true)
+            swal({
+                title: "Are you sure?",
+                text: "You are going to delete all selected employees!",
+                icon: "warning",
+                className: 'warning-swal',
+                buttons: ["Cancel", "Yes, delete"],
+            })
+            .then((willDelete) => {
+                if (willDelete) {
+                    $.post(`${base_url}/app/hrm_controller.php?action=delete&endpoint=employeeBulk`, { ids:ids, action:value })
+                    .then(response => {
+                        console.log(response)
+                        let res = JSON.parse(response);
+                        if (!res.error) {
+                            toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            toaster.error(res.msg, 'Error');
+                        }
+                    })
+                } else {
+                    $(e.target).html('Apply')
+                    $(e.target).attr('disabled', false)
+                }
+            });
+        } 
+    })
 
-	        { title: `Project`, className: "project", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.project}</span>
-	                </div>`;
-	        }},
+    // Select/Deselect all
+    $('#select-all').on('change', function () {
+      $('.row-select').prop('checked', $(this).is(':checked'));
+    });
 
-	        { title: `Designation`, className: "designation", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.designation}</span>
-	                </div>`;
-	        }},
+  }
 
-	       	{ title: `Hire date`, className: "hire_date", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${formatDate(row.hire_date)}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Contract start`, className: "contract_start", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${formatDate(row.contract_start)}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Contract end`, className: "contract_end", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${formatDate(row.contract_end)}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Work days`, className: "work_days", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.work_days} days/week</span>
-	                </div>`;
-	        }},
-
-	        { title: `Work hours`, className: "work_hours", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.work_hours} hours/day</span>
-	                </div>`;
-	        }},
-
-	        { title: `Budget code`, className: "budget_code", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.budget_code} hours/day</span>
-	                </div>`;
-	        }},
-
-	        { title: `Salary`, className: "salary", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${formatMoney(row.salary)}</span>
-	                </div>`;
-	        }},
-
-	        { title: `MoH Contract`, className: "moh_contract", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.moh_contract}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Bank`, className: "bank", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.payment_bank}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Account number`, className: "account_number", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.payment_account}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Grade`, className: "grade", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.grade}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Tax exempt`, className: "tax_exempt", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.tax_exempt}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Seniority`, className: "seniority", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.seniority}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Status`, className: "status", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.status}</span>
-	                </div>`;
-	        }},
-
-	        { title: "Action", className: "action", data: null, render: function(data, type, row) {
-	            return `<div class="sflex scenter-items">
-	            	<a href="${base_url}/employees/show/${row.employee_id}" class="fa smt-5 cursor smr-10 fa-eye"></a>
-            		<a href="${base_url}/employees/edit/${row.employee_id}" class="fa  smt-5 cursor smr-10 fa-pencil"></a>
-            		<span data-recid="${row.employee_id}" class="fa delete_employee smt-5 cursor fa-trash"></span>
-                </div>`;
-	        }},
-	    ]
-	});
-
-	return false;
+  return false;
 }
-
 async function handle_addEmployeeForm(form) {
 	clearErrors();
 	 
@@ -927,7 +872,7 @@ function load_docTypes() {
         ],
         "serverMethod": 'post',
         "ajax": {
-            "url": "./app/hrm_controller.php?action=load&endpoint=doc_types",
+            "url": `${base_url}/app/hrm_controller.php?action=load&endpoint=doc_types`,
             "method": "POST",
 		    // dataFilter: function(data) {
 			// 	console.log(data)
@@ -1093,168 +1038,54 @@ async function get_docType(id) {
 }
 
 // Documents in folder
-function load_folderDocs() {
-    let folder_id = $('#folder_id').val();
-    let employee_id = $('#employee_id').val();
-    var datatable = $('#empDocumentsDT').DataTable({
-		// let datatable = new DataTable('#companyDT', {
-	    "processing": true,
-	    "serverSide": true,
-	    "bDestroy": true,
-	    "searching": true,  
-	    "info": true,
-	    "columnDefs": [
-	        { "orderable": false, "searchable": false, "targets": [3] }  // Disable search on first and last columns
-	    ],
-	    "serverMethod": 'post',
-	    "ajax": {
-	        "url": `${base_url}/app/hrm_controller.php?action=load&endpoint=documents`,
-	        "method": "POST",
-	        "data": {
-	            "folder_id": folder_id,
-	            "employee_id": employee_id
-	        },
-		    // dataFilter: function(data) {
+function loadDocumentsTable(tableId, folder_id = '', employee_id = '') {
+    $('#' + tableId).DataTable({
+        processing: true,
+        serverSide: true,
+        destroy: true,
+        searching: true,
+        info: true,
+        serverMethod: 'post',
+        ajax: {
+            url: `${base_url}/app/hrm_controller.php?action=load&endpoint=documents`,
+            method: "POST",
+            data: {
+                folder_id: folder_id,
+                employee_id: employee_id
+            },
+            // dataFilter: function(data) {
 			// 	console.log(data)
 			// }
-	    },
-	    
-	    columns: [
-	    	{ title: `Document Name`, className: "document_name", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.name}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Employee`, className: "full_name", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.full_name}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Phone Number`, className: "phone_number", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.phone}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Document type`, className: "type_name", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.type_name}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Folder`, className: "folder_name", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.folder_name}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Expiration date`, className: "expiration_date", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${formatDate(row.expiration_date)}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Created at`, className: "created_at", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${formatDate(row.created_at)}</span>
-	                </div>`;
-	        }},
-
-	        { title: "Action", className: "action", data: null, render: function(data, type, row) {
-	            return `<div class="sflex scenter-items">
-	            	<a href="${base_url}/assets/docs/employee/${row.document}" download="${row.document}" class="fa smt-5 cursor smr-10 fa-download"></a>
-	            	<span onclick="handleDeleteDocument(${row.id})" class="fa delete_document smt-5 cursor fa-trash"></span>
-                </div>`;
-	        }},
-	    ]
-	});
-
-	return false;
+        },
+        columnDefs: [
+            { orderable: false, searchable: false, targets: [7] } // Action column index
+        ],
+        columns: [
+            { title: "Document Name", data: "doc_name" },
+            { title: "Employee", data: "full_name" },
+            { title: "Phone Number", data: "phone_number" },
+            { title: "Document Type", data: "type_name" },
+            { title: "Folder", data: "folder_name" },
+            { title: "Expiration Date", data: "expiration_date", render: formatDate },
+            { title: "Created At", data: "created_at", render: formatDate },
+            {
+                title: "Action",
+                data: null,
+                render: function (data, type, row) {
+                    return `
+                        <div class="sflex scenter-items">
+                            <a href="${base_url}/assets/docs/employee/${row.document}" 
+                               download="${row.document}" 
+                               class="fa smt-5 cursor smr-10 fa-download"></a>
+                            <span onclick="handleDeleteDocument(${row.id})" 
+                                  class="fa delete_document smt-5 cursor fa-trash"></span>
+                        </div>`;
+                }
+            }
+        ]
+    });
 }
 
-function load_employeeDocs() {
-    let folder_id = '';
-    let employee_id = $('#employee_id').val();
-    console.log(folder_id, employee_id)
-    var datatable = $('#employeeDocsDT').DataTable({
-		// let datatable = new DataTable('#companyDT', {
-	    "processing": true,
-	    "serverSide": true,
-	    "bDestroy": true,
-	    "searching": true,  
-	    "info": true,
-	    "columnDefs": [
-	        { "orderable": false, "searchable": false, "targets": [3] }  // Disable search on first and last columns
-	    ],
-	    "serverMethod": 'post',
-	    "ajax": {
-	        "url": `${base_url}/app/hrm_controller.php?action=load&endpoint=documents`,
-	        "method": "POST",
-	        "data": {
-	            "folder_id": folder_id,
-	            "employee_id": employee_id
-	        },
-		    /*dataFilter: function(data) {
-				console.log(data)
-			}*/
-	    },
-	    
-	    columns: [
-	    	{ title: `Document Name`, className: "document_name", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.name}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Employee`, className: "full_name", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.full_name}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Phone Number`, className: "phone_number", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.phone}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Document type`, className: "type_name", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.type_name}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Folder`, className: "folder_name", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.folder_name}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Expiration date`, className: "expiration_date", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${formatDate(row.expiration_date)}</span>
-	                </div>`;
-	        }},
-
-	        { title: `Created at`, className: "created_at", data: null, render: function(data, type, row) {
-	            return `<div>
-	            		<span>${formatDate(row.created_at)}</span>
-	                </div>`;
-	        }},
-
-	        { title: "Action", className: "action", data: null, render: function(data, type, row) {
-	            return `<div class="sflex scenter-items">
-	            	<a href="${base_url}/assets/docs/employee/${row.document}" download="${row.document}" class="fa smt-5 cursor smr-10 fa-download"></a>
-	            	<span onclick="handleDeleteDocument(${row.id})" class="fa delete_document smt-5 cursor fa-trash"></span>
-                </div>`;
-	        }},
-	    ]
-	});
-
-	return false;
-}
 
 function handleFolderDocs() {
     // Load document types for select
@@ -1270,6 +1101,7 @@ function handleFolderDocs() {
     // Load employees for select
     $.get('./app/hrm_controller.php?action=get&endpoint=employees_list', function(response) {
         let employees = JSON.parse(response);
+        console.log(employees)
         let options = '<option value="">Select Employee</option>';
         employees.forEach(emp => {
             options += `<option value="${emp.id}" data-phone="${emp.phone}" data-email="${emp.email}">${emp.full_name}</option>`;
@@ -1282,7 +1114,9 @@ function handleFolderDocs() {
         return false;
     });
 
-    load_folderDocs();
+    loadDocumentsTable("empDocumentsDT", $('#folder_id').val())
+    // loadDocumentsTable("empDocumentsDT", $('#folder_id').val())
+    
 
     $(document).on('click', '.edit_document', async function() {
         let id = $(this).data('recid');
@@ -1325,7 +1159,7 @@ function handleFolderDocs() {
                             toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
                         } else {
                             toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 2000 }).then(() => {
-                                load_folderDocs();
+                                loadDocumentsTable("empDocumentsDT", $('#folder_id').val())
                             });
                         }
                     }
@@ -1345,11 +1179,32 @@ function handleFolderDocs() {
         let id = $(this).data('recid');
         window.open(`./app/hrm_controller.php?action=view&endpoint=folder_docs&id=${id}`, '_blank');
     });
+
+    // Search and select employee for ducment upload
+    $(document).on('keyup', '.bootstrap-select.searchEmployee input.form-control', async (e) => {
+        let search = $(e.target).val();
+        let searchFor = 'award';
+        let formData = {search:search, searchFor:searchFor}
+        if(search) {
+            try {
+                let response = await send_hrmPost('search employee4Select', formData);
+                let res = JSON.parse(response);
+                if(!res.error) {
+                    $('#searchEmployee').html(res.options)
+                    $('.my-select').selectpicker('refresh');
+                } 
+            } catch (err) {
+                console.error('Error occurred during employee search:', err);
+            }
+        }
+    });
+   
 }
 
 function handleEmpDocs() {
-    load_folderDocs();
-    load_employeeDocs();
+    loadDocumentsTable("empDocumentsDT", $('#folder_id').val())
+    loadDocumentsTable("employeeDocsDT", '', $('#employee_id').val())
+    
     // console.log('handleEmpDocs');
 
     // Handle document form submission
@@ -1363,16 +1218,18 @@ function handleEmpDocs() {
 async function handle_addEmpDocumentForm(form) {
     clearErrors();
     let error = validateForm(form);
-    let employee_id = $(form).find('#employee').val();
+    let employee_id = $(form).find('#searchEmployee').val();
     let docName = $(form).find('#docName').val();
     let docType = $(form).find('#docType').val();
     let docTypeName = $(form).find('#docType option:selected').text();
     let docFolder = $(form).find('#docFolder').val();
     let docFolderName = $(form).find('#docFolder option:selected').text();
     let expirationDate = $(form).find('#expirationDate').val();
-    let employee_name = $(form).find('#employee option:selected').text();
+    let employee_name = $(form).find('#searchEmployee option:selected').text();
 
     console.log(employee_id, employee_name);
+
+    // return false;
 
     if (!employee_id) { 
         error = true;
@@ -1397,7 +1254,7 @@ async function handle_addEmpDocumentForm(form) {
         return;
     }
 
-    form_loading(this);
+    form_loading(form);
 
     let formData = new FormData(form);
     formData.append('employee_id', employee_id);
@@ -1438,8 +1295,8 @@ async function handle_addEmpDocumentForm(form) {
                     $('.my-select').selectpicker('refresh');
                     $('#add_document').modal('hide');
                     form_loadingUndo(form)
-                    load_folderDocs();
-                    load_employeeDocs();
+                    loadDocumentsTable("empDocumentsDT", $('#folder_id').val())
+                    loadDocumentsTable("employeeDocsDT", '', $('#employee_id').val())
                     // location.reload();
                 });
             }
@@ -1495,7 +1352,7 @@ async function handleDeleteDocument(id) {
                         toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
                     } else {
                         toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
-                            load_folderDocs();
+                            loadDocumentsTable("empDocumentsDT", $('#folder_id').val())
                         });
                         console.log(res);
                     }

@@ -175,10 +175,20 @@ if(isset($_GET['action'])) {
 				    $GLOBALS['conn']->begin_transaction();
 				    $post = escapePostData($_POST);
 
-				    if($post['ref'] = 'All') {
+				    if($post['ref'] == 'All') {
 				    	$post['ref_id'] = '';
 				    	$post['ref_name'] = 'All employees';
 				    }
+
+					// Initialize workflow as an array with the first action
+				    $workflow = [
+				        [
+				            'action' => 'Created by '. $_SESSION['full_name'], 
+				            'date' => date('Y-m-d H:i:s'),
+				            'status' => 'Created',
+							'user_id' => $_SESSION['user_id']
+				        ]
+				    ];
 
 				    $month = date('Y-m');
 				    $data = array(
@@ -186,8 +196,11 @@ if(isset($_GET['action'])) {
 				        'ref_id' 	=> $post['ref_id'], 
 				        'month' 	=> $month,
 				        'ref_name' 	=> $post['ref_name'], 
-				        'added_by' 	=> $_SESSION['user_id']
+						'workflow' 	=> json_encode($workflow),
+						'added_by' 	=> $_SESSION['user_id']
 				    );
+
+					// var_dump($data); exit;
 
 				    check_auth('create_payroll');
 				    $payroll_id = $payrollClass->create($data);
@@ -1142,7 +1155,7 @@ if(isset($_GET['action'])) {
 			       $data .= '</select>';
 				} else if($_POST['transFor'] == 'Department') {
 					$data = '<label class="label required" for="searchDepartment">Department</label>
-                        <select class="my-select searchDepartment" name="searchDepartment" id="searchDepartment" data-live-search="true" title="Search and select employee">';
+                        <select class="my-select searchDepartment" name="searchDepartment" id="searchDepartment" data-live-search="true" title="Search and select department">';
                         $query = "SELECT * FROM `branches` WHERE `status` = 'active' ORDER BY `name` ASC LIMIT 10";
                         $branchSet = $GLOBALS['conn']->query($query);
                         if($branchSet->num_rows > 0) {
@@ -1157,7 +1170,7 @@ if(isset($_GET['action'])) {
 			       $data .= '</select>';
 				} else if($_POST['transFor'] == 'Location') {
 					$data = '<label class="label required" for="searchLocation">Location</label>
-                        <select class="my-select searchLocation" name="searchLocation" id="searchLocation" data-live-search="true" title="Search and select employee">';
+                        <select class="my-select searchLocation" name="searchLocation" id="searchLocation" data-live-search="true" title="Search and select location">';
                         $query = "SELECT * FROM `locations` WHERE `status` = 'active' ORDER BY `name` ASC LIMIT 10";
                         $locationSet = $GLOBALS['conn']->query($query);
                         if($locationSet->num_rows > 0) {

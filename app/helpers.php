@@ -670,6 +670,110 @@ function get_columns($table, $reqColumns = 'show_columns') {
 }
 
 
+// Helper function for cached entity creation
+function getCachedOrCreateEntity($table, $name, $userId, $classInstance, &$cache) {
+    if (empty($name)) return null;
+    
+    $cacheKey = strtolower(trim($name));
+    
+    // Check cache first
+    if (isset($cache[$table][$cacheKey])) {
+        return $cache[$table][$cacheKey];
+    }
+    
+    // Check database
+    $stmt = $GLOBALS['conn']->prepare("SELECT id FROM `$table` WHERE name = ?");
+    $stmt->bind_param('s', $name);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $id = $row['id'];
+        $stmt->close();
+    } else {
+        $stmt->close();
+        // Create new entity
+        $data = ['name' => $name, 'added_by' => $userId];
+        $id = $classInstance->create($data);
+    }
+    
+    // Cache the result
+    $cache[$table][$cacheKey] = $id;
+    return $id;
+}
+
+// Helper function for batch processing employees
+function processBatchEmployees($batchData, $employeeClass, $userId) {
+    $result = ['success' => 0, 'errors' => 0, 'error_messages' => ''];
+
+    try {
+        $GLOBALS['conn']->begin_transaction();
+
+        foreach ($batchData as $employeeData) {
+            try {
+                $employeeData['added_by'] = $userId;
+
+                // Extract and remove arrays before inserting employee
+                $budget_codesArray = isset($employeeData['budget_codes_array']) ? $employeeData['budget_codes_array'] : [];
+                $projectsArray     = isset($employeeData['projects_array']) ? $employeeData['projects_array'] : [];
+
+                unset($employeeData['budget_codes_array'], $employeeData['projects_array'], $employeeData['row_number']);
+
+                // Create the employee
+                $empId = $employeeClass->create($employeeData);
+
+                if ($empId) {
+                    // Handle staff number
+                    if (!isset($employeeData['staff_no']) || $employeeData['staff_no'] == return_setting('staff_prefix')) {
+                        $staff_no = return_setting('staff_prefix') . $empId;
+                        $employeeClass->update($empId, ['staff_no' => $staff_no]);
+                    }
+
+                    // Insert budget codes
+                    foreach ($budget_codesArray as $code) {
+                        $code = trim($code);
+                        if ($code === '') continue;
+                        $code_id = getCachedOrCreateEntity('budget_codes', $code, $userId, $GLOBALS['budgetCodesClass'], $GLOBALS['entityCache']);
+                        $stmt = $GLOBALS['conn']->prepare("INSERT INTO employee_budget_codes (emp_id, code_id) VALUES (?, ?)");
+                        $stmt->bind_param("ii", $empId, $code_id);
+                        $stmt->execute();
+                        $stmt->close();
+                    }
+
+                    // Insert projects
+                    foreach ($projectsArray as $proj) {
+                        $proj = trim($proj);
+                        if ($proj === '') continue;
+                        $proj_id = getCachedOrCreateEntity('projects', $proj, $userId, $GLOBALS['projectsClass'], $GLOBALS['entityCache']);
+                        $stmt = $GLOBALS['conn']->prepare("INSERT INTO employee_projects (emp_id, project_id) VALUES (?, ?)");
+                        $stmt->bind_param("ii", $empId, $proj_id);
+                        $stmt->execute();
+                        $stmt->close();
+                    }
+
+                    $result['success']++;
+                } else {
+                    $result['errors']++;
+                    $result['error_messages'] .= " Failed to create employee at line {$employeeData['row_number']}.";
+                }
+            } catch (Exception $e) {
+                $result['errors']++;
+                $result['error_messages'] .= " Error at line {$employeeData['row_number']}: " . $e->getMessage();
+            }
+        }
+
+        $GLOBALS['conn']->commit();
+    } catch (Exception $e) {
+        $GLOBALS['conn']->rollback();
+        $result['errors'] += count($batchData);
+        $result['error_messages'] .= " Batch processing failed: " . $e->getMessage();
+    }
+
+    return $result;
+}
+
+
 
 
 ?>

@@ -1,7 +1,10 @@
 <?php 
 $employee_id = $_GET['employee_id'];
-$employee = $GLOBALS['employeeClass']->read($employee_id);
-// var_dump($employee);
+$employee = $GLOBALS['employeeClass']->getFullProfile($employee_id);
+
+$projectIds = $GLOBALS['employeeClass']->getProjectIds($employee_id);
+$budget_codeIds = $GLOBALS['employeeClass']->getBudgetCodeIds($employee_id);
+// var_dump($budget_codeNames);
 
 ?>
 <div class="page content">
@@ -196,10 +199,10 @@ $employee = $GLOBALS['employeeClass']->read($employee_id);
                                             <?php 
                                             $query = "SELECT * FROM `projects` WHERE `status` = 'Active'";
                                             $result = $GLOBALS['conn']->query($query);
-                                            $projects = explode(',', $employee['project_id']);
+                                            // $projects = explode(',', $employee['project_id']);
                                             if($result->num_rows > 0) {
                                                 while($row = $result->fetch_assoc()) { ?>
-                                                    <option <?php if(in_array($row['id'], $projects)) echo 'selected="selected"'; ?> value="<?=$row['id'];?>"><?=$row['name'];?></option>
+                                                    <option <?php if(in_array($row['id'], $projectIds)) echo 'selected="selected"'; ?> value="<?=$row['id'];?>"><?=$row['name'];?></option>
                                                 <?php }
                                             } ?>
                                           <!-- <?php select_active('projects', [], $employee['project_id']); ?> -->
@@ -217,10 +220,10 @@ $employee = $GLOBALS['employeeClass']->read($employee_id);
                                             <?php 
                                             $query = "SELECT * FROM `budget_codes` WHERE `status` = 'Active'";
                                             $result = $GLOBALS['conn']->query($query);
-                                            $budget_codes = explode(',', $employee['budget_code']);
+                                            // $budget_codes = explode(',', $employee['budget_code']);
                                             if($result->num_rows > 0) {
                                                 while($row = $result->fetch_assoc()) { ?>
-                                                    <option <?php if(in_array($row['name'], $budget_codes)) echo 'selected="selected"'; ?> value="<?=$row['name'];?>"><?=$row['name'];?></option>
+                                                    <option <?php if(in_array($row['id'], $budget_codeIds)) echo 'selected="selected"'; ?> value="<?=$row['id'];?>"><?=$row['name'];?></option>
                                                 <?php }
                                             } ?>
                                         </select>

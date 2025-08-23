@@ -8,6 +8,8 @@ if(!isset($emp_id)) {
     $emp_id = isset($_GET['employee_id']) ? $_GET['employee_id'] : '';
 }
 
+$emp_id = trim($emp_id);
+$folder_id = trim($folder_id);
 
 ?>
 
@@ -33,9 +35,13 @@ if(!isset($emp_id)) {
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="label required" for="employee">Employee</label>
-                                <select class="my-select searchEmployee" name="employee" id="employee" data-live-search="true" title="Search and select employee">
+                                <select class="my-select searchEmployee" name="searchEmployee" id="searchEmployee" data-live-search="true" title="Search and select employee">
                                     <?php 
-                                    $query = "SELECT * FROM `employees` WHERE `status` = 'active' ORDER BY `full_name` ASC LIMIT 10";
+                                    $query = "SELECT * FROM `employees` WHERE `status` = 'active' ";
+                                    if($emp_id) {
+                                        $query .= " AND `employee_id` = '$emp_id'";
+                                    }
+                                    $query .= " ORDER BY `full_name` ASC LIMIT 10";
                                     $empSet = $GLOBALS['conn']->query($query);
                                     if($empSet->num_rows > 0) {
                                         while($row = $empSet->fetch_assoc()) {
@@ -47,6 +53,8 @@ if(!isset($emp_id)) {
                                             if($phone_number) {
                                                 $text .= ', '.$phone_number;
                                             }
+
+                                            // echo $emp_id;
 
                                             echo '<option value="'.$employee_id.'" '.($emp_id == $employee_id ? 'selected' : '').'>'.$text.'</option>';
                                         }
@@ -100,7 +108,7 @@ if(!isset($emp_id)) {
                             </div>
                         </div>
                     </div>
-                    <div class="mt-3">
+                    <div class="mt-3 sflex sjend">
                         <button type="submit" class="btn btn-primary">Upload Document</button>
                     </div>
                 </form>

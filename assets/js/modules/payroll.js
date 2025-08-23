@@ -1160,6 +1160,9 @@ async function handle_generatePayrollForm(form) {
         month:month,
     };
 
+	console.log(formData)
+	// return false;
+
     try {
         let response = await send_payrollPost('save payroll', formData);
         console.log(response)

@@ -408,6 +408,9 @@ function get_menu_config() {
                     'name' => 'Documents',
                     'icon' => 'file-earmark-text',
                     'js' => ['docs'],
+                    'actions' => [
+                        'show' => ['file' => 'folder_show', 'auth' => 'manage_employee_docs'],
+                    ],
                 ],
                 'awards' => [
                     'default' => 'awards',

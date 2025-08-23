@@ -22,36 +22,18 @@ if(isset($_GET['action'])) {
 					// Unset project and budget codes 
 					unset($employeeData['project']);
 					unset($employeeData['project_id']);
-					unset($employeeData['bduget_code']);
+					unset($employeeData['budget_code']);
 
 				    foreach ($employeeData as $index => $value) {
 				    	$data[$index] = isset($employeeData[$index]) ? $employeeData[$index]: "";
 				    }
 
-					$data['project_id'] = $data['project'] =  $data['budget_code'] = '';
-					if(isset($post['project_id']) && is_array($post['project_id'])) {
-						// foreach ($post['project_id'] as $id) {
-						// 	$data['project_id'] .= $id.', ';;
-						// 	$data['project'] .= get_data('projects', ['id' => $id])[0]['name'].', ';
-					    // }
-					}
-
-					if(isset($post['budget_code']) && is_array($post['budget_code'])) {
-						// foreach ($post['budget_code'] as $code) {
-						// 	$data['budget_code'] .= $code .', ';
-						// }
-					}
-
-
-					$data['project_id'] = rtrim($data['project_id'], ', ');
-					$data['project'] = rtrim($data['project'], ', ');
-					$data['budget_code'] = rtrim($data['budget_code'], ', ');
-
-
 				    $data['added_by'] = $_SESSION['user_id'];
 
 				    check_exists('employees', ['full_name' => $post['full_name'], 'email' => $post['email']]);
 				    check_auth('create_employees');
+
+					// var_dump($data);
 
 				    // Call the create method for employee
 				    $result['id'] = $employeeClass->create($data);
@@ -138,182 +120,212 @@ if(isset($_GET['action'])) {
 
 				// Return the result as a JSON response
 				echo json_encode($result);
-			} elseif ($_GET['endpoint'] == 'upload_employees') {
-				/* -------------------------------------------------------------
-				*  1.  Helper functions (procedural scope – no classes)
-				* -----------------------------------------------------------*/
-				
-
-				function getOrCreateCached(
-					string $table,
-					string $rawName,
-					int    $userId,
-						$class,
-					array  &$cache
-				): int {
-					$key = mb_strtolower(trim($rawName));
-					if ($key === '') {
-						throw new RuntimeException("Empty name for $table");
-					}
-					if (isset($cache[$table][$key])) {
-						return $cache[$table][$key];
-					}
-					$id = checkAndCreateEntity($table, $rawName, $userId, $class);
-					$cache[$table][$key] = $id;
-					return $id;
-				}
-
+			} else if($_GET['endpoint'] == 'upload_employees') {
 				try {
-					check_auth('create_employees');
+				    $result = ['error' => false, 'msg' => '', 'errors' => '', 'progress' => 0, 'total' => 0, 'processed' => 0];
 
-					if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
-						throw new RuntimeException('Please select a valid CSV file.');
-					}
+				    check_auth('create_employees'); // Authorization check
 
-					$f = $_FILES['file'];
-					if ($f['type'] !== 'text/csv') {
-						throw new RuntimeException('Invalid file type. Only CSV allowed.');
-					}
+				    if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
+				        $fileTmpPath = $_FILES['file']['tmp_name'];
+				        $fileName = $_FILES['file']['name'];
+				        $fileSize = $_FILES['file']['size'];
+				        $fileType = $_FILES['file']['type'];
 
-					$conn = $GLOBALS['conn'];
-					$conn->begin_transaction();
+				        // Validate file type and size
+				        if ($fileType != 'text/csv') {
+				            $result['error'] = true;
+				            $result['msg'] = "Invalid file type. Please upload a valid CSV file.";
+				            echo json_encode($result);
+				            exit();
+				        }
 
-					/* ---------- Cache + classes ---------- */
-					$cache = [
-						'locations'      => [],
-						'branches'       => [],
-						'states'         => [],
-						'designations'   => [],
-						'contract_types' => [],
-						'budget_codes'   => [],
-						'projects'       => [],
-					];
-					// Pre-load existing names
-					foreach (array_keys($cache) as $tbl) {
-						$res = $conn->query("SELECT id, name FROM `$tbl`");
-						while ($r = $res->fetch_assoc()) {
-							$cache[$tbl][mb_strtolower($r['name'])] = (int)$r['id'];
-						}
-					}
+				        // First pass: Count total rows for progress tracking
+				        $totalRows = 0;
+				        if (($file = fopen($fileTmpPath, 'r')) !== false) {
+				            while (fgetcsv($file, 1000, ',') !== false) {
+				                $totalRows++;
+				            }
+				            fclose($file);
+				            $totalRows--; // Subtract header row
+				        }
 
-					/* ---------- Prepared statements ---------- */
-					$empStmt = $conn->prepare(
-						"INSERT INTO employees (
-							staff_no, full_name, phone_number, email, gender, national_id,
-							date_of_birth, city, address, payment_bank, payment_account,
-							branch_id, branch, state_id, state, location_id, location_name,
-							position, designation, hire_date, contract_start, contract_end,
-							work_days, work_hours, contract_type, salary, budget_code,
-							moh_contract, grade, tax_exempt, seniority, added_by
-						) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
-					);
+				        $result['total'] = $totalRows;
 
-					$projStmt = $conn->prepare("INSERT INTO employee_projects (emp_id, project_id) VALUES (?,?)");
-					$bcStmt   = $conn->prepare("INSERT INTO employee_budget_codes (emp_id, budget_code_id) VALUES (?,?)");
+				        if (($file = fopen($fileTmpPath, 'r')) !== false) {
+				            $row = 0;
+				            $processedCount = 0;
+				            $successCount = 0;
+				            $errorCount = 0;
+				            $batchSize = 50; // Process in batches for better performance
+				            $batchData = [];
+				            
+				            // Prepare entity caches to reduce database queries
+				            $entityCache = [
+				                'branches' => [],
+				                'states' => [],
+				                'locations' => [],
+				                'designations' => [],
+				                'contract_types' => [],
+				                'budget_codes' => []
+				            ];
 
-					$fp    = fopen($f['tmp_name'], 'r');
-					$rowNo = 0;
-					$batch = 0;
-					$errors = [];
+				            while (($line = fgetcsv($file, 1000, ',')) !== false) {
+				                $row++;
+				                if ($row == 1) continue; // Skip header row
 
-					while (($line = fgetcsv($fp, 0, ',')) !== false) {
-						++$rowNo;
-						if ($rowNo === 1) continue; // header
+				                $processedCount++;
 
-						if (count($line) < 27) {
-							$errors[$rowNo] = 'Column count mismatch';
-							continue;
-						}
+				                // Ensure the row has the correct number of columns
+				                if (count($line) < 27) {
+				                    $result['errors'] .= "Skipping invalid row at line $row: ";
+				                    $errorCount++;
+				                    continue;
+				                }
 
-						[
-							0  => $staff_no,        1 => $full_name,      2 => $phone,
-							3  => $email,           4 => $gender,         5 => $national_id,
-							6  => $dob,             7 => $city,           8 => $address,
-							9  => $payment_bank,   10 => $payment_acc,   11 => $branch,
-							12 => $designation,    13 => $state,         14 => $location,
-							15 => $hire_date,      16 => $contract_start,17 => $contract_end,
-							18 => $contract_type,  19 => $salary,        20 => $tax_exempt,
-							21 => $budget_code,    22 => $moh_contract,  23 => $work_days,
-							24 => $work_hours,     25 => $grade,         26 => $seniority
-						] = array_map('trim', $line);
+				                list(
+				                    $staff_no, $full_name, $phone_number, $email, $gender,
+				                    $national_id, $date_of_birth, $city, $address,
+				                    $payment_bank, $payment_account, $branch, 
+				                    $designation, $state, $location, $hire_date,
+				                    $contract_start, $contract_end, $contract_type, $salary,
+				                    $tax_exempt, $budget_codes, $projects, $moh_contract, $work_days,
+				                    $work_hours, $grade, $seniority
+				                ) = array_map('escapeStr', $line);
 
-						if (!$full_name || !$phone || !$email || !$branch) {
-							$errors[$rowNo] = 'Missing required fields';
-							continue;
-						}
+				                $position = $designation;
 
-						/* ---------- Foreign-key resolution ---------- */
-						$branch_id        = getOrCreateCached('branches',       $branch,        $_SESSION['user_id'], $branchClass,       $cache);
-						$state_id         = getOrCreateCached('states',         $state,         $_SESSION['user_id'], $statesClass,       $cache);
-						$location_id      = getOrCreateCached('locations',      $location,      $_SESSION['user_id'], $locationsClass,    $cache);
-						$designation_id   = getOrCreateCached('designations',   $designation,   $_SESSION['user_id'], $designationsClass, $cache);
-						$contract_type_id = getOrCreateCached('contract_types', $contract_type, $_SESSION['user_id'], $contractTypesClass,$cache);
+				                // Check for missing required fields
+				                if (!$full_name) {
+				                    $result['errors'] .= " Missing required fields at line $row.";
+				                    $errorCount++;
+				                    continue;
+				                }
 
-						/* ---------- Insert employee ---------- */
-						$dob = date('Y-m-d', strtotime($dob));
-						$hire_date = date('Y-m-d', strtotime($hire_date));
-						$contract_start = date('Y-m-d', strtotime($contract_start));
-						$contract_end = date('Y-m-d', strtotime($contract_end));
+				                // Validate and format dates
+				                try {
+				                    $date_of_birth = date('Y-m-d', strtotime($date_of_birth));
+				                    $hire_date = date('Y-m-d', strtotime($hire_date));
+				                    $contract_start = date('Y-m-d', strtotime($contract_start));
+				                    $contract_end = date('Y-m-d', strtotime($contract_end));
+				                } catch (Exception $dateEx) {
+				                    $result['errors'] .= " Invalid date format at line $row.";
+				                    $errorCount++;
+				                    continue;
+				                }
 
-						$empStmt->bind_param(
-							'ssssssssssssssssssssssssssssssss',
-							$staff_no, $full_name, $phone, $email, $gender, $national_id,
-							$dob, $city, $address,
-							$payment_bank, $payment_acc, $branch_id, $branch,
-							$state_id, $state, $location_id, $location,
-							$designation, 
-							$hire_date,
-							$contract_start,
-							$contract_end,
-							$work_days, $work_hours, $contract_type,
-							$salary, $budget_code, $moh_contract,
-							$grade, $tax_exempt, $seniority, $_SESSION['user_id']
-						);
-						if (!$empStmt->execute()) {
-							$errors[$rowNo] = $empStmt->error;
-							continue;
-						}
-						$empId = $conn->insert_id;
+								// Check for duplicate employees using prepared statement for better performance
+				                $check_stmt = $GLOBALS['conn']->query("SELECT employee_id FROM employees WHERE full_name = '$full_name' AND phone_number = '$phone_number'");
+				                if($check_stmt && $check_stmt->num_rows > 0) {
+				                    $result['errors'] .= " Record already exists at line $row.";
+				                    $errorCount++;
+				                    continue;
+				                }
 
-						/* Auto staff_no */
-						if (!$staff_no || $staff_no === return_setting('staff_prefix')) {
-							$staff_no = return_setting('staff_prefix') . $empId;
-							$conn->query("UPDATE employees SET staff_no='$staff_no' WHERE employee_id=$empId");
-						}
+								$budget_codes_array = explode(",", trim($budget_codes));
+								$projects_array = explode(",", trim($projects));
 
-						/* Projects */
-						foreach (array_filter(array_map('trim', explode(',', $line[27] ?? ''))) as $pName) {
-							$pid = getOrCreateCached('projects', $pName, $_SESSION['user_id'], $projectsClass, $cache);
-							$projStmt->bind_param('ii', $empId, $pid);
-							$projStmt->execute();
-						}
+				                // Use cached entities or create new ones
+				                $branch_id = getCachedOrCreateEntity('branches', $branch, $myUserId, $branchClass, $entityCache);
+				                $state_id = getCachedOrCreateEntity('states', $state, $myUserId, $statesClass, $entityCache);
+				                $location_id = getCachedOrCreateEntity('locations', $location, $myUserId, $locationsClass, $entityCache);
+				                $designation_id = getCachedOrCreateEntity('designations', $designation, $myUserId, $designationsClass, $entityCache);
+				                $contract_type_id = getCachedOrCreateEntity('contract_types', $contract_type, $myUserId, $contractTypesClass, $entityCache);
+				                // $budget_code_id = getCachedOrCreateEntity('budget_codes', $budget_codes, $myUserId, $budgetCodesClass, $entityCache);
 
-						/* Budget codes */
-						foreach (array_filter(array_map('trim', explode(',', $budget_code))) as $bcName) {
-							$bcid = getOrCreateCached('budget_codes', $bcName, $_SESSION['user_id'], $budgetCodesClass, $cache);
-							$bcStmt->bind_param('ii', $empId, $bcid);
-							$bcStmt->execute();
-						}
+				                // Add to batch
+				                $batchData[] = [
+				                    'full_name' => $full_name,
+				                    'phone_number' => $phone_number,
+				                    'email' => $email,
+				                    'gender' => $gender,
+				                    'staff_no' => $staff_no,
+				                    'national_id' => $national_id,
+				                    'date_of_birth' => $date_of_birth,
+				                    'state_id' => $state_id,
+				                    'state' => $state,
+				                    'city' => $city,
+				                    'address' => $address,
+				                    'branch_id' => $branch_id,
+				                    'branch' => $branch,
+				                    'location_id' => $location_id,
+				                    'location_name' => $location,
+				                    'position' => $position,
+				                    'designation' => $designation,
+				                    'hire_date' => $hire_date,
+				                    'contract_start' => $contract_start,
+				                    'contract_end' => $contract_end,
+				                    'work_days' => $work_days,
+				                    'work_hours' => $work_hours,
+				                    'contract_type' => $contract_type,
+				                    'salary' => $salary,
+				                    // 'budget_code' => $budget_codes,
+									// 'project' => $projects,
+				                    'moh_contract' => $moh_contract,
+				                    'payment_bank' => $payment_bank,
+				                    'payment_account' => $payment_account,
+				                    'grade' => $grade,
+				                    'tax_exempt' => $tax_exempt,
+				                    'seniority' => $seniority,
+									'budget_codes_array' => $budget_codes_array,
+									'projects_array' => $projects_array,
+				                    'row_number' => $row
+				                ];
 
-						/* Batch commit */
-						if (++$batch % 200 === 0) {
-							$conn->commit();
-							$conn->begin_transaction();
-						}
-					}
-					fclose($fp);
+								// var_dump($batchData);
+								// exit;
 
-					$conn->commit();
-					echo json_encode([
-						'error'  => false,
-						'msg'    => 'Upload completed. ' . ($rowNo - 1) . ' rows processed.',
-						'errors' => $errors
-					]);
+				                // Process batch when it reaches the batch size
+				                if (count($batchData) >= $batchSize) {
+				                    $batchResult = processBatchEmployees($batchData, $employeeClass, $myUserId);
+				                    $successCount += $batchResult['success'];
+				                    $errorCount += $batchResult['errors'];
+				                    if (!empty($batchResult['error_messages'])) {
+				                        $result['errors'] .= $batchResult['error_messages'];
+				                    }
+				                    $batchData = [];
+				                }
+				            }
 
-				} catch (Throwable $e) {
-					$GLOBALS['conn']->rollback();
-					echo json_encode(['error' => true, 'msg' => $e->getMessage()]);
+				            // Process remaining batch
+				            if (!empty($batchData)) {
+				                $batchResult = processBatchEmployees($batchData, $employeeClass, $myUserId);
+				                $successCount += $batchResult['success'];
+				                $errorCount += $batchResult['errors'];
+				                if (!empty($batchResult['error_messages'])) {
+				                    $result['errors'] .= $batchResult['error_messages'];
+				                }
+				            }
+
+				            fclose($file);
+				            
+				            $result['processed'] = $processedCount;
+				            $result['success_count'] = $successCount;
+				            $result['error_count'] = $errorCount;
+				            $result['progress'] = 100;
+				            
+				            if ($successCount > 0) {
+				                $result['msg'] = "Upload completed. Successfully processed $successCount employees.";
+				                if ($errorCount > 0) {
+				                    $result['msg'] .= " $errorCount records had errors.";
+				                }
+				            } else {
+				                $result['error'] = true;
+				                $result['msg'] = "No employees were successfully processed.";
+				            }
+				        } else {
+				            throw new Exception("File read error.");
+				        }
+				    } else {
+				        throw new Exception("Please select a file.");
+				    }
+				} catch (Exception $e) {
+				    $result['error'] = true;
+				    $result['msg'] = $e->getMessage();
+				    error_log($e->getMessage());
 				}
+
+				echo json_encode($result);
 			} else if($_GET['endpoint'] == 'folder') {
 				try {
 					$GLOBALS['conn']->begin_transaction();
@@ -524,135 +536,132 @@ if(isset($_GET['action'])) {
 		// Update data
 		else if($_GET['action'] == 'update') {
 			$updated_date = date('Y-m-d H:i:s');
-			if($_GET['endpoint'] == 'employee') {
+			if ($_GET['endpoint'] == 'employee') {
 				try {
-				    // Begin a transaction
-				    $GLOBALS['conn']->begin_transaction();
-				    $post = escapePostData($_POST);
-				    $data = array();
+					/* ---------- 1. Start transaction ---------- */
+					$GLOBALS['conn']->begin_transaction();
 
-				    $employeeData = $post;
-				    unset($employeeData['employee_id']);
-				    unset($employeeData['degree']);
-				    unset($employeeData['institution']);
-				    unset($employeeData['startYear']);
-				    unset($employeeData['endYear']);
+					/* ---------- 2. Sanitize incoming data ---------- */
+					$post  = escapePostData($_POST);
+					$empId = (int)($post['employee_id'] ?? 0);
 
-					// Unset project and budget codes 
-					unset($employeeData['project']);
-					unset($employeeData['project_id']);
-					unset($employeeData['bduget_code']);
-
-				    foreach ($employeeData as $index => $value) {
-				    	$data[$index] = isset($employeeData[$index]) ? $employeeData[$index]: "";
-				    }
-
-					$data['project_id'] = $data['project'] =  $data['budget_code'] = '';
-					foreach ($post['project_id'] as $id) {
-						$data['project_id'] .= $id.', ';;
-						$data['project'] .= get_data('projects', ['id' => $id])[0]['name'].', ';
-				    }
-
-					foreach ($post['budget_code'] as $code) {
-						$data['budget_code'] .= $code .', ';
+					if (!$empId) {
+						throw new Exception('Employee id missing.');
 					}
 
-					$data['project_id'] = rtrim($data['project_id'], ', ');
-					$data['project'] = rtrim($data['project'], ', ');
-					$data['budget_code'] = rtrim($data['budget_code'], ', ');
+					/* ---------- 3. Build the employees table payload ---------- */
+					$employeeData = $post;
 
-				    $data['updated_by'] = $_SESSION['user_id'];
-				    $data['updated_date'] = $updated_date;
+					// Remove everything that does NOT belong to the employees table
+					unset(
+						$employeeData['employee_id'],
+						$employeeData['degree'],
+						$employeeData['institution'],
+						$employeeData['startYear'],
+						$employeeData['endYear'],
+						$employeeData['project'],
+						$employeeData['project_id'],
+						$employeeData['budget_code']
+					);
 
-				    check_exists('employees', ['full_name' => $post['full_name'], 'email' => $post['email']], ['employee_id' => $post['employee_id'], 'staff_no' => $post['staff_no']]);
-				    check_auth('edit_employees');
+					// Optional meta
+					$employeeData['updated_by']   = $_SESSION['user_id'];
+					$employeeData['updated_date'] = date('Y-m-d H:i:s');   // or $updated_date if you already have it
 
-				    // Call the create method for employee
-				    $result['id'] = $employeeClass->update($post['employee_id'], $data);
+					/* ---------- 4. Check constraints ---------- */
+					check_exists(
+						'employees',
+						['full_name' => $post['full_name'], 'email' => $post['email']],
+						['employee_id' => $empId, 'staff_no' => $post['staff_no'] ?? null]
+					);
+					check_auth('edit_employees');
 
-				    // If the employee was created successfully, handle salary and education
-				    if ($result['id']) {
-				    	// Handle staff number
-				    	if(!isset($post['staff_no']) || $post['staff_no'] == return_setting('staff_prefix')) {
-				    		$staff_no = return_setting('staff_prefix').$result['id'];
-				    		$staffNo = array('staff_no' => $staff_no);
-				    		$employeeClass->update($result['id'], $staffNo);
-				    	}
-				        // Education data
-				        $degree 		= isset($post['degree']) ? $post['degree'] : [];
-				        $institution 	= isset($post['institution']) ? $post['institution'] : [];
-				        $startYear 		= isset($post['startYear']) ? $post['startYear'] : [];
-				        $endYear 		= isset($post['endYear']) ? $post['endYear'] : [];
+					/* ---------- 5. Update the employee row ---------- */
+					$updated = $employeeClass->update($empId, $employeeData);
+					if (!$updated) {
+						throw new Exception('Unable to update employee record.');
+					}
 
-				        $deleted = $educationClass->delete($post['employee_id']);
+					/* ---------- 6. Handle staff_no if empty ---------- */
+					if (empty($post['staff_no']) || $post['staff_no'] == return_setting('staff_prefix')) {
+						$staffNo = return_setting('staff_prefix') . $empId;
+						$employeeClass->update($empId, ['staff_no' => $staffNo]);
+					}
 
-				        if (is_array($degree) && count($degree) > 0) {
-				            foreach ($degree as $index => $value) {
-				                $degree         = escapeStr($degree[$index]);
-				                $institution    = escapeStr($institution[$index]);
-				                $startYear      = escapeStr($startYear[$index]);
-				                $endYear        = escapeStr($endYear[$index]);
+					/* ---------- 7. Sync projects ---------- */
+					$projectIds = isset($post['project_id']) && is_array($post['project_id'])
+						? array_map('intval', $post['project_id'])
+						: [];
 
-				                $educationData = array(
-				                    'employee_id'      => $post['employee_id'],
-				                    'degree'           => $degree,
-				                    'institution'      => $institution,
-				                    'start_year'       => $startYear,
-				                    'graduation_year'  => $endYear,
-				                );
+					$employeeClass->assignProjects($empId, $projectIds);
 
-				                // Create education records
-				                $educationClass->create($educationData);
-				            }
-				        }
+					/* ---------- 8. Sync budget codes ---------- */
+					$budgetCodes = isset($post['budget_code']) && is_array($post['budget_code'])
+						? $post['budget_code']
+						: [];
 
-				        $password = password_hash($post['phone_number'], PASSWORD_DEFAULT);
+					$employeeClass->assignBudgetCodes($empId, $budgetCodes);
 
-				        // Create user
-				        $userData = array(
-					        'full_name' => $post['full_name'],
-					        'phone'   	=> $post['phone_number'],
-					        'email'     => $post['email'],
-					        'emp_id'    => $result['id'],
-					        'branch_id'         => $post['branch_id'],
-					        'username'  	=> usernameFromEmail($post['email']),
-					        'password'      => $password,
-					        'role'     		=> 'employee',
-					        'updated_by' 	=> $_SESSION['user_id'],
-					        'updated_date' 	=> $updated_date
-					    );
+					/* ---------- 9. Sync education ---------- */
+					$educationClass->delete($empId);   // Remove all existing rows
 
-					    $user = $employeeClass->get_user($post['employee_id']);
-					    if($user) {
-					    	$id = $user[0]['emp_id'];
-					    	// $user_id = $userClass->update($id, $userData);
-					    } else {
-					    	// $user_id = $userClass->create($userData);
-					    }
+					$degrees      = $post['degree']      ?? [];
+					$institutions = $post['institution'] ?? [];
+					$startYears   = $post['startYear']   ?? [];
+					$endYears     = $post['endYear']     ?? [];
 
-				        // Commit the transaction if everything is successful
-				        $GLOBALS['conn']->commit();
+					if (is_array($degrees) && count($degrees)) {
+						foreach ($degrees as $idx => $deg) {
+							$educationClass->create([
+								'employee_id'     => $empId,
+								'degree'          => escapeStr($deg),
+								'institution'     => escapeStr($institutions[$idx] ?? ''),
+								'start_year'      => escapeStr($startYears[$idx]  ?? ''),
+								'graduation_year' => escapeStr($endYears[$idx]    ?? ''),
+							]);
+						}
+					}
 
-				        // Return success response
-				        $result['msg'] = 'Employee info updated  successfully';
-				        $result['error'] = false;
-				    } else {
-				        // If employee creation failed, roll back the transaction
-				        $GLOBALS['conn']->rollback();
-				        $result['msg'] = 'Something went wrong, please try again';
-				        $result['error'] = true;
-				    }
-				} catch (Exception $e) {
-				    // If any exception occurs, rollback the transaction
-				    $GLOBALS['conn']->rollback();
+					/* ---------- 10. Update / create user account ---------- */
+					$password = password_hash($post['phone_number'], PASSWORD_DEFAULT);
 
-				    // Return error response
-				    $result['msg'] = 'Error: Something went wrong';
-				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
-				    $result['error'] = true;
+					$userData = [
+						'full_name'    => $post['full_name'],
+						'phone'        => $post['phone_number'],
+						'email'        => $post['email'],
+						'emp_id'       => $empId,
+						'branch_id'    => $post['branch_id'],
+						'username'     => usernameFromEmail($post['email']),
+						'password'     => $password,
+						'role'         => 'employee',
+						'updated_by'   => $_SESSION['user_id'],
+						'updated_date' => date('Y-m-d H:i:s'),
+					];
+
+					$user = $employeeClass->getUser($empId);
+					if ($user) {
+						// $userClass->update($user[0]['id'], $userData);
+					} else {
+						// $userClass->create($userData);
+					}
+
+					/* ---------- 11. Finish ---------- */
+					$GLOBALS['conn']->commit();
+
+					$result = [
+						'msg'   => 'Employee updated successfully',
+						'error' => false,
+					];
+				} catch (Throwable $e) {
+					$GLOBALS['conn']->rollback();
+
+					$result = [
+						'msg'       => 'Error: ' . $e->getMessage(),
+						'sql_error' => $e->getMessage(),
+						'error'     => true,
+					];
 				}
 
-				// Return the result as a JSON response
 				echo json_encode($result);
 			} else if ($_GET['endpoint'] == 'employee_avatar') {
 			    // Ensure user has the correct permissions
@@ -931,74 +940,214 @@ if(isset($_GET['action'])) {
 			];
 
 			if ($_GET['endpoint'] === 'employees') {
-				if (isset($_POST['order']) && isset($_POST['order'][0])) {
-				    $orderColumnMap = ['full_name', 'phone_number', 'email', 'position', 'hire_date', 'salary', 'status'];
-				    $orderByIndex = (int)$_POST['order'][0]['column'];
-				    $orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
-				    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+				$conn = $GLOBALS['conn'];
+
+				// DataTables params
+				$draw   = isset($_POST['draw']) ? (int)$_POST['draw'] : 0;
+				$start  = isset($_POST['start']) ? (int)$_POST['start'] : 0;
+				$length = isset($_POST['length']) ? (int)$_POST['length'] : 20;
+				$searchValue = $_POST['search']['value'] ?? '';
+
+				// Custom filters
+				$department = $_POST['department'] ?? '';
+				$state      = $_POST['state'] ?? '';
+				$location   = $_POST['location'] ?? '';
+				$status     = $_POST['status'] ?? '';
+
+				// Increase GROUP_CONCAT capacity (optional but recommended)
+				$conn->query("SET SESSION group_concat_max_len = 8192");
+
+				// Whitelist for order-by (DataTables sends columns[i][data]/[name])
+				// Keys here MUST match the "data" keys you use in JS columns config.
+				$orderable = [
+					'staff_no'       => 'e.staff_no',
+					'full_name'      => 'e.full_name',
+					'phone_number'   => 'e.phone_number',
+					'email'          => 'e.email',
+					'gender'         => 'e.gender',
+					'date_of_birth'  => 'e.date_of_birth',
+					'state'          => 's.name',
+					'city'           => 'e.city',              // you store city as text on employees
+					'address'        => 'e.address',
+					'branch'         => 'b.name',
+					'location_name'  => 'l.name',
+					'position'       => 'e.position',
+					'project'        => 'project',             // alias in select
+					'designation'    => 'e.designation',
+					'hire_date'      => 'e.hire_date',
+					'contract_start' => 'e.contract_start',
+					'contract_end'   => 'e.contract_end',
+					'work_days'      => 'e.work_days',
+					'work_hours'     => 'e.work_hours',
+					'budget_code'    => 'budget_code',         // alias in select
+					'salary'         => 'e.salary',
+					'moh_contract'   => 'e.moh_contract',
+					'payment_bank'   => 'e.payment_bank',
+					'payment_account'=> 'e.payment_account',
+					'grade'          => 'e.grade',
+					'tax_exempt'     => 'e.tax_exempt',
+					'seniority'      => 'e.seniority',
+					'status'         => 'e.status'
+				];
+
+				// Parse ordering from DataTables
+				$orderSql = ' ORDER BY e.employee_id DESC ';
+				if (!empty($_POST['order'][0])) {
+					$colIdx = (int)$_POST['order'][0]['column'];
+					$dir    = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+					// DataTables sends the column meta in columns[]
+					$colDataKey = $_POST['columns'][$colIdx]['data'] ?? '';
+					if (isset($orderable[$colDataKey])) {
+						$orderSql = " ORDER BY {$orderable[$colDataKey]} {$dir} ";
+					}
 				}
 
-				$department = $state = $location = $status = '';	
-				if(isset($_POST['department'])) $department = $_POST['department'];
-				if(isset($_POST['state'])) $state = $_POST['state'];
-				if(isset($_POST['location'])) $location = $_POST['location'];
-				if(isset($_POST['status'])) $status = $_POST['status'];
+				// Base FROM + JOINs
+				$from = "
+					FROM employees e
+					LEFT JOIN states s        ON s.id = e.state_id
+					LEFT JOIN locations l     ON l.id = e.location_id
+					LEFT JOIN branches b      ON b.id = e.branch_id
+					LEFT JOIN employee_projects ep  ON ep.emp_id = e.employee_id
+					LEFT JOIN projects p             ON p.id = ep.project_id
+					LEFT JOIN employee_budget_codes ebc ON ebc.emp_id = e.employee_id
+					LEFT JOIN budget_codes bc           ON bc.id = ebc.code_id
+					WHERE e.employee_id IS NOT NULL
+				";
 
+				// Dynamic WHERE (prepared)
+				$where = '';
+				$params = [];
+				$types  = '';
 
-			    // Base query
-			    $query = "SELECT * FROM `employees` WHERE `employee_id` IS NOT NULL";
+				if ($department !== '') { $where .= " AND e.branch_id = ? ";   $params[] = $department; $types .= 'i'; }
+				if ($state      !== '') { $where .= " AND e.state_id = ? ";    $params[] = $state;      $types .= 'i'; }
+				if ($location   !== '') { $where .= " AND e.location_id = ? "; $params[] = $location;   $types .= 'i'; }
+				if ($status     !== '') { $where .= " AND e.status = ? ";      $params[] = $status;     $types .= 's'; }
+				// Default to Active when no status and no search (keep your original behavior)
+				if ($status === '' && $searchValue === '') {
+					$where .= " AND e.status = 'Active' ";
+				}
 
-			    // Add search functionality
-			    if ($searchParam) {
-			        $query .= " AND (`full_name` LIKE '%" . escapeStr($searchParam) . "%'  OR `phone_number` LIKE '%" . escapeStr($searchParam) . "%'  OR `email` LIKE '%" . escapeStr($searchParam) . "%'  OR `address` LIKE '%" . escapeStr($searchParam) . "%' OR `designation` LIKE '%" . escapeStr($searchParam) . "%' OR `position` LIKE '%" . escapeStr($searchParam) . "%')";
-			    }
+				// Global search across multiple fields (including joined)
+				if ($searchValue !== '') {
+					$where .= " AND ( 
+						e.staff_no      LIKE ? OR
+						e.full_name     LIKE ? OR
+						e.phone_number  LIKE ? OR
+						e.email         LIKE ? OR
+						e.address       LIKE ? OR
+						e.designation   LIKE ? OR
+						e.position      LIKE ? OR
+						s.name          LIKE ? OR
+						e.city          LIKE ? OR
+						b.name          LIKE ? OR
+						l.name          LIKE ? OR
+						p.name          LIKE ? OR
+						bc.name         LIKE ?
+					)";
+					for ($i=0; $i<13; $i++) { $params[] = "%{$searchValue}%"; $types .= 's'; }
+				}
 
-			    if($department) {
-			    	$query .= " AND `branch_id` LIKE '$department'";
-			    }
+				// Main SELECT (NOTE: project and budget_code are aggregated here)
+				$select = "
+					SELECT
+						e.employee_id,
+						e.staff_no,
+						e.full_name,
+						e.phone_number,
+						e.email,
+						e.gender,
+						e.date_of_birth,
+						s.name           AS state,
+						e.city           AS city,
+						e.address,
+						b.name           AS branch,
+						l.name           AS location_name,
+						e.position,
+						GROUP_CONCAT(DISTINCT p.name  ORDER BY p.name  SEPARATOR ', ') AS project,
+						e.designation,
+						e.hire_date,
+						e.contract_start,
+						e.contract_end,
+						e.work_days,
+						e.work_hours,
+						GROUP_CONCAT(DISTINCT bc.name ORDER BY bc.name SEPARATOR ', ') AS budget_code,
+						e.salary,
+						e.moh_contract,
+						e.payment_bank,
+						e.payment_account,
+						e.grade,
+						e.tax_exempt,
+						e.seniority,
+						e.status
+					{$from}
+					{$where}
+					GROUP BY e.employee_id
+					{$orderSql}
+					LIMIT ?, ?
+				";
 
-			    if($state) {
-			    	$query .= " AND `state_id` LIKE '$state'";
-			    }
+				// recordsTotal (no filters, no search)
+				$recordsTotalSql = "SELECT COUNT(*) AS cnt FROM employees e WHERE e.employee_id IS NOT NULL";
+				$recordsTotalRes = $conn->query($recordsTotalSql);
+				$recordsTotal = (int)($recordsTotalRes->fetch_assoc()['cnt'] ?? 0);
 
-			    if($location) {
-			    	$query .= " AND `location_id` LIKE '$location'";
-			    }
+				// recordsFiltered (with filters + search BUT without limit; group by because of joins)
+				$recordsFilteredSql = "
+					SELECT COUNT(*) AS cnt FROM (
+						SELECT e.employee_id
+						{$from}
+						{$where}
+						GROUP BY e.employee_id
+					) x
+				";
 
-			    if($status) {
-			    	$query .= " AND `status` LIKE '$status'";
-			    } else if (!$searchParam) {
-			    	$query .= " AND `status` LIKE 'Active'";
-			    }
+				// Prepare filtered count
+				$stmtCount = $conn->prepare($recordsFilteredSql);
+				if ($types !== '') $stmtCount->bind_param($types, ...$params);
+				$stmtCount->execute();
+				$resCount = $stmtCount->get_result();
+				$recordsFiltered = (int)($resCount->fetch_assoc()['cnt'] ?? 0);
+				$stmtCount->close();
 
-			    // Add ordering
-			    $query .= " ORDER BY `$orderBy` $order LIMIT $start, $length";
+				// Prepare main data query
+				$stmt = $conn->prepare($select);
+				// Add limit params
+				$paramsWithLimit = $params;
+				$typesWithLimit  = $types . 'ii';
+				$paramsWithLimit[] = $start;
+				$paramsWithLimit[] = $length;
 
+				$stmt->bind_param($typesWithLimit, ...$paramsWithLimit);
+				$stmt->execute();
+				$resultSet = $stmt->get_result();
 
+				$data = [];
+				while ($row = $resultSet->fetch_assoc()) {
+					// Keep keys exactly as JS expects
+					$data[] = $row;
+				}
+				$stmt->close();
 
-			    // Execute query
-			    $employees = $GLOBALS['conn']->query($query);
+				// DataTables standard response
+				$out = [
+					'draw'            => $draw,
+					'recordsTotal'    => $recordsTotal,
+					'recordsFiltered' => $recordsFiltered,
+					'data'            => $data,
 
-			    // Count total records for pagination
-			    $countQuery = "SELECT COUNT(*) as total FROM `employees` WHERE `employee_id` IS NOT NULL";
-			    if ($searchParam) {
-			        $countQuery .= " AND (`full_name` LIKE '%" . escapeStr($searchParam) . "%' OR `phone_number` LIKE '%" . escapeStr($searchParam) . "%' OR `email` LIKE '%" . escapeStr($searchParam) . "%' OR `address` LIKE '%" . escapeStr($searchParam) . "%' OR `designation` LIKE '%" . escapeStr($searchParam) . "%' OR `position` LIKE '%" . escapeStr($searchParam) . "%')";
-			    }
+					// keep your legacy keys too (optional; remove if not needed)
+					'status'               => 201,
+					'error'                => false,
+					'iTotalRecords'        => $recordsTotal,
+					'iTotalDisplayRecords' => $recordsFiltered,
+					'msg'                  => count($data) . " records returned."
+				];
 
-			    // Execute count query
-			    $totalRecordsResult = $GLOBALS['conn']->query($countQuery);
-			    $totalRecords = $totalRecordsResult->fetch_assoc()['total'];
-
-			    if ($employees->num_rows > 0) {
-			        while ($row = $employees->fetch_assoc()) {
-			            $result['data'][] = $row;
-			        }
-			        $result['iTotalRecords'] = $totalRecords;
-			        $result['iTotalDisplayRecords'] = $totalRecords;
-			        $result['msg'] = $employees->num_rows . " records were found.";
-			    } else {
-			        $result['msg'] = "No records found";
-			    }
+				header('Content-Type: application/json');
+				echo json_encode($out);
+				exit();
 			} else if ($_GET['endpoint'] === 'folders') {
 				$result = [];
 				try {
@@ -1074,109 +1223,254 @@ if(isset($_GET['action'])) {
 			        $result['msg'] = "No records found";
 			    }
 			} else if ($_GET['endpoint'] === 'documents') {
-				$folder_id = isset($_POST['folder_id']) ? escapeStr($_POST['folder_id']) : '';
-				$employee_id = isset($_POST['employee_id']) ? escapeStr($_POST['employee_id']) : '';
-				if (isset($_POST['order']) && isset($_POST['order'][0])) {
-				    $orderColumnMap = ['name', 'full_name', 'phone','type_name', 'expiration_date', 'created_at'];
-				    $orderByIndex = (int)$_POST['order'][0]['column'];
-				    $orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
-				    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+				/* --------------------------
+				* 1) Incoming parameters
+				* -------------------------- */
+				$folder_id   = isset($_POST['folder_id'])   ? (int)$_POST['folder_id']   : null;
+				$employee_id = isset($_POST['employee_id']) ? (int)$_POST['employee_id'] : null;
+				$searchParam = isset($_POST['search']['value']) ? trim($_POST['search']['value']) : '';
+				$start       = isset($_POST['start'])  ? (int)$_POST['start']  : 0;
+				$length      = isset($_POST['length']) ? (int)$_POST['length'] : 10;
+
+				/* --------------------------
+				* 2) Column mapping for ordering
+				* -------------------------- */
+				$orderColumnMap = [
+					0 => 'ed.name',
+					1 => 'e.full_name',
+					2 => 'e.phone_number',
+					3 => 'dt.name',
+					4 => 'f.name',
+					5 => 'ed.expiration_date',
+					6 => 'ed.created_at'
+				];
+				$orderByIndex = isset($_POST['order'][0]['column']) ? (int)$_POST['order'][0]['column'] : 6;
+				$orderBy      = $orderColumnMap[$orderByIndex] ?? 'ed.created_at';
+				$orderDir     = (isset($_POST['order'][0]['dir']) && strtolower($_POST['order'][0]['dir']) === 'desc') ? 'DESC' : 'ASC';
+
+				/* --------------------------
+				* 3) Base query components
+				* -------------------------- */
+				$baseJoin = "
+					FROM employee_docs      ed
+					JOIN employees          e  ON e.employee_id = ed.emp_id
+					LEFT JOIN folders       f  ON f.id          = ed.folder_id
+					LEFT JOIN document_types dt ON dt.id         = ed.type_id
+				";
+
+				$where  = ' WHERE 1=1 ';
+				$params = [];
+				$types  = '';
+
+				if ($searchParam !== '') {
+					$where .= " AND (
+									ed.name     LIKE ?
+								OR e.full_name LIKE ?
+								OR e.phone_number LIKE ?
+								)";
+					$like   = "%$searchParam%";
+					$params = array_merge($params, [$like, $like, $like]);
+					$types  .= 'sss';
 				}
-			    // Base query
-			    $query = "SELECT * FROM `employee_docs` WHERE `id` IS NOT NULL";
 
-			    // Add search functionality
-			    if ($searchParam) {
-			        $query .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%' OR `full_name` LIKE '%" . escapeStr($searchParam) . "%' OR `phone` LIKE '%" . escapeStr($searchParam) . "%' )";
-			    }
-
-				if($folder_id) {
-					$query .= " AND `folder_id` = '$folder_id'";
+				if ($folder_id) {
+					$where  .= ' AND ed.folder_id = ?';
+					$params[] = $folder_id;
+					$types   .= 'i';
 				}
 
-				if($employee_id) {
-					$query .= " AND `emp_id` = '$employee_id'";
+				if ($employee_id) {
+					$where  .= ' AND ed.emp_id = ?';
+					$params[] = $employee_id;
+					$types   .= 'i';
 				}
 
-			    // Add ordering
-			    $query .= " ORDER BY `$orderBy` $order LIMIT $start, $length";
+				/* --------------------------
+				* 4) Total (un-filtered) row count
+				* -------------------------- */
+				$totalQuery = "SELECT COUNT(*) AS total {$baseJoin}";
+				$stmt = $GLOBALS['conn']->prepare($totalQuery);
+				$stmt->execute();
+				$totalRecords = (int)$stmt->get_result()->fetch_assoc()['total'];
+				$stmt->close();
 
-			    // Execute query
-			    $empDocs = $GLOBALS['conn']->query($query);
-
-			    // Count total records for pagination
-			    $countQuery = "SELECT COUNT(*) as total FROM `employee_docs` WHERE `id` IS NOT NULL";
-			    if ($searchParam) {
-			        $countQuery .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%' OR `full_name` LIKE '%" . escapeStr($searchParam) . "%' OR `phone` LIKE '%" . escapeStr($searchParam) . "%' )";
-			    }
-
-			    if($folder_id) {
-			        $countQuery .= " AND `folder_id` = '$folder_id'";
-			    }
-
-			    // Execute count query
-			    $totalRecordsResult = $GLOBALS['conn']->query($countQuery);
-			    $totalRecords = $totalRecordsResult->fetch_assoc()['total'];
-
-			    if ($empDocs->num_rows > 0) {
-			        while ($row = $empDocs->fetch_assoc()) {
-			            $result['data'][] = $row;
-			        }
-			        $result['iTotalRecords'] = $totalRecords;
-			        $result['iTotalDisplayRecords'] = $totalRecords;
-			        $result['msg'] = $empDocs->num_rows . " records were found.";
-			    } else {
-			        $result['msg'] = "No records found";
-			    }
-			}  else if ($_GET['endpoint'] === 'awards') {
-				
-				if (isset($_POST['order']) && isset($_POST['order'][0])) {
-				    $orderColumnMap = ['full_name', 'award_type', 'gift', 'award_date', 'status'];
-				    $orderByIndex = (int)$_POST['order'][0]['column'];
-				    $orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
-				    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+				/* --------------------------
+				* 5) Filtered row count
+				* -------------------------- */
+				$filteredQuery = "SELECT COUNT(*) AS filtered {$baseJoin} {$where}";
+				$stmt = $GLOBALS['conn']->prepare($filteredQuery);
+				if ($params) {
+					$stmt->bind_param($types, ...$params);
 				}
-			    // Base query
-			    $query = "SELECT * FROM `employee_awards` WHERE `id` IS NOT NULL";
+				$stmt->execute();
+				$filteredRecords = (int)$stmt->get_result()->fetch_assoc()['filtered'];
+				$stmt->close();
 
-			    // Add search functionality
-			    if ($searchParam) {
-			        $query .= " AND (`full_name` LIKE '%" . escapeStr($searchParam) . "%' OR `award_type` LIKE '%" . escapeStr($searchParam) . "%' OR `gift` LIKE '%" . escapeStr($searchParam) . "%' )";
-			    }
+				/* --------------------------
+				* 6) Main data query
+				* -------------------------- */
+				$dataQuery = "
+					SELECT
+						ed.id,
+						ed.name AS doc_name,
+						ed.document,
+						ed.expiration_date,
+						ed.tags,
+						ed.created_at,
+						ed.updated_at,
+						ed.created_by,
+						ed.updated_by,
 
-				
+						e.employee_id,
+						e.full_name,
+						e.phone_number,
+						e.email,
 
-				
-				
+						f.id        AS folder_id,
+						f.name      AS folder_name,
+						f.status    AS folder_status,
 
-			    // Add ordering
-			    $query .= " ORDER BY `$orderBy` $order LIMIT $start, $length";
+						dt.id       AS type_id,
+						dt.name     AS type_name,
+						dt.status   AS type_status
+					{$baseJoin}
+					{$where}
+					ORDER BY {$orderBy} {$orderDir}
+					LIMIT ?, ?
+				";
 
-			    // Execute query
-			    $awards = $GLOBALS['conn']->query($query);
+				$params[] = $start;
+				$params[] = $length;
+				$types   .= 'ii';
 
-			    // Count total records for pagination
-			    $countQuery = "SELECT COUNT(*) as total FROM `employee_awards` WHERE `id` IS NOT NULL";
-			    if ($searchParam) {
-			        $countQuery .= " AND (`full_name` LIKE '%" . escapeStr($searchParam) . "%' OR `award_type` LIKE '%" . escapeStr($searchParam) . "%' OR `gift` LIKE '%" . escapeStr($searchParam) . "%' )";
-			    }
+				$stmt = $GLOBALS['conn']->prepare($dataQuery);
+				$stmt->bind_param($types, ...$params);
+				$stmt->execute();
+				$res = $stmt->get_result();
 
-			    
+				$data = [];
+				while ($row = $res->fetch_assoc()) {
+					$data[] = $row;
+				}
+				$stmt->close();
 
-			    // Execute count query
-			    $totalRecordsResult = $GLOBALS['conn']->query($countQuery);
-			    $totalRecords = $totalRecordsResult->fetch_assoc()['total'];
+				/* --------------------------
+				* 7) Output
+				* -------------------------- */
+				echo json_encode([
+					'draw'            => isset($_POST['draw']) ? (int)$_POST['draw'] : 0,
+					'recordsTotal'    => $totalRecords,
+					'recordsFiltered' => $filteredRecords,
+					'data'            => $data
+				]);
+				exit;
+			} else if ($_GET['endpoint'] === 'awards') {
+				/* ---------- 1) Incoming parameters ---------- */
+				$start       = isset($_POST['start'])  ? (int)$_POST['start']  : 0;
+				$length      = isset($_POST['length']) ? (int)$_POST['length'] : 10;
+				$searchParam = isset($_POST['search']['value']) ? trim($_POST['search']['value']) : '';
 
-			    if ($awards->num_rows > 0) {
-			        while ($row = $awards->fetch_assoc()) {
-			            $result['data'][] = $row;
-			        }
-			        $result['iTotalRecords'] = $totalRecords;
-			        $result['iTotalDisplayRecords'] = $totalRecords;
-			        $result['msg'] = $awards->num_rows . " records were found.";
-			    } else {
-			        $result['msg'] = "No records found";
-			    }
+				/* ---------- 2) Column mapping for ordering ---------- */
+				$orderColumnMap = [
+					0 => 'e.full_name',
+					1 => 'at.name',      // award type
+					2 => 'ea.gift',
+					3 => 'ea.award_date',
+					4 => 'ea.status'
+				];
+				$orderByIndex = (int)($_POST['order'][0]['column'] ?? 3);
+				$orderBy      = $orderColumnMap[$orderByIndex] ?? 'ea.award_date';
+				$orderDir     = strtoupper($_POST['order'][0]['dir'] ?? 'DESC') === 'DESC' ? 'DESC' : 'ASC';
+
+				/* ---------- 3) WHERE clause (search) ---------- */
+				$where  = ' WHERE 1=1 ';
+				$params = [];
+				$types  = '';
+
+				if ($searchParam !== '') {
+					$where .= " AND (
+									e.full_name LIKE ?
+								OR at.name   LIKE ?
+								OR ea.gift   LIKE ?
+								)";
+					$like   = "%$searchParam%";
+					$params = [$like, $like, $like];
+					$types  = 'sss';
+				}
+
+				/* ---------- 4) Count queries ---------- */
+				// 4-a) total rows (before search)
+				$totalQuery = "SELECT COUNT(*) AS total FROM employee_awards ea";
+				$stmt = $GLOBALS['conn']->prepare($totalQuery);
+				$stmt->execute();
+				$totalRecords = (int)$stmt->get_result()->fetch_assoc()['total'];
+				$stmt->close();
+
+				// 4-b) filtered rows (after search)
+				$filteredQuery = "
+					SELECT COUNT(*) AS filtered
+					FROM employee_awards ea
+					JOIN employees   e  ON e.employee_id = ea.emp_id
+					JOIN award_types t ON t.id         = ea.type_id
+					{$where}
+				";
+
+				// echo $filteredQuery;
+				$stmt = $GLOBALS['conn']->prepare($filteredQuery);
+				if ($params) {
+					$stmt->bind_param($types, ...$params);
+				}
+				$stmt->execute();
+				$filteredRecords = (int)$stmt->get_result()->fetch_assoc()['filtered'];
+				$stmt->close();
+
+				/* ---------- 5) Main data query ---------- */
+				$dataQuery = "
+					SELECT
+						ea.id,
+						ea.gift,
+						ea.award_date,
+						ea.status,
+
+						e.employee_id,
+						e.full_name,
+						e.staff_no,
+						e.phone_number,
+						e.email,
+
+						t.id   AS type_id,
+						t.name AS award_type
+					FROM employee_awards ea
+					JOIN employees   e  ON e.employee_id = ea.emp_id
+					JOIN award_types t ON t.id         = ea.type_id
+					{$where}
+					ORDER BY {$orderBy} {$orderDir}
+					LIMIT ?, ?
+				";
+
+				$params[] = $start;
+				$params[] = $length;
+				$types   .= 'ss';
+
+				$stmt = $GLOBALS['conn']->prepare($dataQuery);
+				$stmt->bind_param($types, ...$params);
+				$stmt->execute();
+				$res = $stmt->get_result();
+
+				$data = [];
+				while ($row = $res->fetch_assoc()) {
+					$data[] = $row;
+				}
+				$stmt->close();
+
+				/* ---------- 6) Output for DataTables ---------- */
+				echo json_encode([
+					'draw'            => isset($_POST['draw']) ? (int)$_POST['draw'] : 0,
+					'recordsTotal'    => $totalRecords,
+					'recordsFiltered' => $filteredRecords,
+					'data'            => $data
+				]);
+				exit;
 			}
 
 			echo json_encode($result);
@@ -1212,11 +1506,11 @@ if(isset($_GET['action'])) {
 				
 				echo json_encode($result);
 				exit();
-			} else if ($_GET['endpoint'] === 'company') {
+			} else if ($_GET['endpoint'] == 'company') {
 				json(get_data('company', array('id' => $_POST['id'])));
-			} else if ($_GET['endpoint'] === 'branch') {
+			} else if ($_GET['endpoint'] == 'branch') {
 				json(get_data('branches', array('id' => $_POST['id'])));
-			} else if ($_GET['endpoint'] === 'doc_types') {
+			} else if ($_GET['endpoint'] == 'doc_types') {
 				$id = $_POST['id'];
 				$sql = "SELECT * FROM document_types WHERE id = '$id'";
 				$result = $GLOBALS['conn']->query($sql);
@@ -1225,7 +1519,7 @@ if(isset($_GET['action'])) {
 					$data[] = $row;
 				}
 				echo json_encode($data);
-			} else if ($_GET['endpoint'] === 'folder_docs') {
+			} else if ($_GET['endpoint'] == 'folder_docs') {
 				$id = $_POST['id'];
 				$sql = "SELECT * FROM documents WHERE id = '$id'";
 				$result = $GLOBALS['conn']->query($sql);
@@ -1235,7 +1529,7 @@ if(isset($_GET['action'])) {
 				}
 				echo json_encode($data);
 				exit();
-			} else if($_GET['endpoint'] == 'doc_types_list') {
+			} else if ($_GET['endpoint'] == 'doc_types_list') {
 				$sql = "SELECT id, name FROM document_types ORDER BY name ASC";
 				$result = $GLOBALS['conn']->query($sql);
 				$data = array();
@@ -1244,7 +1538,7 @@ if(isset($_GET['action'])) {
 				}
 				echo json_encode($data);
 				exit();
-			} else if($_GET['endpoint'] == 'employees_list') {
+			} else if ($_GET['endpoint'] == 'employees_list') {
 				$sql = "SELECT id, full_name FROM employees ORDER BY full_name ASC";
 				$result = $GLOBALS['conn']->query($sql);
 				$data = array();
@@ -1593,45 +1887,14 @@ if(isset($_GET['action'])) {
 				
 				echo json_encode($response);
 				exit();
-			}
-			if ($_GET['endpoint'] === 'employee') {
+			} else if ($_GET['endpoint'] === 'employee') {
 				try {
 				    // Delete company
 				    check_auth('delete_employees');
 				    $post = escapePostData($_POST);
 				    $employeeId = $post['id'];
-
-				    // Delete payroll info
-				    $deleted = "DELETE FROM `payroll_details` WHERE `emp_id` LIKE '$employeeId'";
-					if(!mysqli_query($GLOBALS["conn"], $deleted)) {
-						throw new Exception('Error: ' . mysqli_error($GLOBALS["conn"]));
-					}
-				    // Delete leave info
-				    $deleted = "DELETE FROM `employee_leave` WHERE `emp_id` LIKE '$employeeId'";
-					if(!mysqli_query($GLOBALS["conn"], $deleted)) {
-						throw new Exception('Error: ' . mysqli_error($GLOBALS["conn"]));
-					}
-				    // Delete attendance info
-				    $deleted = "DELETE FROM `atten_details` WHERE `emp_id` LIKE '$employeeId'";
-					if(!mysqli_query($GLOBALS["conn"], $deleted)) {
-						throw new Exception('Error: ' . mysqli_error($GLOBALS["conn"]));
-					}
-				    // Delete timesheet info
-				    $deleted = "DELETE FROM `timesheet_details` WHERE `emp_id` LIKE '$employeeId'";
-					if(!mysqli_query($GLOBALS["conn"], $deleted)) {
-						throw new Exception('Error: ' . mysqli_error($GLOBALS["conn"]));
-					}
-				    // Delete trans info
-				    $deleted = "DELETE FROM `employee_transactions` WHERE `emp_id` LIKE '$employeeId'";
-					if(!mysqli_query($GLOBALS["conn"], $deleted)) {
-						throw new Exception('Error: ' . mysqli_error($GLOBALS["conn"]));
-					}
-
-					// Delete employee
-					$deleted = "DELETE FROM `employees` WHERE `employee_id` LIKE '$employeeId'";
-					if(!mysqli_query($GLOBALS["conn"], $deleted)) {
-						throw new Exception('Error: ' . mysqli_error($GLOBALS["conn"]));
-					}
+					
+					$deleted = $employeeClass->deleteEmployee($employeeId);
 
 				    // Company deleted
 				    if($deleted) {
@@ -1723,7 +1986,36 @@ if(isset($_GET['action'])) {
 
 				// Return the result as a JSON response (for example in an API)
 				echo json_encode($result);
-			} 
+			} else if ($_GET['endpoint'] === 'employeeBulk') {
+				check_auth('delete_employees');
+
+				$ids = $_POST['ids'] ?? [];
+				$action = $_POST['action'] ?? '';
+
+				if (!is_array($ids) || empty($ids)) {
+					echo json_encode(['error' => true, 'msg' => 'No employees selected or invalid data']);
+					exit;
+				}
+
+				if ($action === 'delete') {
+					try {
+						$deleted_count = 0;
+						foreach ($ids as $id) {
+							if ($employeeClass->deleteEmployee($id)) {
+								$deleted_count++;
+							} 
+						}
+
+						echo json_encode(['error' => false, 'msg' => "$deleted_count employees deleted successfully"]);
+
+					} catch (Exception $e) {
+						echo json_encode(['error' => true, 'msg' => 'An error occurred: ' . $e->getMessage()]);
+					}
+				} else {
+					echo json_encode(['error' => true, 'msg' => 'Invalid action']);
+				}
+				exit;
+			}
 
 			exit();
 		} else if($_GET['action'] == 'download') {
@@ -1782,10 +2074,6 @@ if(isset($_GET['action'])) {
 	}
 }
 
-// Helper function for upload
-function getIdCached(array &$cache, string $name): ?int
-{
-    return $cache[mb_strtolower(trim($name))] ?? null;
-}
+
 
 ?>

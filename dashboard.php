@@ -33,7 +33,7 @@
               </div>
               <div>
                 <h4 class="mb-0 company_balance">$00</h4>
-                <p class="mb-3">Company Balance</p>
+                <p class="mb-3">Operational Funds</p>
                 <div id="chart1"></div>
               </div>
             </div>
@@ -54,7 +54,7 @@
               </div>
               <div>
                 <h4 class="mb-0 total_expenses">$00</h4>
-                <p class="mb-3">Company Expense</p>
+                <p class="mb-3">Expenses</p>
                 <div id="chart2"></div>
               </div>
             </div>
@@ -75,7 +75,7 @@
               </div>
               <div>
                 <h4 class="mb-0 upcoming_salary">$00</h4>
-                <p class="mb-3">Upcoming salary amount</p>
+                <p class="mb-3">Pending Approvals</p>
                 <div id="chart3"></div>
               </div>
             </div>
@@ -96,7 +96,7 @@
               </div>
               <div>
                 <h4 class="mb-0 coming_date"><?=date('F d, Y');?></h4>
-                <p class="mb-3">Upcoming salary date</p>
+                <p class="mb-3">Next Payroll Run</p>
                 <div id="chart4"></div>
               </div>
             </div>
