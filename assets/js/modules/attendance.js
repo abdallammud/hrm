@@ -1334,9 +1334,9 @@ function load_timesheetAllocation() {
 	    "ajax": {
 	        "url": "./app/atten_controller.php?action=load&endpoint=allocations",
 	        "method": "POST",
-		    /*dataFilter: function(data) {
-				console.log(data)
-			}*/
+		    // dataFilter: function(data) {
+			// 	console.log(data)
+			// }
 	    },
 	    
 	    "createdRow": function(row, data, dataIndex) { 

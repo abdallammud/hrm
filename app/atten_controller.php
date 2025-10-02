@@ -1180,53 +1180,148 @@ if(isset($_GET['action'])) {
 			    } else {
 			        $result['msg'] = "No records found";
 			    }
-			} else if ($_GET['endpoint'] === 'allocations') {
-				if (isset($_POST['order']) && isset($_POST['order'][0])) {
-				    $orderColumnMap = ['month', 'staff_no', 'full_name', 'sup_name', 'added_date'];
-				    $orderByIndex = (int)$_POST['order'][0]['column'];
-				    $orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
-				    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+			} // --- allocations endpoint (replace existing block) ---
+			else if ($_GET['endpoint'] === 'allocations') {
+				// DataTables params
+				$draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
+				$start = isset($_POST['start']) ? max(0, intval($_POST['start'])) : 0;
+				$length = isset($_POST['length']) ? intval($_POST['length']) : 10;
+				if ($length <= 0 || $length > 500) $length = 25; // sane cap
+			
+				$searchParam = isset($_POST['search']['value']) ? trim($_POST['search']['value']) : '';
+			
+				// Safe ordering mapping (map column index => DB expression)
+				$orderColumnMap = [
+					0 => 'r.month',
+					1 => 'e.staff_no',
+					2 => 'e.full_name',
+					3 => 'sup.full_name',
+					4 => 'r.added_date'
+				];
+				$orderColumnIndex = isset($_POST['order'][0]['column']) ? intval($_POST['order'][0]['column']) : 0;
+				$orderDir = (isset($_POST['order'][0]['dir']) && strtoupper($_POST['order'][0]['dir']) === 'DESC') ? 'DESC' : 'ASC';
+				$orderBy = isset($orderColumnMap[$orderColumnIndex]) ? $orderColumnMap[$orderColumnIndex] : 'r.added_date';
+			
+				// Build WHERE clauses + param arrays
+				$where = " WHERE r.id IS NOT NULL ";
+				$params = []; $types = '';
+			
+				if ($searchParam !== '') {
+					$where .= " AND (
+						COALESCE(e.full_name, r.full_name) LIKE ? OR
+						COALESCE(e.staff_no, r.staff_no) LIKE ? OR
+						COALESCE(sup.full_name, r.sup_name) LIKE ? OR
+						COALESCE(r.sup_staff_no, '') LIKE ? OR
+						r.added_date LIKE ?
+					) ";
+					$like = '%' . $searchParam . '%';
+					// bind five strings
+					$params[] = $like; $params[] = $like; $params[] = $like; $params[] = $like; $params[] = $like;
+					$types .= 'sssss';
 				}
-			    // Base query
-			    $query = "SELECT * FROM `res_allocation` WHERE `id` IS NOT NULL";
-
-			    // Add search functionality
-			    if ($searchParam) {
-			        $query .= " AND (`full_name` LIKE '%" . escapeStr($searchParam) . "%' OR `added_date` LIKE '%" . escapeStr($searchParam) . "%' OR `sup_name` LIKE '%" . escapeStr($searchParam) . "%' OR `staff_no` LIKE '%" . escapeStr($searchParam) . "%' OR `sup_staff_no` LIKE '%" . escapeStr($searchParam) . "%' OR `added_by` LIKE '%" . escapeStr($searchParam) . "%' )";
-			    }
-
-			    // Add ordering
-			    $query .= " ORDER BY `$orderBy` $order LIMIT $start, $length";
-
-			    // Execute query
-			    $timesheet = $GLOBALS['conn']->query($query);
-
-			    // Count total records for pagination
-			    $countQuery = "SELECT COUNT(*) as total FROM `timesheet` WHERE `id` IS NOT NULL";
-			    if ($searchParam) {
-			        $query .= " AND (`full_name` LIKE '%" . escapeStr($searchParam) . "%' OR `added_date` LIKE '%" . escapeStr($searchParam) . "%' OR `sup_name` LIKE '%" . escapeStr($searchParam) . "%' OR `staff_no` LIKE '%" . escapeStr($searchParam) . "%' OR `sup_staff_no` LIKE '%" . escapeStr($searchParam) . "%' OR `added_by` LIKE '%" . escapeStr($searchParam) . "%' )";
-			    }
-
-			    // Execute count query
-			    $totalRecordsResult = $GLOBALS['conn']->query($countQuery);
-			    $totalRecords = $totalRecordsResult->fetch_assoc()['total'];
-
-			    if ($timesheet->num_rows > 0) {
-			        while ($row = $timesheet->fetch_assoc()) {
-			        	$id = $row['id'];
-						$month = new dateTime($row['month']);
-						$row['month'] = $month->format('M Y');
-
-			        	$row['time'] = $allocationClass->getTotalTime($row['allocation']);
-			            $result['data'][] = $row;
-			        }
-			        $result['iTotalRecords'] = $totalRecords;
-			        $result['iTotalDisplayRecords'] = $totalRecords;
-			        $result['msg'] = $timesheet->num_rows . " records were found.";
-			    } else {
-			        $result['msg'] = "No records found";
-			    }
+			
+				// Main select: join employee (e) and supervisor (sup)
+				$select = "
+					SELECT
+						r.*,
+						COALESCE(e.employee_id, r.emp_id) AS employee_id,
+						COALESCE(e.staff_no, r.staff_no) AS staff_no,
+						COALESCE(e.full_name, r.full_name) AS full_name,
+						COALESCE(e.location_name, '') AS location_name,
+						COALESCE(e.state, '') AS state,
+						COALESCE(e.designation, '') AS designation,
+						COALESCE(sup.employee_id, r.sup_id) AS sup_employee_id,
+						COALESCE(sup.staff_no, r.sup_staff_no) AS sup_staff_no,
+						COALESCE(sup.full_name, r.sup_name) AS sup_full_name
+					FROM res_allocation r
+					LEFT JOIN employees e ON r.emp_id = e.employee_id
+					LEFT JOIN employees sup ON r.sup_id = sup.employee_id
+				";
+			
+				// Query with where/order/limit
+				$sql = $select . $where . " ORDER BY {$orderBy} {$orderDir} LIMIT ?, ?";
+			
+				// append limit params
+				$params[] = $start; $params[] = $length;
+				$types .= 'ii';
+			
+				$stmt = $GLOBALS['conn']->prepare($sql);
+				if (!$stmt) {
+					$result = ['draw' => $draw, 'data' => [], 'iTotalRecords' => 0, 'iTotalDisplayRecords' => 0, 'msg' => $GLOBALS['conn']->error];
+					echo json_encode($result);
+					exit;
+				}
+			
+				// bind params dynamically
+				if (!empty($types)) {
+					$stmt->bind_param($types, ...$params);
+				}
+				$stmt->execute();
+				$res = $stmt->get_result();
+			
+				// Count filtered
+				$countSql = "SELECT COUNT(*) AS total FROM res_allocation r LEFT JOIN employees e ON r.emp_id = e.employee_id LEFT JOIN employees sup ON r.sup_id = sup.employee_id " . $where;
+				$countStmt = $GLOBALS['conn']->prepare($countSql);
+				$totalFiltered = 0;
+				if ($countStmt) {
+					// for count, use only the where params (exclude the last two limit ints)
+					$whereParamCount = strlen($types) > 2 ? (strlen($types) - 2) : strlen($types);
+					// compute proper split by counting chars: we used 'sssss' maybe; easier: re-build types/params for where
+					// Simpler: extract where-specific params by the number of placeholders in $where (we used 5 when search exists)
+					if ($searchParam !== '') {
+						// we added 5 's' params earlier
+						$wtypes = 'sssss';
+						$wparams = array_slice($params, 0, 5);
+						$countStmt->bind_param($wtypes, ...$wparams);
+					}
+					$countStmt->execute();
+					$cntR = $countStmt->get_result();
+					if ($cntR && $cntR->num_rows) {
+						$totalFiltered = intval($cntR->fetch_assoc()['total']);
+					}
+					$countStmt->close();
+				}
+			
+				// Count total records (no search)
+				$totalSql = "SELECT COUNT(*) AS total FROM res_allocation";
+				$totalResult = $GLOBALS['conn']->query($totalSql);
+				$totalRecords = ($totalResult && $totalResult->num_rows) ? intval($totalResult->fetch_assoc()['total']) : 0;
+			
+				// Build response rows
+				$result = ['draw' => $draw, 'data' => [], 'iTotalRecords' => $totalRecords, 'iTotalDisplayRecords' => $totalFiltered];
+			
+				if ($res && $res->num_rows > 0) {
+					while ($row = $res->fetch_assoc()) {
+						// Format month
+						try {
+							$dt = new DateTime($row['month']);
+							$row['month'] = $dt->format('M Y');
+						} catch (Exception $e) {
+							// leave as-is
+						}
+			
+						// compute total time using your existing allocationClass
+						$row['time'] = method_exists($allocationClass, 'getTotalTime') ? $allocationClass->getTotalTime($row['allocation']) : '';
+			
+						// normalize supervisor fields
+						$row['sup_name'] = $row['sup_full_name'];
+						$row['sup_staff_no'] = $row['sup_staff_no'];
+			
+						// ensure employee name/staff_no come from employees table (COALESCE handled in query)
+						$row['full_name'] = $row['full_name'];
+						$row['staff_no'] = $row['staff_no'];
+			
+						$result['data'][] = $row;
+					}
+					$result['msg'] = $res->num_rows . " records were found.";
+				} else {
+					$result['msg'] = "No records found";
+				}
+			
+				echo json_encode($result);
+				exit;
 			}
+			
 
 			echo json_encode($result);
 
@@ -1255,7 +1350,7 @@ if(isset($_GET['action'])) {
 				// Get details
 				$employees = '';
 
-				$get_details = "SELECT * FROM `atten_details` WHERE `atten_id` = '$atten_id'";
+				$get_details = "SELECT id, emp_id, employees.full_name, employees.staff_no, atten_details.status, atten_details.added_by FROM `atten_details` INNER JOIN employees ON employees.employee_id = atten_details.emp_id WHERE `atten_id` = '$atten_id'";
 				$detailsSet = $GLOBALS['conn']->query($get_details);
 				while($row = $detailsSet->fetch_assoc()) {
 					$id 	= $row['id'];
@@ -1387,7 +1482,7 @@ if(isset($_GET['action'])) {
 				// Get details
 				$employees = '';
 
-				$get_details = "SELECT * FROM `timesheet_details` WHERE `ts_id` = '$ts_id'";
+				$get_details = "SELECT id, emp_id, employees.full_name, employees.staff_no, timesheet_details.status, timesheet_details.time_in, timesheet_details.time_out, timesheet_details.added_by FROM `timesheet_details` INNER JOIN employees ON employees.employee_id = timesheet_details.emp_id WHERE `ts_id` = '$ts_id'";
 				$detailsSet = $GLOBALS['conn']->query($get_details);
 				while($row = $detailsSet->fetch_assoc()) {
 					$id 	= $row['id'];
@@ -1989,8 +2084,8 @@ if(isset($_GET['action'])) {
 
 				if ($row = $result->fetch_assoc()) {
 					$employee_id  = $row['employee_id'];
-					$project_ids  = array_filter(explode(",", $row['project_id']));
-					$budget_codes = array_filter(explode(",", $row['budget_code']));
+					$project_ids  = $employeeClass->getProjectIds($employee_id);
+					$budget_codes = $employeeClass->getBudgetCodeNames($employee_id);
 
 					// Budget Code Allocation UI
 					if (count($budget_codes) > 0) {

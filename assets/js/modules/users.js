@@ -62,21 +62,28 @@ function load_users() {
 	                </div>`;
 	        }},
 
+			{ title: "Reports to", data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.reports_to}</span>
+	                </div>`;
+	        }},
+
 	        { title: "Status", data: null, render: function(data, type, row) {
 	            return `<div>
 	            		<span>${row.status}</span>
 	                </div>`;
 	        }},
-
+			// <span data-recid="${row.user_id}" onclick="return deleteUser(${row.user_id})"  class="fa  smt-5 cursor fa-trash"></span>
 	        { title: "Action", data: null, render: function(data, type, row) {
 	            return `<div class="sflex scenter-items">
-					<a href="${base_url}/user/show/${row.user_id}" class="fa edit_companyInfo smt-5 cursor smr-10 fa-eye"></a>
-					<a onclick="return editUserModal(${row.user_id})" class="fa edit_companyInfo smt-5 cursor smr-10 fa-pencil"></a>
-					<span data-recid="${row.user_id}"  class="fa delete_company smt-5 cursor fa-trash"></span>
+					<a href="${base_url}/user/show/${row.user_id}" class="fa  smt-5 cursor smr-10 fa-eye"></a>
+					<a onclick="return editUserModal(${row.user_id})" class="fa  smt-5 cursor smr-10 fa-pencil"></a>
+					
 				</div>`;
 	        }},
 	    ]
 	});
+
 
 	return false;
 }
@@ -86,7 +93,7 @@ async function editUserModal(id) {
 	let modal = $('#editUser');
 	if (response) {
 		let res = JSON.parse(response)[0]
-		// console.log(res)
+		console.log(res)
 		$(modal).find('#full_name4Edit').val(res.full_name)
 		$(modal).find('#phone4Edit').val(res.phone)
 		$(modal).find('#email4Edit').val(res.email)
@@ -94,6 +101,16 @@ async function editUserModal(id) {
 		$(modal).find('#username4Edit').val(res.username)
 		$(modal).find('#slcStatus').val(res.status)
 		$(modal).find('#userId4Edit').val(res.user_id)
+		$(modal).find('#reportsTo').find('option').prop('selected', false)
+		console.log(res.reports_to)
+		if(res.reports_to && res.reports_to.length > 0) {
+			res.reports_to.forEach((item) => {
+				console.log(item)
+				$(modal).find('#reportsTo').find('option[value="' + item + '"]').prop('selected', true)
+			})
+		}
+
+		$('.my-select').selectpicker('refresh');
 	}
 
 	$('#editUser').modal('show');
@@ -162,6 +179,10 @@ document.addEventListener("DOMContentLoaded", function() {
 		return false
 	})
 
+	$('.my-select').selectpicker({
+	    noneResultsText: "No results found"
+	});
+
 });	
 
 function handleUser4CreateUser(employee_id, full_name) {
@@ -180,6 +201,7 @@ async function handle_addUserForm(form) {
 	let sysRole 		= $(form).find('#sysRole').val();
     let username 		= $(form).find('#username').val();
     let password 		= $(form).find('#password').val();
+	let reportsTo 		= $(form).find('#reportsTo').val();
  
     // return false;
 
@@ -200,6 +222,7 @@ async function handle_addUserForm(form) {
         username: username,
         password: password,
         sysRole: sysRole,
+		reportsTo: reportsTo,
     };
 
     try {
@@ -237,6 +260,7 @@ async function handle_editUserForm(form) {
     let sysRole 		= $(form).find('#sysRole4Edit').val();
 	let user_id 		= $(form).find('#userId4Edit').val();
     let slcStatus 		= $(form).find('#slcStatus').val();
+	let reportsTo 		= $(form).find('#reportsTo').val();
 
     // return false;
 
@@ -257,7 +281,8 @@ async function handle_editUserForm(form) {
         username: username,
         sysRole: sysRole,
         user_id:user_id,
-        slcStatus:slcStatus
+        slcStatus:slcStatus,
+		reportsTo:reportsTo
     };
 
     try {
@@ -330,6 +355,10 @@ async function handle_changePasswordForm(form) {
 	return false
 }
 
+function deleteUser(id) {
+	console.log(id)
+}
+
 function simplifyRoles() {
 	$('#selectAll').on('change', function() {
 		var isChecked = $(this).is(':checked');
@@ -369,6 +398,7 @@ async function handle_addRole(form) {
 	let error = validateForm(form)
 
 	let name 		= $(form).find('#roleName').val();
+	let reportsTo 	= $(form).find('#reportsTo').val();
     let actions 	= [];
 
 	$('input.action:checked').each((i, el) => {
@@ -383,8 +413,13 @@ async function handle_addRole(form) {
 
 	let formData = {
         name: name,
-        actions: actions
+        actions: actions,
+		reportsTo: reportsTo
     };
+
+	// console.log(formData)
+
+	// return false;
 
 	form_loading(form);
 
@@ -420,6 +455,7 @@ async function handle_editRole(form) {
 
 	let name 		= $(form).find('#roleName4Edit').val();
 	let role_id 	= $(form).find('#role_id').val();
+	let reportsTo 	= $(form).find('#reportsTo').val();
     let actions 	= [];
 
 	$(form).find('input.action:checked').each((i, el) => {
@@ -435,7 +471,8 @@ async function handle_editRole(form) {
 	let formData = {
         name: name,
 		id: role_id,
-        actions: actions
+        actions: actions,
+		reportsTo: reportsTo
     };
 
 	form_loading(form);
@@ -510,6 +547,10 @@ async function editRoleModal(id) {
 		let res = JSON.parse(response)
 		if(!res.error) {
 			$('#editRole').find('.modal-body').html(res.data)
+			$('.my-select').selectpicker({
+				noneResultsText: "No results found"
+			});
+		
 		}
 	}
 

@@ -149,8 +149,9 @@ function set_sessions($user_id) {
 	$_SESSION['username'] 	= $user['username'];
 	$_SESSION['myUser'] 	= $user['username'];
 	$_SESSION['role'] 		= $user['role'];
-	$_SESSION['branch_id'] 		= $user['branch_id'];
-	$_SESSION['user_id'] 		= $user['user_id'];
+	$_SESSION['branch_id'] 	= $user['branch_id'];
+	$_SESSION['user_id'] 	= $user['user_id'];
+	$_SESSION['reports_to'] = json_decode($user['reports_to']);
 
 	$emp_id = $user['emp_id'];
 	$avatar = 'male_avatar.png';
@@ -191,6 +192,21 @@ function set_sessions($user_id) {
 	
 	foreach ($role_permissions as $sysPermission) {
 		$_SESSION[$sysPermission] = 'on';
+	}
+
+	if (function_exists('get_setting')) {
+		$disabled_features = json_decode(get_setting('disabled_features')['value']);
+		foreach ($disabled_features as $disabled_feature) {
+			// replace space with _
+			$disabled_feature = str_replace(' ', '_', $disabled_feature);
+			$_SESSION["manage_".$disabled_feature] = 'off';
+			$_SESSION["create_".$disabled_feature] = 'off';
+			$_SESSION["edit_".$disabled_feature] = 'off';
+			$_SESSION["delete_".$disabled_feature] = 'off';
+			$_SESSION["review_".$disabled_feature] = 'off';
+			$_SESSION["reject_".$disabled_feature] = 'off';
+			$_SESSION["approve_".$disabled_feature] = 'off';
+		}
 	}
 	return true;
 }

@@ -86,4 +86,11 @@ class PayrollDetailsClass extends Model {
     }
 }
 
+class Notifications extends Model {
+    public function __construct() {
+        parent::__construct('notifications');
+    }
+}
+
+$GLOBALS['notificationsClass'] = $notificationsClass = new Notifications();
 $GLOBALS['payrollDetailsClass'] = $payrollDetailsClass = new PayrollDetailsClass();

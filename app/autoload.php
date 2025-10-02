@@ -25,10 +25,12 @@ function load_files() {
     if ($tab && isset($menus[$menu]['sub'][$tab])) {
         handle_sub_menu($menus[$menu]['sub'][$tab], $folder, $action);
     } 
+    
     // Handle top-level menu actions
     else if ($action && isset($menus[$menu]['actions'][$action])) {
         handle_action($menus[$menu]['actions'][$action], $folder);
     } 
+   
     // Load the default file for the menu
     else {
         if (check_session($authKey)) {
@@ -60,7 +62,7 @@ function handle_sub_menu($subMenu, $folder, $action) {
 function handle_action($actionConfig, $folder) {
     $file = $actionConfig['file'] ?? null;
     $authKey = $actionConfig['auth'] ?? null;
-
+    // var_dump($authKey);
     if ($file && check_session($authKey)) {
         load_file($folder . $file . '.php');
     } else {
@@ -768,6 +770,11 @@ function get_menu_config() {
                     'route' => 'user',
                     'icon' => 'person',
                     'auth' => 'manage_users',
+                    'actions' => [
+                        'add' => ['file' => 'user_add', 'auth' => 'create_users'],
+                        'edit' => ['file' => 'user_edit', 'auth' => 'edit_users'],
+                        'show' => ['file' => 'user_show', 'auth' => 'manage_users'],
+                    ],
                 ],
                 'roles' => [
                     'default' => 'roles',

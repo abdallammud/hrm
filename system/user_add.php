@@ -61,6 +61,29 @@
                 <div class="row">
                     <div class="col col-xs-12 col-md-12 col-lg-12">
                         <div class="form-group">
+                            <label class="label " for="reportsTo">Reports To</label>
+                            <select  class="form-control my-select" data-msg="Please select user role." data-live-search="true" multiple id="reportsTo" name="reportsTo" >
+                                <option value="">- Select</option>
+                                <?php
+                                $query = "SELECT `user_id`, `full_name`, `role` FROM `users`";
+                                $users = $GLOBALS['conn']->query($query);
+                                if ($users->num_rows > 0) {
+                                    while ($row = $users->fetch_assoc()) {
+                                        $role = $row['role'];
+                                        $roleName = $GLOBALS['userClass']->get_roleName($row['user_id']);
+                                        echo '<option value="'.$row['user_id'].'">'.$row['full_name'].' ('.$roleName.')</option>';
+                                    }
+                                }   
+                                ?>
+                            </select>
+                            <span class="form-error text-danger">This is error</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col col-xs-12 col-md-12 col-lg-12">
+                        <div class="form-group">
                             <label class="label " for="username">Username</label>
                             <input type="text"  class="form-control " id="username" name="username" placeholder="">
                             <span class="form-error text-danger">This is error</span>

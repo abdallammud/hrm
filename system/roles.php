@@ -1,4 +1,4 @@
-
+<!-- load roles -->
 <div class="page content">
 	<div class="page-breadcrumb d-sm-flex align-items-center mb-3">
         <h5 class="">System Roles</h5>
@@ -49,95 +49,86 @@
 </div>
 
 
-
-<div class="modal fade "  data-bs-focus="false" id="addRole" tabindex="-1" role="dialog" aria-labelledby="addRoleLabel" aria-hidden="true">
+<!-- Add role -->
+<div class="modal fade" data-bs-focus="false" id="addRole" tabindex="-1" role="dialog" aria-labelledby="addRoleLabel" aria-hidden="true">
     <div class="modal-dialog" role="Category" style="min-width:700px; width: 90vw; max-width: 750px;">
         <form class="modal-content" id="addSystemRoleForm" style="border-radius: 14px 14px 0px 0px; margin-top: -15px;">
-        	<div class="modal-header">
+            <div class="modal-header">
                 <h5 class="modal-title" id="addSystemRole">Add New Role</h5>
                 <button type="button" class="close modal-close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
+
             <div class="modal-body">
-                <div>
-                    <div class="row">
-                        <div class="col col-xs-12">
-                            <div class="form-group">
-                                <label class="label  required"  for="roleName">Role  Name</label>
-                                <input type="text"  data-msg="Please provide role name."  class="form-control validate" id="roleName" name="roleName">
-                                <span class="form-error text-danger">This is error</span>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="label required" for="roleName">Role Name</label>
+                            <input type="text" data-msg="Please provide role name." class="form-control validate" id="roleName" name="roleName">
+                            <span class="form-error text-danger">This is error</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="label required" for="reportsTo">Reports to</label>
+                            <select data-live-search="true" name="reportsTo" id="reportsTo" title="Select reports to" multiple class="form-control my-select reports_to">
+                                <option value="">Select</option>
+                                <?php
+                                foreach ($GLOBALS['sys_roles']->read_all() as $role) {
+                                    echo '<option value="' . $role['id'] . '">' . ucwords($role['name']) . '</option>';
+                                }
+                                ?>
+                            </select>
+                            <span class="form-error text-danger">This is error</span>
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="mt-3">Assign permission to this role</h6>
+                <hr>
+
+                <div class="permissions-list">
+                    <?php
+                    foreach ($GLOBALS['sys_permissions']->read_all() as $permission) {
+                        $actions = json_decode($permission['actions']);
+                        $disabled_features = json_decode(get_setting('disabled_features')['value']);
+                        if (in_array($permission['module'], $disabled_features)) {
+                            continue;
+                        }
+                        $permission_name = $permission['module'];
+                        $module_id = strtolower(str_replace(" ", "_", $permission_name));
+                        ?>
+                        
+                        <div class="permission-module mb-3">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input module" type="checkbox" id="<?=$module_id;?>">
+                                <label class="form-check-label fw-bold" for="<?=$module_id;?>"><?=ucwords($permission_name);?></label>
+                            </div>
+
+                            <div class="d-flex flex-wrap gap-3 ms-4">
+                                <?php foreach ($actions as $action_name => $action_code) { ?>
+                                    <div class="form-check me-3">
+                                        <input class="form-check-input action <?=$module_id;?>" data-module="<?=$module_id;?>" type="checkbox" id="<?=$action_code->code;?>" value="<?=$action_code->code;?>">
+                                        <label class="form-check-label" for="<?=$action_code->code;?>"><?=ucwords($action_name);?></label>
+                                    </div>
+                                <?php } ?>
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col col-md-12 col-lg-12 col-xs-12">
-                            <h6 style="margin-top: 10px;;">Assign permission to this role</h6>
-                        </div>
-                        
-                         <div class="table-responsive">
-                            <table class="table assing_roles table-borderless">
-                                <thead>
-                                    <hr>
-                                    <tr>
-                                        <th scope="col">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" value="" id="selectAll">
-                                                <label class="form-check-label" for="selectAll">MODULE</label>
-                                            </div>
-                                        </th>
-                                        <th scope="col">PERMISSIONS</th>
-                                        <th scope="col"></th>
-                                        <th scope="col"></th>
-                                        <th scope="col"></th>
-                                    </tr>
-                                    
-                                </thead>
-                                <tbody>
-                                <?php
-                                foreach ($GLOBALS['sys_permissions']->read_all() as $permission) {
-                                    $actions = json_decode($permission['actions']);
-
-                                    // var_dump($actions);
-                                    $permission['actions'] = $actions;
-                                    $permission_name = $permission['module'];
-                                    ?>
-                                    <tr>
-                                        <td>
-                                            <div class="form-check">
-                                                <input class="form-check-input module" type="checkbox" value="" id="<?=strtolower(str_replace(" ", "_",$permission_name));?>">
-                                                <label class="form-check-label" for="<?=strtolower(str_replace(" ", "_",$permission_name));?>"><?=ucwords($permission_name);?></label>
-                                            </div>     
-                                        </td>
-
-                                        <?php
-
-                                        foreach ($actions as $action_name => $action_code) {
-                                            ?>
-                                            <td>
-                                                <div class="form-check form-check-inline">
-                                                    <input class="form-check-input action <?=strtolower(str_replace(" ", "_",$permission_name));?>" data-module="<?=strtolower(str_replace(" ", "_",$permission_name));?>" type="checkbox" id="<?=$action_code->code;?>" value="<?=$action_code->code;?>">
-                                                    <label class="form-check-label" for="<?=$action_code->code;?>"><?=ucwords($action_name);?></label>
-                                                </div>
-                                            </td>
-                                        <?php } ?>
-                                    </tr>
-                                <?php } ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <?php } ?>
                 </div>
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary cursor " data-bs-dismiss="modal" aria-label="Close" style="min-width: 100px;">Cancel</button>
+                <button type="button" class="btn btn-secondary cursor" data-bs-dismiss="modal" aria-label="Close" style="min-width: 100px;">Cancel</button>
                 <button type="submit" class="btn btn-primary cursor" style="min-width: 100px;">Save</button>
             </div>
         </form>
     </div>
 </div>
 
+
+<!-- Edit role -->
 <div class="modal fade "  data-bs-focus="false" id="editRole" tabindex="-1" role="dialog" aria-labelledby="editRoleLabel" aria-hidden="true">
     <div class="modal-dialog" role="Category" style="min-width:700px; width: 90vw; max-width: 750px;">
         <form class="modal-content" id="editSystemRoleForm" style="border-radius: 14px 14px 0px 0px; margin-top: -15px;">
@@ -179,14 +170,18 @@
         display: flex;
         align-items: center;
     }
-    table.assing_roles .form-check-input {
+   .form-check-input {
         height: 20px;
         width: 20px;
         margin-right: 10px;
         margin-top: 0px;
     }
-    table.assing_roles .form-check-label {
+    .form-check-label {
         cursor: pointer;
+    }
+    .permission-module.mb-3 {
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 5px;
     }
 </style>
 

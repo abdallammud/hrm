@@ -220,6 +220,13 @@ function settingsArray() {
             'details' => 'System secondary color', 
             'remarks' => 'required'
         ],
+        'disabled_features' => [
+            'type' => 'disabled_features',
+            'value' => '[]', 
+            'section' => 'admin', 
+            'details' => 'Disabled features', 
+            'remarks' => 'required'
+        ],
 
     );
 

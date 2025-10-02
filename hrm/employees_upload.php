@@ -1,5 +1,5 @@
 <div class="modal fade"   data-bs-focus="false" id="upload_employees" tabindex="-1" role="dialog" aria-labelledby="upload_employeesLabel" aria-hidden="true">
-    <div class="modal-dialog" role="upload_employees" style="width:500px;">
+    <div class="modal-dialog" role="upload_employees" >
         <form class="modal-content" id="upload_employeesForm" style="border-radius: 14px 14px 0px 0px; margin-top: -15px;">
         	<div class="modal-header">
                 <h5 class="modal-title">Upload Employees</h5>

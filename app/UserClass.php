@@ -59,6 +59,19 @@ class Users extends Model {
         return $return;;
     }
 
+    public function get_roleName($user_id) {
+        $user = $this->get($user_id);
+        // var_dump($user);
+        $role_id = $user['role'];
+        return $GLOBALS['sys_roles']->read($role_id)['name'];
+    }
+
+    public function get_reportsTo($user_id) {
+        $user = $this->read($user_id);
+        $reportsTo = $user['reports_to'];
+        return $GLOBALS['sys_roles']->get($reportsTo)['name'];
+    }
+
     
 }
 
@@ -78,6 +91,13 @@ class UserPermissions extends Model {
     }
 }
 
+class SysRoles extends Model {
+    public function __construct() {
+        parent::__construct('sys_roles');
+    }
+}
+
 $GLOBALS['userClass']  = $userClass = new Users();
 $GLOBALS['permissionsClass']  = $permissionsClass = new Permissios;
 $GLOBALS['userPermissionsClass']  = $userPermissionsClass = new UserPermissions();
+$GLOBALS['sys_roles']  = $sys_roles = new SysRoles();

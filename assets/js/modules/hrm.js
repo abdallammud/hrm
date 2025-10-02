@@ -19,42 +19,42 @@ document.addEventListener("DOMContentLoaded", function() {
 	    // Hide all "Add" buttons
 	    $('button.add-educationRow').css('display', 'none');
 	    $('button.remove-educationRow').css('display', 'block');
-	    let newRow = `<div class="row education-row">
-	        <div class="col col-xs-12 col-md-6 col-lg-4">
-	            <div class="form-group">
-	                <input type="text" class="form-control degree" id="degree" name="degree">
-	                <span class="form-error text-danger">This is error</span>
-	            </div>
-	        </div>
-	        <div class="col col-xs-12 col-md-6 col-lg-3">
-	            <div class="form-group">
-	                <input type="text" class="form-control institution" id="institution" name="institution">
-	                <span class="form-error text-danger">This is error</span>
-	            </div>
-	        </div>
-	        <div class="col col-xs-12 col-md-6 col-lg-2">
-	            <div class="form-group">
-	                <input type="text" class="form-control startYear" onkeypress="return isNumberKey(event)" id="startYear" name="startYear">
-	                <span class="form-error text-danger">This is error</span>
-	            </div>
-	        </div>
-	        <div class="col col-xs-12 col-md-6 col-lg-2">
-	            <div class="form-group">
-	                <input type="text" class="form-control endYear" onkeypress="return isNumberKey(event)" id="endYear" name="endYear">
-	                <span class="form-error text-danger">This is error</span>
-	            </div>
-	        </div>
-	        <div class="col col-xs-12 col-md-6 col-lg-1">
-	            <div class="form-group">
-	                <button type="button" class="btn form-control add-educationRow btn-info cursor" style="color: #fff;" >
-                    	<i class="fa fa-plus-square"></i>
+	    let newRow = `<div class="row education-row added">
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="form-group">
+                    <input type="text" class="form-control degree" id="degree" name="degree">
+                    <span class="form-error text-danger">This is error</span>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-3">
+                <div class="form-group">
+                    <input type="text" class="form-control institution" id="institution" name="institution">
+                    <span class="form-error text-danger">This is error</span>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-2">
+                <div class="form-group">
+                    <input type="text" class="form-control startYear" onkeypress="return isNumberKey(event)" id="startYear" name="startYear">
+                    <span class="form-error text-danger">This is error</span>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-2">
+                <div class="form-group">
+                    <input type="text" class="form-control endYear" onkeypress="return isNumberKey(event)" id="endYear" name="endYear">
+                    <span class="form-error text-danger">This is error</span>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 col-lg-1">
+                <div class="form-group">
+                    <button type="button" class="btn form-control add-educationRow btn-info cursor" style="color: #fff;">
+                        <i class="fa fa-plus-square"></i>
                     </button>
-	                <button type="button" class="btn form-control remove-educationRow btn-danger cursor" style="display: none;">
-	                	<i class="fa fa-trash"></i>
-	                </button>
-	            </div>
-	        </div>
-	    </div>`;
+                    <button type="button" class="btn form-control remove-educationRow btn-danger cursor" style="display: none;">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>`;
 
 	    // Insert the new row after the current row
 	    $(prevRow).after(newRow);
@@ -534,11 +534,11 @@ async function handle_editEmployeeForm(form) {
 
     let position 	= $(form).find('#position').val();
     let project_id 	= $(form).find('#project').val();
-    let project 	= $(form).find('#project option:selected').val();
+    let project 	= $(form).find('#project option:selected').text();
     let dep 		= $(form).find('#dep').val();
     let depName 	= dep ? $(form).find('#dep option:selected').text() : '';
     let dutyStation = $(form).find('#dutyStation').val();
-    let dutyStationName = $(form).find('#dutyStation option:selected').val();
+    let dutyStationName = $(form).find('#dutyStation option:selected').text();
     let designation = $(form).find('#designation').val();
     let contractType 	= $(form).find('#contractType').val();
     let mohContract 	= $(form).find('#mohContract').val();

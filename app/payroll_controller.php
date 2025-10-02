@@ -179,11 +179,12 @@ if(isset($_GET['action'])) {
 				    	$post['ref_id'] = '';
 				    	$post['ref_name'] = 'All employees';
 				    }
-
+					$userInfo = $userClass->read($_SESSION['user_id']);
+					$user_fullName = $userInfo['full_name'];
 					// Initialize workflow as an array with the first action
 				    $workflow = [
 				        [
-				            'action' => 'Created by '. $_SESSION['full_name'], 
+				            'action' => 'Created by '. $user_fullName, 
 				            'date' => date('Y-m-d H:i:s'),
 				            'status' => 'Created',
 							'user_id' => $_SESSION['user_id']
@@ -567,6 +568,172 @@ if(isset($_GET['action'])) {
 
 			    echo 'updated'; exit();
 
+			} else if($_GET['endpoint'] == 'payroll_status') {
+				try {
+					$post = escapePostData($_POST);
+					$status = $post['status'];
+					$payrollId = $post['id']; 
+					$emp_id = isset($post['emp_id']) ? $post['emp_id'] : ''; 
+
+					// Check auth
+					if($status == 'Approved') {
+						$check = 'approve_payroll';
+					} else if($status == 'Rejected') {
+						$check = 'reject_payroll';
+					} else if($status == 'Reviewed') {
+						$check = 'review_payroll';
+					}
+
+					check_auth($check);
+				   	
+					$data = array(
+				        'status' => $status, 
+				        'updated_by' => $_SESSION['user_id'],
+				        'updated_date' => $updated_date
+				    );
+					// [{"action":"Created by Admin","date":"2025-08-14 17:44:40","status":"Created","user_id":59}]
+					$userInfo = $userClass->read($_SESSION['user_id']);
+					$user_fullName = $userInfo['full_name'];
+
+					$newWorkflow = [
+						"action" => $status." by ".$user_fullName, 
+						"date" => $updated_date, 
+						"status" => $status, 
+						"user_id" => $_SESSION['user_id']
+					];
+
+					$payrollInfo = $payrollClass->read($payrollId);
+					$workflow = json_decode($payrollInfo['workflow'], true);
+					$rejected = json_decode($payrollInfo['rejected'], true);
+					$finished = json_decode($payrollInfo['finished'], true);
+					$currentUser = (string)$_SESSION['user_id'];
+
+					if (is_array($rejected)) {
+						foreach ($rejected as $key => $record) {
+							if (isset($record['next_user']) && (string)$record['next_user'] === $currentUser) {
+								unset($rejected[$key]); // Removes the record
+								// The loop will continue to check the next record
+							}
+						}
+					}
+
+					if (is_array($finished)) {
+						foreach ($finished as $key => $record) {
+							if (isset($record['next_user']) && (string)$record['next_user'] === $currentUser) {
+								unset($finished[$key]); // Removes the record
+								// The loop will continue to check the next record
+							}
+						}
+					}
+
+					// Re-index the array after removal
+					$rejected = array_values($rejected);
+					$finished = array_values($finished);
+
+					$updatedRejectedJson = json_encode($rejected);
+					$updatedFinishedJson = json_encode($finished);
+
+					if($payrollInfo) {
+						$workflow = json_decode($payrollInfo['workflow'], true); 
+						$workflow[] = $newWorkflow; 
+						$updatedWorkflowJson = json_encode($workflow);
+					}
+
+					$data['workflow'] = $updatedWorkflowJson;
+					$data['rejected'] = $updatedRejectedJson;
+					$data['finished'] = $updatedFinishedJson;
+					$result['id'] = $payrollClass->update($payrollId, $data);
+					
+
+					$details = $conn->prepare("UPDATE `payroll_details` SET `status`=? WHERE `payroll_id` = '$payrollId'");
+					$details->bind_param("s", $status);
+					$details->execute();
+
+				    // If the branch is created successfully, return a success message
+				    if($result['id']) {
+				        $result['msg'] = 'Payroll status changed successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+				} catch (Exception $e) {
+				    // Catch any exceptions from the create method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
+			} else if($_GET['endpoint'] == 'notify_next_person') {
+				try {
+					$post = escapePostData($_POST);
+					$payroll_id = $post['payroll_id'];
+					$current_status = $post['current_status'];
+					$next_user = $post['next_user'];
+					$message = $post['message'];
+
+					$userInfo = $userClass->read($_SESSION['user_id']);
+					$user_fullName = $userInfo['full_name'];
+
+					if($current_status == 'Rejected') {
+						$updateColumn = 'rejected';
+						$action = "Rejected by ".$user_fullName;
+					} else {
+						$updateColumn = 'finished';
+						$action = "Finished by ".$user_fullName;
+					}
+
+					$newData = [
+						'action' => $action,
+						'date' => date('Y-m-d H:i:s'),
+						'status' => $current_status,
+						'user_id' => $_SESSION['user_id'],
+						'next_user' => $next_user,
+						'message' => $message
+					];
+
+					$payrollInfo = $payrollClass->read($payroll_id);
+					$json = json_decode($payrollInfo[$updateColumn], true);
+					$json[] = $newData;
+
+					$updateData = [
+						$updateColumn => json_encode($json),
+						'updated_by' => $_SESSION['user_id'],
+						'updated_date' => $updated_date
+					];
+
+					$result['id'] = $payrollClass->update($payroll_id, $updateData);
+
+					$notificationData = [
+						'recipient_id' => $next_user,
+						'channel_type' => 'both',
+						'notification_type' => 'Payroll',
+						'priority' => 'high',
+						'subject' => 'Payroll Notification',
+						'details' => 'Payroll action required, please check',
+						'message' => $message,
+						'added_by' => $_SESSION['user_id'],
+					];
+					$notificationsClass->create($notificationData);
+					// If the branch is created successfully, return a success message
+					if($result['id']) {
+				        $result['msg'] = 'Notification sent successfully';
+				        $result['error'] = false;
+				    } else {
+				        $result['msg'] = 'Something went wrong, please try again';
+				        $result['error'] = true;
+				    }
+				} catch (Exception $e) {
+				    // Catch any exceptions from the create method and return an error message
+				    $result['msg'] = 'Error: Something went wrong';
+				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
+				    $result['error'] = true;
+				}
+
+				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
 			}
 		}
 
@@ -597,47 +764,99 @@ if(isset($_GET['action'])) {
 			];
 
 			if ($_GET['endpoint'] === 'transactions') {
-				if (isset($_POST['order']) && isset($_POST['order'][0])) {
-				    $orderColumnMap = ['staff_no', 'full_name', 'transaction_type', 'transaction_subtype', 'amount', 'status', 'added_date'];
-				    // var_dump($_POST['order']);
-				    $orderByIndex = (int)$_POST['order'][0]['column'];
-				    $orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
-				    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+				$result = ['data' => []];
+			
+				// Ordering
+				$order = "ASC";
+				$orderBy = "et.added_date";
+				if (!empty($_POST['order'][0])) {
+					$orderColumnMap = [
+						0 => 'e.staff_no',
+						1 => 'e.full_name',
+						2 => 'et.transaction_type',
+						3 => 'et.transaction_subtype',
+						4 => 'et.amount',
+						5 => 'et.status',
+						6 => 'et.added_date'
+					];
+					$orderByIndex = (int)$_POST['order'][0]['column'];
+					if (isset($orderColumnMap[$orderByIndex])) {
+						$orderBy = $orderColumnMap[$orderByIndex];
+					}
+					$order = (strtoupper($_POST['order'][0]['dir']) === 'DESC') ? 'DESC' : 'ASC';
 				}
-			    // Base query
-			    $query = "SELECT * FROM `employee_transactions` WHERE `transaction_id` IS NOT NULL";
-
-			    // Add search functionality
-			    if ($searchParam) {
-			        $query .= " AND (`staff_no` LIKE '%" . escapeStr($searchParam) . "%' OR `full_name` LIKE '%" . escapeStr($searchParam) . "%' OR `phone_number` LIKE '%" . escapeStr($searchParam) . "%' OR `email` LIKE '%" . escapeStr($searchParam) . "%'  OR `transaction_type` LIKE '%" . escapeStr($searchParam) . "%' OR `transaction_subtype` LIKE '%" . escapeStr($searchParam) . "%' OR `amount` LIKE '%" . escapeStr($searchParam) . "%' OR `description` LIKE '%" . escapeStr($searchParam) . "%'  OR `added_by` LIKE '%" . escapeStr($searchParam) . "%' )";
-			    }
-
-			    // Add ordering
-			    $query .= " ORDER BY `$orderBy` $order LIMIT $start, $length";
-
-			    // Execute query
-			    $employee_transactions = $GLOBALS['conn']->query($query);
-
-			    // Count total records for pagination
-			    $countQuery = "SELECT COUNT(*) as total FROM `employee_transactions` WHERE `transaction_id` IS NOT NULL";
-			    if ($searchParam) {
-			        $countQuery .= " AND (`staff_no` LIKE '%" . escapeStr($searchParam) . "%' OR `full_name` LIKE '%" . escapeStr($searchParam) . "%' OR `phone_number` LIKE '%" . escapeStr($searchParam) . "%' OR `email` LIKE '%" . escapeStr($searchParam) . "%'  OR `transaction_type` LIKE '%" . escapeStr($searchParam) . "%' OR `transaction_subtype` LIKE '%" . escapeStr($searchParam) . "%' OR `amount` LIKE '%" . escapeStr($searchParam) . "%' OR `description` LIKE '%" . escapeStr($searchParam) . "%'  OR `added_by` LIKE '%" . escapeStr($searchParam) . "%' )";
-			    }
-
-			    // Execute count query
-			    $totalRecordsResult = $GLOBALS['conn']->query($countQuery);
-			    $totalRecords = $totalRecordsResult->fetch_assoc()['total'];
-
-			    if ($employee_transactions->num_rows > 0) {
-			        while ($row = $employee_transactions->fetch_assoc()) {
-			            $result['data'][] = $row;
-			        }
-			        $result['iTotalRecords'] = $totalRecords;
-			        $result['iTotalDisplayRecords'] = $totalRecords;
-			        $result['msg'] = $employee_transactions->num_rows . " records were found.";
-			    } else {
-			        $result['msg'] = "No records found";
-			    }
+			
+				// Base query: join employee info
+				$query = "
+					SELECT et.*, 
+						   e.staff_no, 
+						   e.full_name, 
+						   e.phone_number, 
+						   e.email
+					FROM employee_transactions et
+					INNER JOIN employees e ON e.employee_id = et.emp_id
+					WHERE et.transaction_id IS NOT NULL
+				";
+			
+				// Search
+				if (!empty($searchParam)) {
+					$esc = escapeStr($searchParam);
+					$query .= " AND (
+						e.staff_no LIKE '%$esc%' OR 
+						e.full_name LIKE '%$esc%' OR 
+						e.phone_number LIKE '%$esc%' OR 
+						e.email LIKE '%$esc%' OR 
+						et.transaction_type LIKE '%$esc%' OR 
+						et.transaction_subtype LIKE '%$esc%' OR 
+						et.amount LIKE '%$esc%' OR 
+						et.description LIKE '%$esc%' OR 
+						et.added_by LIKE '%$esc%'
+					)";
+				}
+			
+				// Ordering + pagination
+				$query .= " ORDER BY $orderBy $order LIMIT $start, $length";
+			
+				// Run query
+				$employee_transactions = $GLOBALS['conn']->query($query);
+			
+				// Count total
+				$countQuery = "
+					SELECT COUNT(*) as total
+					FROM employee_transactions et
+					INNER JOIN employees e ON e.employee_id = et.emp_id
+					WHERE et.transaction_id IS NOT NULL
+				";
+				if (!empty($searchParam)) {
+					$esc = escapeStr($searchParam);
+					$countQuery .= " AND (
+						e.staff_no LIKE '%$esc%' OR 
+						e.full_name LIKE '%$esc%' OR 
+						e.phone_number LIKE '%$esc%' OR 
+						e.email LIKE '%$esc%' OR 
+						et.transaction_type LIKE '%$esc%' OR 
+						et.transaction_subtype LIKE '%$esc%' OR 
+						et.amount LIKE '%$esc%' OR 
+						et.description LIKE '%$esc%' OR 
+						et.added_by LIKE '%$esc%'
+					)";
+				}
+				$totalRecordsResult = $GLOBALS['conn']->query($countQuery);
+				$totalRecords = $totalRecordsResult->fetch_assoc()['total'] ?? 0;
+			
+				// Build response
+				if ($employee_transactions && $employee_transactions->num_rows > 0) {
+					while ($row = $employee_transactions->fetch_assoc()) {
+						$result['data'][] = $row;
+					}
+					$result['iTotalRecords'] = $totalRecords;
+					$result['iTotalDisplayRecords'] = $totalRecords;
+					$result['msg'] = $employee_transactions->num_rows . " records were found.";
+				} else {
+					$result['msg'] = "No records found";
+					$result['iTotalRecords'] = 0;
+					$result['iTotalDisplayRecords'] = 0;
+				}
 			} else if ($_GET['endpoint'] === 'payroll') {
 				if (isset($_POST['order']) && isset($_POST['order'][0])) {
 				    $orderColumnMap = ['ref', 'month', '', 'added_date'];
@@ -699,73 +918,196 @@ if(isset($_GET['action'])) {
 			        $result['msg'] = "No records found";
 			    }
 			} else if ($_GET['endpoint'] === 'payroll_details') {
-				$payroll_id = isset($_POST['payroll_id']) ? $_POST['payroll_id'] : 0;
-				$month = isset($_POST['month']) ? $_POST['month'] : '';
-				if(isset($_POST['payroll_id'])) $payroll_id = $_POST['payroll_id'];
-				if (isset($_POST['order']) && isset($_POST['order'][0])) {
-				    $orderColumnMap = ['staff_no', 'full_name', 'base_salary', 'earnings', 'total_deductions', 'tax', 'net_salary'];
-				    $orderByIndex = (int)$_POST['order'][0]['column'];
-				    $orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
-				    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+				// DataTables server side params
+				$draw = isset($_POST['draw']) ? intval($_POST['draw']) : 0;
+				$start = isset($_POST['start']) ? max(0, intval($_POST['start'])) : 0;
+				$length = isset($_POST['length']) ? intval($_POST['length']) : 10;
+				// limit page size to avoid heavy queries
+				if ($length <= 0 || $length > 200) $length = 25;
+			
+				$payroll_id = isset($_POST['payroll_id']) ? intval($_POST['payroll_id']) : 0;
+				$month_raw = isset($_POST['month']) ? trim($_POST['month']) : '';
+				// keep backward-compatible logic: if month provided use exact match, otherwise wildcard
+				$monthLike = ($month_raw !== '') ? $month_raw : '%';
+			
+				$searchParam = isset($_POST['search']['value']) ? trim($_POST['search']['value']) : '';
+			
+				// Map datatable column index -> safe DB expression
+				$orderColumnIndex = isset($_POST['order'][0]['column']) ? intval($_POST['order'][0]['column']) : 2;
+				$orderDir = (isset($_POST['order'][0]['dir']) && strtoupper($_POST['order'][0]['dir']) === 'DESC') ? 'DESC' : 'ASC';
+			
+				$orderColumnMap = [
+					0 => 'pd.id',
+					1 => 'COALESCE(e.staff_no, pd.staff_no)',
+					2 => 'COALESCE(e.full_name, pd.full_name)',
+					3 => 'COALESCE(e.email, pd.email)',
+					4 => 'COALESCE(e.contract_type, pd.contract_type)',
+					5 => 'COALESCE(e.designation, e.position, pd.job_title)',
+					6 => 'pd.month',
+					7 => 'pd.required_days',
+					8 => 'pd.days_worked',
+					9 => 'pd.unpaid_days',
+					10 => 'pd.unpaid_hours',
+					11 => 'pd.base_salary',
+					12 => '(pd.allowance + pd.bonus + pd.commission)',
+					13 => '(pd.loan + pd.advance + pd.deductions)',
+					14 => 'pd.tax',
+					15 => '(pd.base_salary + (pd.allowance + pd.bonus + pd.commission) - (pd.loan + pd.advance + pd.deductions) - pd.tax)',
+					16 => 'pd.status',
+					17 => 'COALESCE(e.payment_bank, pd.bank_name)',
+					18 => 'COALESCE(e.payment_account, pd.bank_number)',
+					19 => 'pd.id'
+				];
+			
+				$orderBy = isset($orderColumnMap[$orderColumnIndex]) ? $orderColumnMap[$orderColumnIndex] : 'COALESCE(e.full_name, pd.full_name)';
+			
+				// Base WHERE (use prepared params)
+				$whereClauses = ['pd.payroll_id = ?', 'pd.month LIKE ?'];
+				$params = [$payroll_id, $monthLike];
+				$paramTypes = 'is';
+			
+				// Add search
+				if ($searchParam !== '') {
+					$whereClauses[] = '(' .
+						'COALESCE(e.full_name, pd.full_name) LIKE ? OR ' .
+						'COALESCE(e.staff_no, pd.staff_no) LIKE ? OR ' .
+						'COALESCE(e.email, pd.email) LIKE ?' .
+						')';
+					$like = '%' . $searchParam . '%';
+					$params[] = $like; $params[] = $like; $params[] = $like;
+					$paramTypes .= 'sss';
 				}
-			    // Base query
-			    $query = "SELECT  `id`, `payroll_id`, `emp_id`, `staff_no`, `full_name`, `email`, `contract_type`, `job_title`, `month`, `required_days`, `days_worked`, `unpaid_days`, `unpaid_hours`, `bank_name`, `bank_number`, `pay_date`, `paid_by`,  `status`, `base_salary`, (`allowance` + `bonus` + `commission`) AS earnings, (`loan` + `advance` + `deductions`) AS `total_deductions`, `tax`, (`base_salary` + (`allowance` + `bonus` + `commission`) - (`loan` + `advance` + `deductions`) - `tax`) AS net_salary FROM `payroll_details` WHERE `payroll_id`  = $payroll_id AND `month` LIKE '$month'";
-
-			    // Add search functionality
-			    if ($searchParam) {
-			        $query .= " AND (`full_name` LIKE '%" . escapeStr($searchParam) . "%' OR `staff_no` LIKE '%" . escapeStr($searchParam) . "%'  )";
-			    }
-
-			    // Add ordering
-			    $query .= " ORDER BY `$orderBy` $order LIMIT $start, $length";
-
-			    // Execute query
-			    $payroll_details = $GLOBALS['conn']->query($query);
-
-			    // Count total records for pagination
-			    $countQuery = "SELECT COUNT(*) as total FROM `payroll_details`  WHERE `payroll_id`  = $payroll_id ";
-			    if ($searchParam) {
-			        $countQuery .= " AND (`full_name` LIKE '%" . escapeStr($searchParam) . "%' OR `staff_no` LIKE '%" . escapeStr($searchParam) . "%'  )";
-			    }
-
-
-
-
-			    // Execute count query
-			    $totalRecordsResult = $GLOBALS['conn']->query($countQuery);
-			    $totalRecords = $totalRecordsResult->fetch_assoc()['total'];
-
-			    if ($payroll_details->num_rows > 0) {
-			        while ($row = $payroll_details->fetch_assoc()) {
-			        	$emp_id = $row['emp_id'];
-			        	$paid_by = $row['paid_by'];
-			        	$month 	= $row['month'];
-			        	$month 	= date('F Y', strtotime($month));
-			        	$net_salary = $row['net_salary'];
-			        	$employeeInfo = get_data('employees', ['employee_id' => $emp_id]);
-			        	$taxPercentage = '';
-			        	if($employeeInfo) {
-			        		$employeeInfo = $employeeInfo[0];
-			        		$state_id = $employeeInfo['state_id'];
-			        		$taxPercentage = getTaxPercentage($net_salary, $state_id);
-			        	}
-
-			        	$paid_by = $userClass->get_emp($paid_by);
-			        	if(count($paid_by) > 0) $paid_by = $paid_by['full_name'];
-
+			
+				$whereSql = implode(' AND ', $whereClauses);
+			
+				// Columns to select (only what's needed)
+				$select = "pd.id, pd.payroll_id, pd.emp_id,
+					COALESCE(e.staff_no, pd.staff_no) AS staff_no,
+					COALESCE(e.full_name, pd.full_name) AS full_name,
+					COALESCE(e.email, pd.email) AS email,
+					COALESCE(e.contract_type, pd.contract_type) AS contract_type,
+					COALESCE(e.designation, e.position, pd.job_title) AS job_title,
+					pd.month, pd.required_days, pd.days_worked, pd.unpaid_days, pd.unpaid_hours,
+					pd.base_salary,
+					(pd.allowance + pd.bonus + pd.commission) AS earnings,
+					(pd.loan + pd.advance + pd.deductions) AS total_deductions,
+					pd.tax,
+					(pd.base_salary + (pd.allowance + pd.bonus + pd.commission) - (pd.loan + pd.advance + pd.deductions) - pd.tax) AS net_salary,
+					COALESCE(e.payment_bank, pd.bank_name) AS bank_name,
+					COALESCE(e.payment_account, pd.bank_number) AS bank_number,
+					pd.status, pd.paid_by, COALESCE(e.state_id, NULL) AS state_id";
+			
+				// Main query with ordering and limit
+				$sql = "SELECT $select
+						FROM payroll_details pd
+						LEFT JOIN employees e ON pd.emp_id = e.employee_id
+						WHERE $whereSql
+						ORDER BY $orderBy $order
+						LIMIT ?, ?";
+			
+				// Append start/length params (integers)
+				$params[] = $start; $params[] = $length;
+				$paramTypes .= 'ii';
+			
+				// Prepare & execute
+				$stmt = $GLOBALS['conn']->prepare($sql);
+				if (!$stmt) {
+					$result = ['draw' => $draw, 'data' => [], 'recordsTotal' => 0, 'recordsFiltered' => 0, 'error' => $GLOBALS['conn']->error];
+					echo json_encode($result);
+					exit;
+				}
+			
+				// bind params (using argument unpacking)
+				$stmt->bind_param($paramTypes, ...$params);
+				$stmt->execute();
+				$res = $stmt->get_result();
+			
+				// Count total matching (filtered) rows
+				$countSql = "SELECT COUNT(*) AS total
+							 FROM payroll_details pd
+							 LEFT JOIN employees e ON pd.emp_id = e.employee_id
+							 WHERE $whereSql";
+				$countStmt = $GLOBALS['conn']->prepare($countSql);
+				if (!$countStmt) {
+					$totalFiltered = 0;
+				} else {
+					// bind the same params except the LIMITs (so copy first N params)
+					// Determine how many params were for WHERE: it's total params minus 2 (start, length)
+					$whereParamCount = count($params) - 2;
+					$whereParams = array_slice($params, 0, $whereParamCount);
+					$whereTypes = substr($paramTypes, 0, $whereParamCount);
+					$countStmt->bind_param($whereTypes, ...$whereParams);
+					$countStmt->execute();
+					$cntRes = $countStmt->get_result();
+					$totalFiltered = ($cntRes && $cntRes->num_rows) ? intval($cntRes->fetch_assoc()['total']) : 0;
+					$countStmt->close();
+				}
+			
+				// Count total records for this payroll_id (unfiltered by search) for pagination
+				$totalSql = "SELECT COUNT(*) as total FROM payroll_details WHERE payroll_id = ?";
+				$totalStmt = $GLOBALS['conn']->prepare($totalSql);
+				$totalRecords = 0;
+				if ($totalStmt) {
+					$totalStmt->bind_param('i', $payroll_id);
+					$totalStmt->execute();
+					$totalRes = $totalStmt->get_result();
+					if ($totalRes && $totalRes->num_rows) $totalRecords = intval($totalRes->fetch_assoc()['total']);
+					$totalStmt->close();
+				}
+			
+				// Build response
+				$result = [
+					'draw' => $draw,
+					'data' => [],
+					'recordsTotal' => $totalRecords,
+					'recordsFiltered' => $totalFiltered,
+					// for compatibility with older DataTables
+					'iTotalRecords' => $totalRecords,
+					'iTotalDisplayRecords' => $totalFiltered
+				];
+			
+				if ($res && $res->num_rows > 0) {
+					while ($row = $res->fetch_assoc()) {
+						$emp_id = $row['emp_id'];
+						$paid_by = $row['paid_by'];
+						$monthFormatted = $row['month'];
+						// If month is stored as date-like, format; otherwise keep
+						if (strtotime($row['month']) !== false) {
+							$monthFormatted = date('F Y', strtotime($row['month']));
+						}
+						$net_salary = $row['net_salary'];
+			
+						// Use joined state_id (from employees)
+						$state_id = isset($row['state_id']) ? $row['state_id'] : null;
+						$taxPercentage = ($state_id !== null) ? getTaxPercentage($net_salary, $state_id) : '';
+			
+						// Resolve paid_by name (existing helper)
+						$paid_by_name = $userClass->get_emp($paid_by);
+						if (is_array($paid_by_name) && isset($paid_by_name['full_name'])) $paid_by_name = $paid_by_name['full_name'];
+			
 						$row['txtStatus'] = $row['status'];
-			        	$row['taxRate'] = $taxPercentage;
-			        	$row['paid_by'] = $paid_by;
-			        	$row['month'] = $month;
-			            $result['data'][] = $row;
-			        }
-			        $result['iTotalRecords'] = $totalRecords;
-			        $result['iTotalDisplayRecords'] = $totalRecords;
-			        $result['msg'] = $payroll_details->num_rows . " records were found.";
-			    } else {
-			        $result['msg'] = "No records found";
-			    }
+						$row['taxRate'] = $taxPercentage;
+						$row['paid_by'] = $paid_by_name;
+						$row['month'] = $monthFormatted;
+			
+						// optional: cast numeric fields to float for JSON consumers
+						$row['base_salary'] = floatval($row['base_salary']);
+						$row['earnings'] = floatval($row['earnings']);
+						$row['total_deductions'] = floatval($row['total_deductions']);
+						$row['tax'] = floatval($row['tax']);
+						$row['net_salary'] = floatval($row['net_salary']);
+			
+						$result['data'][] = $row;
+					}
+					$result['msg'] = $res->num_rows . " records were found.";
+				} else {
+					$result['msg'] = "No records found";
+				}
+			
+				echo json_encode($result);
+				exit;
 			}
+			
 
 
 			echo json_encode($result);
@@ -778,7 +1120,29 @@ if(isset($_GET['action'])) {
 		// Get data
 		else if($_GET['action'] == 'get') {
 			if ($_GET['endpoint'] === 'transaction') {
-				json(get_data('employee_transactions', array('transaction_id' => $_POST['id']))[0]);
+				// json(get_data('employee_transactions', array('transaction_id' => $_POST['id']))[0]);
+				$query = "
+					SELECT et.*, 
+						   e.staff_no, 
+						   e.full_name, 
+						   e.phone_number, 
+						   e.email
+					FROM employee_transactions et
+					INNER JOIN employees e ON e.employee_id = et.emp_id
+					WHERE et.transaction_id = ?
+				";
+				
+				$stmt = $conn->prepare($query);
+				$stmt->bind_param("i", $_POST['id']);
+				$stmt->execute();
+				$result = $stmt->get_result();
+				
+				if ($result->num_rows > 0) {
+					$row = $result->fetch_assoc();
+					json($row);
+				} else {
+					json([]);
+				}
 			} else if ($_GET['endpoint'] === 'transSubTypes') {
 				$data = '<option value="">None</option>';
 				$type = $_POST['type'];
@@ -851,163 +1215,179 @@ if(isset($_GET['action'])) {
 
 	    		echo json_encode($result);
 			} else if ($_GET['endpoint'] === '4payslipShow') {
-				$payroll_id = $_POST['id'];
+				$payroll_id = (int)$_POST['id'];
 				$data = '';
-
-				$query = $GLOBALS['conn']->query("SELECT * FROM `payroll_details` WHERE `id` = '$payroll_id'");
-				if($query) {
-					while($row = $query->fetch_assoc()) {
-						$full_name = $row['full_name'];
-						$emp_id = $row['emp_id'];
-						$month = $row['month'];
-						$base_salary = $row['base_salary'];
-						$added_date = $row['added_date'];
-						$month = date('F Y', strtotime($month));
-						$added_date = date('F d, Y', strtotime($added_date));
-
-
-
-						$employee = $GLOBALS['employeeClass']->read($emp_id);
-						$state_id = $employee['state_id'];
-		        		$taxPercentage = getTaxPercentage($base_salary, $state_id);
-						// var_dump($employee);
-						if(!$employee['avatar']) {
-							if(strtolower($employee['gender']) == 'female')  {
-								$employee['avatar'] = 'female_avatar.png';
-							} else {
-								$employee['avatar'] = 'male_avatar.png';
-							}
-						}
-
-						$avatar = $employee['avatar'];
-
-
-						$data = '<form class="modal-content" id="PayslipForm" style="border-radius: 14px 14px 0px 0px; margin-top: -15px;">
-				        	<div class="modal-header">
-				                <h5 class="modal-title">Payslip for the month of <span class="paySlipMonth">'.$month.'</span></h5>
-				                <button type="button" class="close modal-close" data-bs-dismiss="modal" aria-label="Close">
-				                    <span aria-hidden="true">&times;</span>
-				                </button>
-				            </div>
-				            <div class="modal-body" >
-				                <div>
-				                	<div class="row">
-				                        <div class="col col-md-3 col-sm-12">
-				                        	<img class="w-100 " style="max-height: 200px;" src="../assets/images/avatars/'.$avatar.'">
-				                        </div>
-
-				                        <div class="col  col-md-5 col-sm-12">
-				                        	<div class="border ">
-				                        		<div class="border-bottom p-1 sflex swrap  ">
-				                        			<span class=" sflex-basis-100">Employee name</span>
-				                        			<span class="bold sflex-basis-100">'.$full_name.'</span>
-				                        		</div>
-				                        		<div class="border-bottom p-1 sflex swrap  ">
-				                        			<span class=" sflex-basis-100">Employee ID/Staff No.</span>
-				                        			<span class="bold sflex-basis-100">'.$emp_id.', '.$row['staff_no'].'</span>
-				                        		</div>
-				                        		<div class="border-bottom p-1 sflex swrap  ">
-				                        			<span class=" sflex-basis-100">Job title</span>
-				                        			<span class="bold sflex-basis-100">'.$employee['position'].'</span>
-				                        		</div>
-				                        		<div class="border-bottom p-1 sflex swrap  ">
-				                        			<span class=" sflex-basis-100">Department</span>
-				                        			<span class="bold sflex-basis-100">'.$employee['branch'].'</span>
-				                        		</div>
-				                        	</div>
-				                        </div>
-
-				                        <div class="col  col-md-4 col-sm-12">
-				                        	<div class="sflex smb-15 p-3 sjend">
-				                        		<a  class="fa cursor print-payslip fa-print"></a>
-				                        	</div>
-				                        	<div class="border ">
-				                        		<div class="border-bottom p-1 sflex swrap  ">
-				                        			<span class=" sflex-basis-100">Payment method</span>
-				                        			<span class="bold sflex-basis-100">'.$employee['payment_bank'].', '.$employee['payment_account'].'</span>
-				                        		</div>
-				                        		<div class="border-bottom p-1 sflex swrap  ">
-				                        			<span class=" sflex-basis-100">Days worked</span>
-				                        			<span class="bold sflex-basis-100">'.$row['days_worked'].'/'.$row['required_days'].' </span>
-				                        		</div>
-				                        		
-				                        		<div class="border-bottom p-1 sflex swrap  ">
-				                        			<span class=" sflex-basis-100">Pay date</span>
-				                        			<span class="bold sflex-basis-100">'.$added_date.'</span>
-				                        		</div>
-				                        	</div>
-				                        </div>
-				                    </div>
-				                    <div class="m-4"></div>
-				                    <h5 class="">Payroll details</h5>
-				                   	<table id="payrollDetails" class="table table-striped table-bordered" style="width:100%">
-				                   		<thead>
-				                   			<tr>
-				                   				<th>Earnings</th>
-				                   				<th>Amount</th>
-				                   				<th>Deductions</th>
-				                   				<th>Amount</th>
-				                   			</tr>
-				                   		</thead>
-				                   		<tbody>
-				                   			<tr>
-				                   				<td>Basic salary</td>
-				                   				<td>'.formatMoney($row['base_salary']).'</td>
-				                   				<td>Un-paid days</td>
-				                   				<td>'.formatMoney($row['unpaid_days']).'</td>
-				                   			</tr>
-				                   			<tr>
-				                   				<td>Allowance</td>
-				                   				<td>'.formatMoney($row['allowance']).'</td>
-				                   				<td>Un-paid hours</td>
-				                   				<td>'.formatMoney($row['unpaid_hours']).'</td>
-				                   			</tr>
-				                   			<tr>
-				                   				<td>Commissions</td>
-				                   				<td>'.formatMoney($row['commission']).'</td>
-				                   				<td>Advance</td>
-				                   				<td>'.formatMoney($row['advance']).'</td>
-				                   			</tr>
-				                   			<tr>
-				                   				<td>Extra Hours</td>
-				                   				<td>'.formatMoney($row['extra_hours']).'</td>
-				                   				<td>Loan</td>
-				                   				<td>'.formatMoney($row['loan']).'</td>
-				                   			</tr>
-				                   			<tr>
-				                   				<td>Bonus</td>
-				                   				<td>'.formatMoney($row['bonus']).'</td>
-				                   				<td>Other Deductions</td>
-				                   				<td>'.formatMoney($row['deductions']).'</td>
-				                   			</tr>
-				                   			<tr>
-				                   				<td>Total Earnings</td>
-				                   				<td>'.formatMoney($row['base_salary']+$row['allowance'] + $row['bonus'] + $row['extra_hours'] + $row['commission']).'</td>
-				                   				<td>Tax</td>
-				                   				<td>'.formatMoney($row['tax']).' ('.$taxPercentage.'%)</td>
-				                   			</tr>
-				                   			<tr>
-				                   				<td></td>
-				                   				<td></td>
-				                   				<td>Total Deductions</td>
-				                   				<td>'.formatMoney($row['advance']+$row['loan'] + $row['deductions'] + $row['unpaid_days'] + $row['unpaid_hours']+$row['tax']).'</td>
-				                   			</tr>
-				                   			<tr>
-				                   				<td></td>
-				                   				<td>Net Salary</td>
-				                   				<td>'.formatMoney(($row['base_salary']+$row['allowance'] + $row['bonus'] + $row['extra_hours'] + $row['commission']) - ($row['advance']+$row['loan'] + $row['deductions'] + $row['unpaid_days'] + $row['unpaid_hours']+$row['tax'])).'</td>
-				                   				<td></td>
-				                   			</tr>
-				                   		</tbody>
-				                   	</table>
-				                </div>
-				            </div>
-				        </form>';
+			
+				// Single query: join payroll_details with employees
+				$sql = "
+					SELECT pd.*, 
+						   e.full_name AS emp_full_name, e.staff_no AS emp_staff_no, e.position,
+						   e.branch, e.payment_bank, e.payment_account,
+						   e.state_id, e.gender, e.avatar
+					FROM payroll_details pd
+					LEFT JOIN employees e ON pd.emp_id = e.employee_id
+					WHERE pd.id = ?
+					LIMIT 1
+				";
+				$stmt = $GLOBALS['conn']->prepare($sql);
+				$stmt->bind_param("i", $payroll_id);
+				$stmt->execute();
+				$result = $stmt->get_result();
+			
+				if ($result && $row = $result->fetch_assoc()) {
+					// Payroll fields
+					$month      = date('F Y', strtotime($row['month']));
+					$added_date = date('F d, Y', strtotime($row['added_date']));
+					$base_salary = (float)$row['base_salary'];
+			
+					// Employee fields (fallback if payroll_details is outdated)
+					$full_name  = $row['emp_full_name'] ?: $row['full_name'];
+					$staff_no   = $row['emp_staff_no'] ?: $row['staff_no'];
+					$emp_id     = $row['emp_id'];
+					$position   = $row['position'] ?? '';
+					$branch     = $row['branch'] ?? '';
+					$payment    = ($row['payment_bank'] ?? '') . ', ' . ($row['payment_account'] ?? '');
+			
+					// Avatar logic
+					$avatar = $row['avatar'];
+					if (!$avatar) {
+						$avatar = strtolower($row['gender']) === 'female' ? 'female_avatar.png' : 'male_avatar.png';
 					}
+			
+					// Tax percentage from employees.state_id
+					$taxPercentage = getTaxPercentage($base_salary, (int)$row['state_id']);
+			
+					// Totals
+					$totalEarnings = $row['base_salary'] + $row['allowance'] + $row['bonus'] + $row['extra_hours'] + $row['commission'];
+					$totalDeductions = $row['advance'] + $row['loan'] + $row['deductions'] + $row['unpaid_days'] + $row['unpaid_hours'] + $row['tax'];
+					$netSalary = $totalEarnings - $totalDeductions;
+			
+					// Build HTML (kept same structure)
+					$data = '<form class="modal-content" id="PayslipForm" style="border-radius: 14px 14px 0px 0px; margin-top: -15px;">
+						<div class="modal-header">
+							<h5 class="modal-title">Payslip for the month of <span class="paySlipMonth">'.$month.'</span></h5>
+							<button type="button" class="close modal-close" data-bs-dismiss="modal" aria-label="Close">
+								<span aria-hidden="true">&times;</span>
+							</button>
+						</div>
+						<div class="modal-body" >
+							<div>
+								<div class="row">
+									<div class="col col-md-3 col-sm-12">
+										<img class="w-100 " style="max-height: 200px;" src="../assets/images/avatars/'.$avatar.'">
+									</div>
+			
+									<div class="col  col-md-5 col-sm-12">
+										<div class="border ">
+											<div class="border-bottom p-1 sflex swrap  ">
+												<span class=" sflex-basis-100">Employee name</span>
+												<span class="bold sflex-basis-100">'.$full_name.'</span>
+											</div>
+											<div class="border-bottom p-1 sflex swrap  ">
+												<span class=" sflex-basis-100">Employee ID/Staff No.</span>
+												<span class="bold sflex-basis-100">'.$emp_id.', '.$staff_no.'</span>
+											</div>
+											<div class="border-bottom p-1 sflex swrap  ">
+												<span class=" sflex-basis-100">Job title</span>
+												<span class="bold sflex-basis-100">'.$position.'</span>
+											</div>
+											<div class="border-bottom p-1 sflex swrap  ">
+												<span class=" sflex-basis-100">Department</span>
+												<span class="bold sflex-basis-100">'.$branch.'</span>
+											</div>
+										</div>
+									</div>
+			
+									<div class="col  col-md-4 col-sm-12">
+										<div class="sflex smb-15 p-3 sjend">
+											<a  class="fa cursor print-payslip fa-print"></a>
+										</div>
+										<div class="border ">
+											<div class="border-bottom p-1 sflex swrap  ">
+												<span class=" sflex-basis-100">Payment method</span>
+												<span class="bold sflex-basis-100">'.$payment.'</span>
+											</div>
+											<div class="border-bottom p-1 sflex swrap  ">
+												<span class=" sflex-basis-100">Days worked</span>
+												<span class="bold sflex-basis-100">'.$row['days_worked'].'/'.$row['required_days'].' </span>
+											</div>
+											
+											<div class="border-bottom p-1 sflex swrap  ">
+												<span class=" sflex-basis-100">Pay date</span>
+												<span class="bold sflex-basis-100">'.$added_date.'</span>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="m-4"></div>
+								<h5 class="">Payroll details</h5>
+								<table id="payrollDetails" class="table table-striped table-bordered" style="width:100%">
+									<thead>
+										<tr>
+											<th>Earnings</th>
+											<th>Amount</th>
+											<th>Deductions</th>
+											<th>Amount</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr>
+											<td>Basic salary</td>
+											<td>'.formatMoney($row['base_salary']).'</td>
+											<td>Un-paid days</td>
+											<td>'.formatMoney($row['unpaid_days']).'</td>
+										</tr>
+										<tr>
+											<td>Allowance</td>
+											<td>'.formatMoney($row['allowance']).'</td>
+											<td>Un-paid hours</td>
+											<td>'.formatMoney($row['unpaid_hours']).'</td>
+										</tr>
+										<tr>
+											<td>Commissions</td>
+											<td>'.formatMoney($row['commission']).'</td>
+											<td>Advance</td>
+											<td>'.formatMoney($row['advance']).'</td>
+										</tr>
+										<tr>
+											<td>Extra Hours</td>
+											<td>'.formatMoney($row['extra_hours']).'</td>
+											<td>Loan</td>
+											<td>'.formatMoney($row['loan']).'</td>
+										</tr>
+										<tr>
+											<td>Bonus</td>
+											<td>'.formatMoney($row['bonus']).'</td>
+											<td>Other Deductions</td>
+											<td>'.formatMoney($row['deductions']).'</td>
+										</tr>
+										<tr>
+											<td>Total Earnings</td>
+											<td>'.formatMoney($totalEarnings).'</td>
+											<td>Tax</td>
+											<td>'.formatMoney($row['tax']).' ('.$taxPercentage.'%)</td>
+										</tr>
+										<tr>
+											<td></td>
+											<td></td>
+											<td>Total Deductions</td>
+											<td>'.formatMoney($totalDeductions).'</td>
+										</tr>
+										<tr>
+											<td></td>
+											<td>Net Salary</td>
+											<td>'.formatMoney($netSalary).'</td>
+											<td></td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</form>';
 				}
-
-				echo $data;		
-			} else if ($_GET['endpoint'] === 'allColumns4CustomizeTable') {
+			
+				echo $data;        
+			}else if ($_GET['endpoint'] === 'allColumns4CustomizeTable') {
 				$table = isset($_POST['table']) ? $_POST['table'] : '';
 				$allColumns = get_columns($table, 'all_columns');
 				$showColumns = get_columns($table, 'show_columns');

@@ -16,13 +16,30 @@ if(isset($_GET['action'])) {
 				        'remarks' => isset($post['remarks']) ? $post['remarks']: "" , 
 				    );
 
-				    $setting = get_data('sys_settings', array('type' => $post['type']));
+					if($post['type'] == 'disabled_features') {
+						if(isset($post['value'])) {
+							$data['value'] = json_encode($post['value']);
+						} else {
+							$data['value'] = '[]';
+						}
+						$data['section'] = 'admin';
+						$data['details'] = 'Disabled features';
+						$data['remarks'] = 'required';
+						
+					}
+					
+					// Check setting already exis
+					$sql = "SELECT * FROM sys_settings WHERE `type` = '".$post['type']."'";
+					$setting = $GLOBALS['conn']->query($sql)->num_rows;
 				    check_auth('edit_settings');
 
-				    if(!$setting) {
+
+				    if($setting == 0) {
 				    	$done = $settingsClass->create($data);
 				    } else {
-				    	$done = $settingsClass->update($post['type'], $data);
+				    	// Update settings
+						$sql = "UPDATE sys_settings SET `value` = '".$data['value']."' WHERE `type` = '".$data['type']."'";
+						$done = $GLOBALS['conn']->query($sql);
 				    }
 
 				    if($done) {

@@ -435,3 +435,15 @@ button.btn.dropdown-toggle:not(.actions){
 .sidebar-wrapper .sidebar-nav .metismenu ul {
 	padding-left: 25px;
 }
+
+@media (max-width: 1128px) {
+	body.toggled .sidebar-wrapper .sidebar-header .logo-img {
+	  width: 50% !important;
+	  height: 50% !important;
+	}
+}
+@media (max-width: 580px) {
+	.modal.show .modal-dialog {
+	  margin-top: 50px;
+	}
+}

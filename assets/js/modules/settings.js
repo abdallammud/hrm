@@ -14,6 +14,9 @@ async function change_settings(type, isOption = false) {
 	let data = await get_setting(type);
     console.log(data)
     let modal = $('#change_setting');
+    if(type == 'disabled_features') {
+        modal = $('#disabledFeaturesModal');
+    }
     if(data) {
     	let res = JSON.parse(data);
     	$(modal).find('.settingType').val(type);
@@ -64,8 +67,7 @@ $(document).on('submit', '.changeSettingForm', async (e) => {
             	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
             	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:2000 }).then(() => {
-            		// location.reload();
-            		load_projects();
+            		location.reload();
             	});
             	console.log(res)
             }
@@ -77,4 +79,39 @@ $(document).on('submit', '.changeSettingForm', async (e) => {
         console.error('Error occurred during form submission:', err);
     }
 	return false;
+})
+$('#disabledFeaturesForm').on('submit', async (e) => {
+    e.preventDefault();
+    let form = $(e.target);
+    let disabledFeatures = [];
+    form.find('.form-check-input').each((index, input) => {
+        if (!$(input).is(':checked')) {
+            disabledFeatures.push($(input).val());
+        }
+    });
+    console.log(disabledFeatures);
+    // return false;
+
+    try {
+        let response = await send_settingsPost('update setting', {type: 'disabled_features', value: disabledFeatures});
+        console.log(response)
+        if (response) {
+            let res = JSON.parse(response)
+            $('#disabledFeaturesModal').modal('hide');
+            if(res.error) {
+            	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            } else {
+            	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:2000 }).then(() => {
+            		location.reload();
+            	});
+            	console.log(res)
+            }
+        } else {
+            console.log('Failed to save state.' + response);
+        }
+
+    } catch (err) {
+        console.error('Error occurred during form submission:', err);
+    }
+    return false;
 })

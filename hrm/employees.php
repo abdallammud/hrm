@@ -30,70 +30,63 @@
     </div>
 </div>
 <div class="page content">
-    <div class="card">
-	    <div class="card-body">
-	        <div class="row d-md-none d-none d-sm-none d-lg-flex align-items-end">
-	            <div class="col col-xs-12 col-md-6 col-lg-2">
-	                <div class="form-group">
-	                    <label class="label required">&nbsp;</label>
-	                    <p>Filter by</p>
-	                </div>
-	            </div>
-
-	            <div class="col col-xs-12 col-md-6 col-lg-2">
-	                <div class="form-group">
-	                    <label class="label required" for="slcDepartment">Department</label>
-	                    <select class="form-control filter" id="slcDepartment" name="slcDepartment">
-	                        <option value="">All</option>
-	                        <?php select_active('branches'); ?>
-	                    </select>
-	                    <span class="form-error text-danger">This is error</span>
-	                </div>
-	            </div>
-
-	            <div class="col col-xs-12 col-md-6 col-lg-2">
-	                <div class="form-group">
-	                    <label class="label required" for="slcState">State</label>
-	                    <select class="form-control filter" id="slcState" name="slcState">
-	                        <option value="">All</option>
-	                        <?php select_active('states'); ?>
-	                    </select>
-	                    <span class="form-error text-danger">This is error</span>
-	                </div>
-	            </div>
-
-	            <div class="col col-xs-12 col-md-6 col-lg-2">
-	                <div class="form-group">
-	                    <label class="label required" for="slcLocation">Duty Location</label>
-	                    <select class="form-control filter" id="slcLocation" name="slcLocation">
-	                        <option value="">All</option>
-	                        <?php select_active('locations'); ?>
-	                    </select>
-	                    <span class="form-error text-danger">This is error</span>
-	                </div>
-	            </div>
-
-	            <!-- Bulk Actions -->
-	            <div class="col col-xs-12 col-md-6 col-lg-4">
-	                <div class="form-group">
-	                    <label for="bulkAction">Bulk Action</label>
-	                    <div class="input-group">
-	                        <select id="bulkAction" class="form-control">
-	                            <option value="">Select Action</option>
-	                            <option value="delete">Delete Selected</option>
-	                        </select>
-	                        <button id="applyBulk" class="btn btn-secondary cursor" >Apply</button>
-	                    </div>
-	                </div>
-	            </div>
-	        </div>
-
-	        <div class="table-responsive">
-	            <table id="employeesDT" class="table table-striped table-bordered" style="width:100%">
-	                
-	            </table> 
-	        </div>
-	    </div>
+	<div class="card">
+		<div class="card-body">
+			<div class="row align-items-end">
+				<div class="col-12 col-md-6 col-lg-2">
+					<div class="form-group">
+						<label class="label required">&nbsp;</label>
+						<p>Filter by</p>
+					</div>
+				</div>
+				<div class="col-12 col-md-6 col-lg-2">
+					<div class="form-group">
+						<label class="label required" for="slcDepartment">Department</label>
+						<select class="form-control filter" id="slcDepartment" name="slcDepartment">
+							<option value="">All</option>
+							<?php select_active('branches'); ?>
+						</select>
+						<span class="form-error text-danger">This is error</span>
+					</div>
+				</div>
+				<div class="col-12 col-md-6 col-lg-2">
+					<div class="form-group">
+						<label class="label required" for="slcState">State</label>
+						<select class="form-control filter" id="slcState" name="slcState">
+							<option value="">All</option>
+							<?php select_active('states'); ?>
+						</select>
+						<span class="form-error text-danger">This is error</span>
+					</div>
+				</div>
+				<div class="col-12 col-md-6 col-lg-2">
+					<div class="form-group">
+						<label class="label required" for="slcLocation">Duty Location</label>
+						<select class="form-control filter" id="slcLocation" name="slcLocation">
+							<option value="">All</option>
+							<?php select_active('locations'); ?>
+						</select>
+						<span class="form-error text-danger">This is error</span>
+					</div>
+				</div>
+				<div class="col-12 col-md-6 col-lg-4">
+					<div class="form-group">
+						<label for="bulkAction">Bulk Action</label>
+						<div class="input-group">
+							<select id="bulkAction" class="form-control">
+								<option value="">Select Action</option>
+								<option value="delete">Delete Selected</option>
+							</select>
+							<button id="applyBulk" class="btn btn-secondary cursor">Apply</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="table-responsive">
+				<table id="employeesDT" class="table table-striped table-bordered" style="width:100%">
+				</table>
+			</div>
+		</div>
 	</div>
 
    

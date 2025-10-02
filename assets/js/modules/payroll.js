@@ -34,9 +34,9 @@ function load_transactions() {
 	    "ajax": {
 	        "url": "./app/payroll_controller.php?action=load&endpoint=transactions",
 	        "method": "POST",
-		    /*dataFilter: function(data) {
-				console.log(data)
-			}*/
+		    // dataFilter: function(data) {
+			// 	console.log(data)
+			// }
 	    },
 	    
 	    "createdRow": function(row, data, dataIndex) { 
@@ -720,6 +720,199 @@ function load_showPayroll(payroll_id, month) {
 
 	return false;
 }
+function load_showPayroll(payroll_id, month) {
+    function set_actions(row) {
+        let actions = `<a title="View payslip" data-recid="${row.id}" data-emp_id="${row.emp_id}" class="fa show_payslip smt-5 cursor smr-10 fa-eye"></a>`;
+        if(row.status == 'Pending') {
+            actions += `<a title="Approve payroll" data-recid="${row.payroll_id}" data-emp_id="${row.emp_id}" class="fa approve_payrollBtn smt-5 cursor smr-10 fa-check"></a>`;
+        } else if(row.status == 'Approved') {
+            actions += `<a title="Pay payroll" data-recid="${row.payroll_id}" data-detail_id="${row.id}" class="fa pay_payrollBtn smt-5 cursor smr-10 fa-dollar-sign"></a>`;
+        }
+        actions += `<a data-recid="${row.id}" data-emp_id="${row.emp_id}" class="fa delete_payrollDetail smt-5 cursor smr-10 fa-trash"></a>`;
+        return actions;
+    }
+
+    var datatable = $('#showpayrollDT').DataTable({
+        processing: true,
+        serverSide: true,
+        bDestroy: true,
+        info: false,
+        columnDefs: [
+            { orderable: false, searchable: false, targets: [0, 19] }  // checkbox and action not orderable
+        ],
+        serverMethod: 'post',
+        ajax: {
+            url: `${base_url}/app/payroll_controller.php?action=load&endpoint=payroll_details`,
+            method: "POST",
+            data: function(d) {
+                // d contains start, length, search, order, etc.
+                d.payroll_id = payroll_id;
+                d.month = month;
+                // optional: send additional filters here
+            },
+            dataFilter: function(data) {
+                try {
+                    JSON.parse(data);
+                } catch (e) {
+                    console.error("Invalid JSON from server:", data);
+                }
+                return data;
+            }
+        },
+        createdRow: function(row, data, dataIndex) { 
+	    	// Add your custom class to the row 
+	    	// $(row).addClass('table-row ' +data.status.toLowerCase());
+	    	// $('#showpayrollDT_wrapper').find('td').css('display', 'none')
+	    	//
+	    	tableColumns.map((column) => {
+	    		// $('#showpayrollDT_wrapper').find('td.'+column).css('display', 'flex')
+	    		// $('#showpayrollDT_wrapper').find('th.'+column).css('display', 'flex')
+	    	})
+	    },
+        drawCallback: function(settings) {
+	    	$('#showpayrollDT_wrapper').find('td').css('display', 'none');
+	    	$('#showpayrollDT_wrapper').find('th').css('display', 'none');
+	    	tableColumns.map((column) => {
+	    		$('#showpayrollDT_wrapper').find('td.'+column).css('display', 'table-cell');
+	    		$('#showpayrollDT_wrapper').find('th.'+column).css('display', 'table-cell');
+	    	});
+	    	// Always show the checkbox column
+	    	$('#showpayrollDT_wrapper').find('td.bulk-checkbox').css('display', 'table-cell');
+	    	$('#showpayrollDT_wrapper').find('th:first-child').css('display', 'table-cell');
+	    },
+		columns: [
+
+	    	{ title: `<input type="checkbox" class="select-all-checkbox">`, data: null, className: "bulk-checkbox", render: function(data, type, row) {
+	            return `<div> 
+	            		<input type="checkbox" class="row-checkbox" data-id="${row.id}" data-emp_id="${row.emp_id}" data-payroll_id="${row.payroll_id}" >
+	                </div>`;
+	        }},
+	        
+			{ title: `Staff No. `, data: null,  className: "staff_no", render: function(data, type, row) {
+	            return `<div> 
+	            		<span>${row.staff_no} </span>
+	                </div>`;
+	        }},
+
+	        { title: `Full name `, data: null, className: "full_name", render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.full_name} </span>
+	                </div>`;
+	        }},
+
+	        { title: `Email `, data: null,  className: "email", render: function(data, type, row) {
+	            return `<div> 
+	            		<span>${row.email} </span>
+	                </div>`;
+	        }},
+
+	        { title: `Contract type `, data: null,  className: "contract_type", render: function(data, type, row) {
+	            return `<div> 
+	            		<span>${row.contract_type} </span>
+	                </div>`;
+	        }},
+
+	        { title: `Job title `, data: null,  className: "job_title", render: function(data, type, row) {
+	            return `<div> 
+	            		<span>${row.job_title} </span>
+	                </div>`;
+	        }},
+
+	        { title: `Month `, data: null,  className: "month", render: function(data, type, row) {
+	            return `<div> 
+	            		<span>${row.month} </span>
+	                </div>`;
+	        }},
+
+	         { title: `Required days `, data: null,  className: "required_days", render: function(data, type, row) {
+	            return `<div> 
+	            		<span>${row.required_days} </span>
+	                </div>`;
+	        }},
+
+	        { title: `Days worked `, data: null,  className: "days_worked", render: function(data, type, row) {
+	            return `<div> 
+	            		<span>${row.days_worked} </span>
+	                </div>`;
+	        }},
+
+	        { title: `Unpaid days `, data: null,  className: "unpaid_days", render: function(data, type, row) {
+	            return `<div> 
+	            		<span>${row.unpaid_days} </span>
+	                </div>`;
+	        }},
+
+	        { title: `Unpaid hours `, data: null,  className: "unpaid_hours", render: function(data, type, row) {
+	            return `<div> 
+	            		<span>${row.unpaid_hours} </span>
+	                </div>`;
+	        }},
+
+	        { title: `Gross salary `, data: null, className: "gross_salary", render: function(data, type, row) {
+	            return `<div>
+	            		<span>${formatMoney(row.base_salary)} </span>
+	                </div>`;
+	        }},
+
+	        { title: `Earnings `, data: null, className: "earnings", render: function(data, type, row) {
+	            return `<div>
+	            		<span>${formatMoney(row.earnings)} </span>
+	                </div>`;
+	        }},
+
+	        { title: `Deductions `, data: null, className: "total_deductions", render: function(data, type, row) {
+	            return `<div>
+	            		<span>${formatMoney(row.total_deductions)} </span>
+	                </div>`;
+	        }},
+
+	        { title: `Tax `, data: null, className: "tax", render: function(data, type, row) {
+	            return `<div>
+	            		<span>${formatMoney(row.tax)} -  (${row.taxRate}%)</span>
+	                </div>`;
+	        }},
+
+	        { title: `Net salary `, data: null, className: "net_salary", render: function(data, type, row) {
+	            return `<div>
+	            		<span>${formatMoney(row.net_salary)} </span>
+	                </div>`;
+	        }},
+
+	        { title: `Status `, data: null, className: "status", render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.txtStatus} </span>
+	                </div>`;
+	        }},
+
+	        { title: `Bank name `, data: null,  className: "bank_name", render: function(data, type, row) {
+	            return `<div> 
+	            		<span>${row.bank_name} </span>
+	                </div>`;
+	        }},
+
+	        { title: `Account number `, data: null,  className: "bank_number", render: function(data, type, row) {
+	            return `<div> 
+	            		<span>${row.bank_number} </span>
+	                </div>`;
+	        }},
+
+	        { title: "Action", data: null, className: "action", render: function(data, type, row) {
+	            return `<div class="sflex scenter-items">
+            		${set_actions(row)}
+                </div>`;
+	        }},
+	    ]
+    });
+
+    // bulk checkbox handlers (retain)
+    $(document).on('change', '.select-all-checkbox', function() {
+        const isChecked = $(this).prop('checked');
+        $('.row-checkbox').prop('checked', isChecked);
+    });
+
+    return false;
+}
+
 
 function handlePayroll() {
 	$('#generatePayrollForm').on('submit', (e) => {
@@ -1263,6 +1456,85 @@ document.addEventListener("DOMContentLoaded", function() {
 		}
     })
 
+
+	// Payroll next action
+	$(document).on('change', '#next_action', async (e) => {
+		let status = $(e.target).val();
+		let payroll_id = $('.payroll_id').val();
+		if(status) {
+			let data = {status:status, id:payroll_id};
+			try {
+				let response = await send_payrollPost('update payroll_status', data);
+				console.log(response)
+				if(response) {
+					let res = JSON.parse(response);
+					if(res.error) {
+						toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 3000 }).then(() => {
+							location.reload();
+						});
+					} else {
+						toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+							location.reload();
+						});
+					}
+				} else {
+					console.log('Failed to update payroll next action.' + response);
+				}
+			} catch (err) {
+				console.error('Error occurred during form submission:', err);
+			}
+		}
+	})
+
+	$("#notifyNextPersonForm").on('submit', async (e) => {
+		e.preventDefault();
+		let form = e.target;
+		handleNotificationSubmit(form)
+	})
     
 });
+
+async function handleNotificationSubmit(form) {
+	clearErrors();
+    let error = validateForm(form)
+    if (error) return false;
+
+	let payroll_id = $(form).find('.payroll_id').val();
+	let current_status = $(form).find('.current_status').val();
+	let next_user = $(form).find('#nextUserSelect').val();
+	let message = $(form).find('#notificationMessage').val();
+
+    let formData = {
+        payroll_id:payroll_id,
+        current_status:current_status,
+        next_user:next_user,
+        message:message
+    };
+
+	console.log(formData)
+	// return false;
+
+    try {
+        let response = await send_payrollPost('update notify_next_person', formData);
+        console.log(response)
+        if (response) {
+            let res = JSON.parse(response);
+            if(res.error) {
+                toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 3000 }).then(() => {
+                    location.reload();
+                });
+            } else {
+                toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+                    location.reload();
+                });
+            }
+        } else {
+            console.log('Failed to update payroll next action.' + response);
+        }
+    } catch (err) {
+        console.error('Error occurred during form submission:', err);
+    }
+
+    return false;
+}
 

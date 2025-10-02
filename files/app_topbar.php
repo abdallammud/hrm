@@ -7,11 +7,78 @@
 			
 		</div>
 		<ul class="navbar-nav gap-1 nav-right-links align-items-center">
-			<li class="nav-item d-lg-none mobile-search-btn">
+			<!-- <li class="nav-item d-lg-none mobile-search-btn">
 				<a class="nav-link" href="javascript:;">
 					<i class="material-icons-outlined">search</i>
 				</a>
-			</li>
+			</li> -->
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle dropdown-toggle-nocaret position-relative show" data-bs-auto-close="outside" data-bs-toggle="dropdown" href="javascript:;" aria-expanded="true"><i class="material-icons-outlined">notifications</i>
+                <span class="badge-notify">5</span>
+                </a>
+                <div class="dropdown-menu dropdown-notify dropdown-menu-end shadow show" data-bs-popper="static">
+                    <div class="px-3 py-1 d-flex align-items-center justify-content-between border-bottom">
+                        <h5 class="notiy-title mb-0">Notifications</h5>
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle dropdown-toggle-nocaret option" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="material-icons-outlined">
+                            more_vert
+                            </span>
+                            </button>
+                            <div class="dropdown-menu dropdown-option dropdown-menu-end shadow">
+                                <div>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="javascript:;"><i class="material-icons-outlined fs-6">inventory_2</i>Archive All</a>
+                                </div>
+                                <div>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="javascript:;"><i class="material-icons-outlined fs-6">done_all</i>Mark all as read</a>
+                                </div>
+                                <div>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="javascript:;"><i class="material-icons-outlined fs-6">mic_off</i>Disable Notifications</a>
+                                </div>
+                                <div>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="javascript:;"><i class="material-icons-outlined fs-6">grade</i>What's new ?</a>
+                                </div>
+                                <div>
+                                    <hr class="dropdown-divider">
+                                </div>
+                                <div>
+                                    <a class="dropdown-item d-flex align-items-center gap-2 py-2" href="javascript:;"><i class="material-icons-outlined fs-6">leaderboard</i>Reports</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="notify-list ps">
+                        <div>
+                            <a class="dropdown-item border-bottom py-2" href="javascript:;">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="">
+                                        <img src="assets/images/avatars/01.png" class="rounded-circle" width="45" height="45" alt="">
+                                    </div>
+                                    <div class="">
+                                        <h5 class="notify-title">Congratulations Jhon</h5>
+                                        <p class="mb-0 notify-desc">Many congtars jhon. You have won the gifts.</p>
+                                        <p class="mb-0 notify-time">Today</p>
+                                    </div>
+                                    <div class="notify-close position-absolute end-0 me-3">
+                                        <i class="material-icons-outlined fs-6">close</i>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    
+                    
+                    
+                    
+                    
+                        <div class="ps__rail-x" style="left: 0px; bottom: 0px;">
+                            <div class="ps__thumb-x" tabindex="0" style="left: 0px; width: 0px;"></div>
+                        </div>
+                        <div class="ps__rail-y" style="top: 0px; right: 0px;">
+                            <div class="ps__thumb-y" tabindex="0" style="top: 0px; height: 0px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </li>
 			<li class="nav-item dropdown">
 				<a class="nav-link dropdown-toggle dropdown-toggle-nocaret" href="avascript:;" data-bs-toggle="dropdown">
 					<!-- <span class="material-symbols-outlined">light_mode</span> -->
@@ -72,6 +139,7 @@
 				</a>
 				</div>
 			</li>
+			
 		</ul>
 	</nav>
 </header>

@@ -55,7 +55,7 @@ $border_color = '#6c757d';
 
 			<hr>
 			<div class="row">
-				<div class="col-lg-4 col-md-12">
+				<div class="col-lg-4 col-md-6 col-sm-12">
 					<div class="card">
 						<div class="card-header bold">
 							Employee
@@ -114,7 +114,7 @@ $border_color = '#6c757d';
 					</div>
 				</div>
 
-				<div class="col-lg-4 col-md-12">
+				<div class="col-lg-4 col-md-6 col-sm-12">
 					<div class="card">
 						<div class="card-header bold">
 							Basic Information
@@ -179,7 +179,7 @@ $border_color = '#6c757d';
 					</div>
 				</div>
 
-				<div class="col-lg-4 col-md-12">
+				<div class="col-lg-4 col-md-6 col-sm-12">
 					<div class="card">
 						<div class="card-header bold">
 							Contract Information
