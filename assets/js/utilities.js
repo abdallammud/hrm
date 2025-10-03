@@ -193,7 +193,19 @@ function formatMoney(amount, currencySymbol = '$', decimals = 2) {
     // Combine integer part, decimal part and currency symbol
     return currencySymbol + integerPart + (decimalPart ? '.' + decimalPart : '');
 }
-
+function markAsRead(type) {
+    let data = {type:type};
+    $.post(`${base_url}/app/payroll_controller.php?action=update&endpoint=markAsRead`, data, function(data) {
+        console.log(data)
+        let res = JSON.parse(data);
+        if(!res.error) {
+            toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                location.reload();
+            });
+            console.log(res);
+        }
+    })
+}
 
 function downloadCSV(data, filename = "data.csv") {
     // Convert array of arrays into a CSV string

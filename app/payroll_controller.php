@@ -364,7 +364,152 @@ if(isset($_GET['action'])) {
 
 				// Return the result as a JSON response (for example in an API)
 				echo json_encode($result);
+			} else if($_GET['endpoint'] == 'add_employees_to_payroll') {
+				try {
+					$GLOBALS['conn']->begin_transaction();
+					$post = escapePostData($_POST);
+					$payroll_id = (int)$post['payroll_id'];
+					$employee_ids = isset($post['employee_ids']) ? $post['employee_ids'] : [];
+			
+					if (empty($payroll_id) || empty($employee_ids)) {
+						throw new Exception("Payroll ID and Employee IDs are required.");
+					}
+			
+					// Fetch existing payroll
+					$payrollInfo = $payrollClass->read($payroll_id);
+					if (!$payrollInfo) {
+						throw new Exception("Payroll not found.");
+					}
+
+					$status = $payrollInfo['status'];
+			
+					// Get the comma-separated months string and convert to array
+					$months_str = $payrollInfo['month'];
+					$months_arr = array_map('trim', explode(',', $months_str));
+			
+					foreach ($employee_ids as $employeeId) {
+						$employeeId = (int)$employeeId;
+						$empSet = get_data('employees', ['employee_id' => $employeeId]);
+			
+						if (!$empSet || count($empSet) === 0) {
+							continue; // Skip if employee not found
+						}
+			
+						$row = $empSet[0];
+						$fullName       = $row['full_name'];
+						$staffNo        = $row['staff_no'];
+						$email          = $row['email'];
+						$contractType   = $row['contract_type'];
+						$position       = $row['position'];
+						$paymentBank    = $row['payment_bank'];
+						$paymentAccount = $row['payment_account'];
+						$salary         = $row['salary'];
+						$state_id       = $row['state_id'];
+						$workDays       = $row['work_days'];
+						$workHours      = $row['work_hours'];
+			
+						foreach ($months_arr as $month) {
+							$month = date('Y-m', strtotime($month));
+			
+							// Attendance information
+							$attendanceInfo = calculateAttendanceStats($employeeId, $month);
+			
+							// Required work days
+							$requiredDays = getWorkdaysInMonth($month, $workDays);
+							$requiredDays -= $attendanceInfo['not_hired_days'] - $attendanceInfo['holidays'];
+			
+							if ($requiredDays <= 0) {
+								continue; // Skip if no required days
+							}
+			
+							// Per-day and per-hour salary
+							$salaryPerDay = $salary / max($requiredDays, 1);
+							$salaryPerHour = $salaryPerDay / max($workHours, 1);
+			
+							// Extra and under hours
+							$extraHours = $underHours = 0;
+							if (return_setting('overtime') === 'Yes') {
+								$timeSheetInfo = calculateTimeSheetHours($employeeId, $month, $workHours);
+								$netHours = $timeSheetInfo['net_hours'];
+			
+								if ($netHours > 0) {
+									$extraHours = $netHours * $salaryPerHour;
+								} elseif ($netHours < 0) {
+									$underHours = abs($netHours) * $salaryPerHour;
+								}
+							}
+			
+							// Earnings
+							$earnings = calculateEmployeeEarnings($employeeId, $month);
+							$allowance = $earnings['allowance'] ?? 0;
+							$bonus = $earnings['bonus'] ?? 0;
+							$commission = $earnings['commission'] ?? 0;
+			
+							// Deductions
+							$deductions = calculateEmployeeDeductions($employeeId, $month);
+							$loan = $deductions['loan'] ?? 0;
+							$advance = $deductions['advance'] ?? 0;
+							$deduction = $deductions['deduction'] ?? 0;
+			
+							// Unpaid leave/no-show deductions
+							$unpaidDaysCost = ($attendanceInfo['unpaid_leave_days'] + $attendanceInfo['no_show_days']) * $salaryPerDay;
+			
+							$daysWorked = $requiredDays - $attendanceInfo['unpaid_leave_days'] - $attendanceInfo['no_show_days'] - $attendanceInfo['paid_leave_days'] - $attendanceInfo['sick_days'];
+			
+							// Net salary calculation
+							$total_earnings = $salary + $allowance + $bonus + $commission + $extraHours - $loan - $advance - $deduction - $underHours - $unpaidDaysCost;
+			
+							// Apply tax
+							$taxRate = getTaxRate($total_earnings, $state_id);
+							$total_earnings -= $taxRate;
+			
+							// Insert into payroll_details
+							$detailsData = [
+								'payroll_id' => $payroll_id,
+								'emp_id' => $employeeId,
+								'full_name' => $fullName,
+								'staff_no' => $staffNo,
+								'email' => $email,
+								'contract_type' => $contractType,
+								'job_title' => $position,
+								'month' => $month,
+								'required_days' => $requiredDays,
+								'days_worked' => $daysWorked,
+								'base_salary' => $salary,
+								'allowance' => $allowance,
+								'bonus' => $bonus,
+								'extra_hours' => $extraHours,
+								'commission' => $commission,
+								'tax' => $taxRate,
+								'advance' => $advance,
+								'loan' => $loan,
+								'deductions' => $deduction,
+								'unpaid_days' => $unpaidDaysCost,
+								'unpaid_hours' => $underHours,
+								'bank_name' => $paymentBank,
+								'bank_number' => $paymentAccount,
+								'status' => $status,
+								'added_by' => $_SESSION['user_id']
+							];
+			
+							$payrollDetailsClass->create($detailsData);
+						}
+					}
+			
+					$GLOBALS['conn']->commit();
+					$result['msg'] = 'Employees added to payroll successfully';
+					$result['error'] = false;
+			
+				} catch (Exception $e) {
+					$GLOBALS['conn']->rollback();
+					$result['msg'] = 'Error: ' . $e->getMessage();
+					$result['error'] = true;
+				}
+			
+				echo json_encode($result);
+				exit();
 			}
+			
 
 			exit();
 		} 
@@ -568,173 +713,266 @@ if(isset($_GET['action'])) {
 
 			    echo 'updated'; exit();
 
-			} else if($_GET['endpoint'] == 'payroll_status') {
+			} else if ($_GET['endpoint'] == 'payroll_status') {
 				try {
 					$post = escapePostData($_POST);
-					$status = $post['status'];
-					$payrollId = $post['id']; 
-					$emp_id = isset($post['emp_id']) ? $post['emp_id'] : ''; 
-
-					// Check auth
-					if($status == 'Approved') {
-						$check = 'approve_payroll';
-					} else if($status == 'Rejected') {
-						$check = 'reject_payroll';
-					} else if($status == 'Reviewed') {
-						$check = 'review_payroll';
+					$status = $post['status'] ?? null;
+					$payrollId = $post['id'] ?? null;
+					$emp_id = $post['emp_id'] ?? '';
+			
+					if (!$status || !$payrollId) {
+						throw new Exception("Missing required data (status or id).");
 					}
-
-					check_auth($check);
-				   	
-					$data = array(
-				        'status' => $status, 
-				        'updated_by' => $_SESSION['user_id'],
-				        'updated_date' => $updated_date
-				    );
-					// [{"action":"Created by Admin","date":"2025-08-14 17:44:40","status":"Created","user_id":59}]
+			
+					// Map status to permission name
+					$check = null;
+					if ($status === 'Approved') $check = 'approve_payroll';
+					else if ($status === 'Rejected') $check = 'reject_payroll';
+					else if ($status === 'Reviewed') $check = 'review_payroll';
+			
+					if ($check) {
+						check_auth($check);
+					}
+			
+					$updated_date = date('Y-m-d H:i:s');
+			
 					$userInfo = $userClass->read($_SESSION['user_id']);
-					$user_fullName = $userInfo['full_name'];
-
+					$user_fullName = $userInfo['full_name'] ?? 'Unknown User';
+			
+					$payrollInfo = $payrollClass->read($payrollId);
+					if (!$payrollInfo) {
+						throw new Exception("Payroll not found.");
+					}
+			
+					// Prevent creator from rejecting own payroll
+					if ($status === 'Rejected' && (string)($payrollInfo['added_by'] ?? '') === (string)$_SESSION['user_id']) {
+						throw new Exception("Payroll creator cannot reject their own payroll.");
+					}
+			
+					// Safely decode JSON (fallback to empty arrays)
+					$workflow = json_decode($payrollInfo['workflow'] ?? '[]', true);
+					$rejected = json_decode($payrollInfo['rejected'] ?? '[]', true);
+					$finished = json_decode($payrollInfo['finished'] ?? '[]', true);
+			
+					$workflow = is_array($workflow) ? $workflow : [];
+					$rejected = is_array($rejected) ? $rejected : [];
+					$finished = is_array($finished) ? $finished : [];
+			
+					$currentUser = (string)$_SESSION['user_id'];
+			
+					// Remove any rejected/finished entries that targeted the current user
+					$rejected = array_values(array_filter($rejected, function ($record) use ($currentUser) {
+						return !isset($record['next_user']) || (string)$record['next_user'] !== $currentUser;
+					}));
+					if($status == "Rejected") {
+						$finished = array_values(array_filter($finished, function ($record) use ($currentUser) {
+							return !isset($record['next_user']) || (string)$record['next_user'] !== $currentUser;
+						}));
+					}
+			
+					// Append to workflow
 					$newWorkflow = [
-						"action" => $status." by ".$user_fullName, 
-						"date" => $updated_date, 
-						"status" => $status, 
+						"action" => $status . " by " . $user_fullName,
+						"date" => $updated_date,
+						"status" => $status,
 						"user_id" => $_SESSION['user_id']
 					];
-
-					$payrollInfo = $payrollClass->read($payrollId);
-					$workflow = json_decode($payrollInfo['workflow'], true);
-					$rejected = json_decode($payrollInfo['rejected'], true);
-					$finished = json_decode($payrollInfo['finished'], true);
-					$currentUser = (string)$_SESSION['user_id'];
-
-					if (is_array($rejected)) {
-						foreach ($rejected as $key => $record) {
-							if (isset($record['next_user']) && (string)$record['next_user'] === $currentUser) {
-								unset($rejected[$key]); // Removes the record
-								// The loop will continue to check the next record
-							}
-						}
-					}
-
-					if (is_array($finished)) {
-						foreach ($finished as $key => $record) {
-							if (isset($record['next_user']) && (string)$record['next_user'] === $currentUser) {
-								unset($finished[$key]); // Removes the record
-								// The loop will continue to check the next record
-							}
-						}
-					}
-
-					// Re-index the array after removal
-					$rejected = array_values($rejected);
-					$finished = array_values($finished);
-
-					$updatedRejectedJson = json_encode($rejected);
-					$updatedFinishedJson = json_encode($finished);
-
-					if($payrollInfo) {
-						$workflow = json_decode($payrollInfo['workflow'], true); 
-						$workflow[] = $newWorkflow; 
-						$updatedWorkflowJson = json_encode($workflow);
-					}
-
-					$data['workflow'] = $updatedWorkflowJson;
-					$data['rejected'] = $updatedRejectedJson;
-					$data['finished'] = $updatedFinishedJson;
+					$workflow[] = $newWorkflow;
+			
+					$data = [
+						'status' => $status,
+						'workflow' => json_encode($workflow),
+						'rejected' => json_encode($rejected),
+						'finished' => json_encode($finished),
+						'updated_by' => $_SESSION['user_id'],
+						'updated_date' => $updated_date
+					];
+			
+					$result = [];
 					$result['id'] = $payrollClass->update($payrollId, $data);
-					
-
-					$details = $conn->prepare("UPDATE `payroll_details` SET `status`=? WHERE `payroll_id` = '$payrollId'");
-					$details->bind_param("s", $status);
+			
+					// Update all payroll details to match new status
+					$details = $conn->prepare("UPDATE `payroll_details` SET `status`=? WHERE `payroll_id` = ?");
+					$details->bind_param("si", $status, $payrollId);
 					$details->execute();
-
-				    // If the branch is created successfully, return a success message
-				    if($result['id']) {
-				        $result['msg'] = 'Payroll status changed successfully';
-				        $result['error'] = false;
-				    } else {
-				        $result['msg'] = 'Something went wrong, please try again';
-				        $result['error'] = true;
-				    }
+			
+					if ($result['id']) {
+						$result['msg'] = 'Payroll status changed successfully';
+						$result['error'] = false;
+					} else {
+						$result['msg'] = 'Something went wrong, please try again';
+						$result['error'] = true;
+					}
 				} catch (Exception $e) {
-				    // Catch any exceptions from the create method and return an error message
-				    $result['msg'] = 'Error: Something went wrong';
-				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
-				    $result['error'] = true;
+					$result = [
+						'msg' => 'Error: ' . $e->getMessage(),
+						'error' => true,
+					];
 				}
-
-				// Return the result as a JSON response (for example in an API)
+			
 				echo json_encode($result);
-			} else if($_GET['endpoint'] == 'notify_next_person') {
+				exit;
+			} else if ($_GET['endpoint'] == 'notify_next_person') {
 				try {
 					$post = escapePostData($_POST);
-					$payroll_id = $post['payroll_id'];
-					$current_status = $post['current_status'];
-					$next_user = $post['next_user'];
-					$message = $post['message'];
-
-					$userInfo = $userClass->read($_SESSION['user_id']);
-					$user_fullName = $userInfo['full_name'];
-
-					if($current_status == 'Rejected') {
-						$updateColumn = 'rejected';
-						$action = "Rejected by ".$user_fullName;
-					} else {
-						$updateColumn = 'finished';
-						$action = "Finished by ".$user_fullName;
+			
+					$payroll_id = $post['payroll_id'] ?? null;
+					$status = $post['status'] ?? '';
+					$next_user = $post['next_user'] ?? null;
+					$message = $post['message'] ?? '';
+			
+					if (!$payroll_id || !$next_user || !$status) {
+						throw new Exception("Missing required data (payroll_id, status or next_user).");
 					}
-
+			
+					// Prevent forwarding to self
+					if ((string)$next_user === (string)$_SESSION['user_id']) {
+						throw new Exception("You cannot forward to yourself.");
+					}
+			
+					// Validate next_user exists & active
+					$nextUserInfo = $userClass->read($next_user);
+					if (!$nextUserInfo || ($nextUserInfo['status'] ?? '') !== 'Active') {
+						throw new Exception("Next user not found or is not active.");
+					}
+			
+					// Permission check depending on status
+					$check = null;
+					if ($status === 'Approved') $check = 'approve_payroll';
+					else if ($status === 'Rejected') $check = 'reject_payroll';
+					else if ($status === 'Reviewed') $check = 'review_payroll';
+			
+					if ($check) check_auth($check);
+			
+					$payrollInfo = $payrollClass->read($payroll_id);
+					if (!$payrollInfo) throw new Exception("Payroll not found.");
+			
+					// Creator cannot reject their own payroll
+					if ($status === 'Rejected' && (string)($payrollInfo['added_by'] ?? '') === (string)$_SESSION['user_id']) {
+						throw new Exception("Payroll creator cannot reject their own payroll.");
+					}
+			
+					// Prepare updated records
+					$updated_date = date('Y-m-d H:i:s');
+					$userInfo = $userClass->read($_SESSION['user_id']);
+					$user_fullName = $userInfo['full_name'] ?? 'Unknown User';
+			
+					$updateColumn = ($status === 'Rejected') ? 'rejected' : 'finished';
+					$action = ($status === 'Rejected' ? "Rejected by " : "Finished by ") . $user_fullName;
+			
+					// Safely decode existing arrays
+					$workflow = json_decode($payrollInfo['workflow'] ?? '[]', true) ?: [];
+					$rejected = json_decode($payrollInfo['rejected'] ?? '[]', true) ?: [];
+					$finished = json_decode($payrollInfo['finished'] ?? '[]', true) ?: [];
+			
+					// Remove entries that targeted the current user (they are now acting)
+					// $currentUser = (string)$_SESSION['user_id'];
+					// $rejected = array_values(array_filter($rejected, function ($r) use ($currentUser) {
+					// 	return !isset($r['next_user']) || (string)$r['next_user'] !== $currentUser;
+					// }));
+					// $finished = array_values(array_filter($finished, function ($r) use ($currentUser) {
+					// 	return !isset($r['next_user']) || (string)$r['next_user'] !== $currentUser;
+					// }));
+			
+					// Build new entry for rejected/finished
 					$newData = [
 						'action' => $action,
-						'date' => date('Y-m-d H:i:s'),
-						'status' => $current_status,
+						'date' => $updated_date,
+						'status' => $status,
 						'user_id' => $_SESSION['user_id'],
 						'next_user' => $next_user,
 						'message' => $message
 					];
-
-					$payrollInfo = $payrollClass->read($payroll_id);
-					$json = json_decode($payrollInfo[$updateColumn], true);
-					$json[] = $newData;
-
+			
+					// Append to the proper list
+					if ($updateColumn === 'rejected') {
+						$rejected[] = $newData;
+					} else {
+						$finished[] = $newData;
+					}
+			
+					// Also append to workflow
+					$workflow[] = [
+						'action' => $status . ' by ' . $user_fullName,
+						'date' => $updated_date,
+						'status' => $status,
+						'user_id' => $_SESSION['user_id']
+					];
+			
+					// Prepare update payload (also set the payroll status to the selected status)
 					$updateData = [
-						$updateColumn => json_encode($json),
+						// 'workflow' => json_encode($workflow),
+						'rejected' => json_encode($rejected),
+						'finished' => json_encode($finished),
+						'status' => $status,
 						'updated_by' => $_SESSION['user_id'],
 						'updated_date' => $updated_date
 					];
-
+			
+					$result = [];
 					$result['id'] = $payrollClass->update($payroll_id, $updateData);
-
+			
+					// Update payroll details statuses
+					$details = $conn->prepare("UPDATE `payroll_details` SET `status`=? WHERE `payroll_id` = ?");
+					$details->bind_param("si", $status, $payroll_id);
+					$details->execute();
+			
+					// Create notification for the next person
 					$notificationData = [
 						'recipient_id' => $next_user,
 						'channel_type' => 'both',
 						'notification_type' => 'Payroll',
 						'priority' => 'high',
 						'subject' => 'Payroll Notification',
-						'details' => 'Payroll action required, please check',
+						'details' => 'Payroll action required: ' . $status,
 						'message' => $message,
 						'added_by' => $_SESSION['user_id'],
 					];
 					$notificationsClass->create($notificationData);
-					// If the branch is created successfully, return a success message
-					if($result['id']) {
-				        $result['msg'] = 'Notification sent successfully';
-				        $result['error'] = false;
-				    } else {
-				        $result['msg'] = 'Something went wrong, please try again';
-				        $result['error'] = true;
-				    }
+			
+					if ($result['id']) {
+						$result['msg'] = 'Notification sent successfully';
+						$result['error'] = false;
+					} else {
+						$result['msg'] = 'Something went wrong, please try again';
+						$result['error'] = true;
+					}
 				} catch (Exception $e) {
-				    // Catch any exceptions from the create method and return an error message
-				    $result['msg'] = 'Error: Something went wrong';
-				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
-				    $result['error'] = true;
+					$result = [
+						'msg' => 'Error: ' . $e->getMessage(),
+						'sql_error' => $e->getMessage(),
+						'error' => true,
+					];
 				}
-
-				// Return the result as a JSON response (for example in an API)
+			
 				echo json_encode($result);
+				exit;
+			} else if($_GET['endpoint'] == 'markAsRead') {
+				try {
+					$post = escapePostData($_POST);
+					$type = $post['type'];
+					if($type == 'all') {
+						$sql = $GLOBALS['conn']->prepare("UPDATE `notifications` SET `is_read`='1' WHERE  recipient_id=?");
+						$sql->bind_param("i", $_SESSION['user_id']);
+						$sql->execute();
+					} else {
+						$sql = $GLOBALS['conn']->prepare("UPDATE `notifications` SET `is_read`='1' WHERE  recipient_id=? AND id=?");
+						$sql->bind_param("ii", $_SESSION['user_id'], $post['type']);
+						$sql->execute();
+					}
+					$result['msg'] = 'Notification marked as read successfully';
+					$result['error'] = false;
+				} catch (Exception $e) {
+					$result = [
+						'msg' => 'Error: ' . $e->getMessage(),
+						'sql_error' => $e->getMessage(),
+						'error' => true,
+					];
+				}
+				echo json_encode($result);
+				exit;
 			}
+			
 		}
 
 
@@ -1567,7 +1805,81 @@ if(isset($_GET['action'])) {
 
 				if($data) echo json_encode(['data' => $data, 'error' => false]); exit();
 				echo json_encode(['error' => true, 'msg' => 'Do data, something went wrong.']);
+			} else if ($_GET['endpoint'] === 'search_employees_for_payroll') {
+				$payroll_id = isset($_POST['payroll_id']) ? (int)$_POST['payroll_id'] : 0;
+				$search = isset($_POST['search']) ? trim($_POST['search']) : '';
+				$options = '';
+				$response = ['error' => true, 'options' => ''];
+			
+				if ($payroll_id > 0) {
+					// Get payroll details
+					$payrollInfo = $payrollClass->read($payroll_id);
+			
+					if ($payrollInfo) {
+						$ref_type = $payrollInfo['ref']; // 'Department' or 'Location'
+						$ref_id   = (int)$payrollInfo['ref_id'];
+			
+						// Base query with LEFT JOIN to exclude already assigned employees
+						$query = "
+							SELECT e.employee_id, e.full_name, e.phone_number
+							FROM employees e
+							LEFT JOIN payroll_details pd 
+								   ON e.employee_id = pd.emp_id AND pd.payroll_id = ?
+							WHERE e.status = 'Active' AND pd.emp_id IS NULL
+						";
+			
+						$types = "i"; // For payroll_id
+						$params = [$payroll_id];
+			
+						// Add filter by department or location
+						if ($ref_type === 'Department' && $ref_id > 0) {
+							$query .= " AND e.branch_id = ? ";
+							$types .= "i";
+							$params[] = $ref_id;
+						} elseif ($ref_type === 'Location' && $ref_id > 0) {
+							$query .= " AND e.location_id = ? ";
+							$types .= "i";
+							$params[] = $ref_id;
+						}
+			
+						// Add search filter
+						if ($search) {
+							$query .= " AND (e.full_name LIKE ? OR e.phone_number LIKE ? OR e.email LIKE ?)";
+							$types .= "sss";
+							$like = "%{$search}%";
+							$params[] = $like;
+							$params[] = $like;
+							$params[] = $like;
+						}
+			
+						$query .= " ORDER BY e.full_name ASC LIMIT 20";
+			
+						// Prepare & bind
+						$stmt = $GLOBALS['conn']->prepare($query);
+						if ($stmt) {
+							$stmt->bind_param($types, ...$params);
+							$stmt->execute();
+							$result = $stmt->get_result();
+			
+							if ($result && $result->num_rows > 0) {
+								while ($row = $result->fetch_assoc()) {
+									$options .= '<option value="' . $row['employee_id'] . '">'
+											  . htmlspecialchars($row['full_name'])
+											  . ', ' . htmlspecialchars($row['phone_number'] ?? '') 
+											  . '</option>';
+								}
+								$response['error'] = false;
+							}
+							$stmt->close();
+						}
+					}
+				}
+			
+				$response['options'] = $options;
+				echo json_encode($response);
+				exit();
 			}
+			
 
 			exit();
 		}

@@ -1353,6 +1353,8 @@ async function handle_generatePayrollForm(form) {
         month:month,
     };
 
+	form_loading(form)
+
 	console.log(formData)
 	// return false;
 
@@ -1457,84 +1459,275 @@ document.addEventListener("DOMContentLoaded", function() {
     })
 
 
-	// Payroll next action
-	$(document).on('change', '#next_action', async (e) => {
-		let status = $(e.target).val();
-		let payroll_id = $('.payroll_id').val();
-		if(status) {
-			let data = {status:status, id:payroll_id};
-			try {
-				let response = await send_payrollPost('update payroll_status', data);
-				console.log(response)
-				if(response) {
-					let res = JSON.parse(response);
-					if(res.error) {
-						toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 3000 }).then(() => {
-							location.reload();
-						});
-					} else {
-						toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
-							location.reload();
-						});
-					}
-				} else {
-					console.log('Failed to update payroll next action.' + response);
+	// Payroll - Next Action Change Handler
+	$(document).on('change', '#next_action', async function (e) {
+		const status = $(e.target).val();
+		const payroll_id = $('.payroll_id').val();
+	
+		if (!status) return;
+	
+		// Show confirmation dialog
+		const result = await swal({
+			title: 'Are you sure?',
+			text: 'You want to update the payroll status?',
+			icon: 'warning',
+			buttons: {
+				cancel: {
+					text: 'No',
+					visible: true
+				},
+				confirm: {
+					text: 'Yes, update',
+					closeModal: false
 				}
-			} catch (err) {
-				console.error('Error occurred during form submission:', err);
 			}
+		});
+	
+		if (!result) return;
+	
+		const data = {
+			status: status,
+			id: payroll_id
+		};
+	
+		try {
+			const response = await send_payrollPost('update payroll_status', data);
+			console.log(response)
+			if (!response) {
+				console.error('Empty response from server.');
+				return;
+			}
+	
+			const res = JSON.parse(response);
+	
+			if (res.error) {
+				toaster.warning(res.msg || 'Something went wrong.', 'Sorry', {
+					top: '30%',
+					right: '20px',
+					hide: true,
+					duration: 3000
+				}).then(() => {
+					location.reload();
+				});
+			} else {
+				toaster.success(res.msg || 'Payroll status updated successfully.', 'Success', {
+					top: '20%',
+					right: '20px',
+					hide: true,
+					duration: 1000
+				}).then(() => {
+					location.reload();
+				});
+			}
+		} catch (err) {
+			console.error('Error occurred during payroll status update:', err);
+			swal("Error", "Failed to update payroll. Please try again.", "error");
 		}
-	})
+	});
+	
 
+
+	// Notify Next Person Form
 	$("#notifyNextPersonForm").on('submit', async (e) => {
 		e.preventDefault();
 		let form = e.target;
-		handleNotificationSubmit(form)
-	})
+		handleNotificationSubmit(form);
+	});
+
+
+
+
+	// Handle "Add Employees to Payroll" modal
+	$(document).on('click', '.add-employees-btn', function() {
+		const payrollId = $(this).data('id');
+		const modal = $('#addEmployeesToPayrollModal');
+		modal.find('#payroll_id_for_add').val(payrollId);
+
+		// Initialize selectpicker
+		const select = modal.find('#search_employee_for_payroll');
+		select.selectpicker();
+
+		// Clear previous options
+		select.html('').selectpicker('refresh');
+
+		modal.modal('show');
+	});
+
+	
+
+
+	// Live search for employees to add to payroll
+	let employeeSearchTimeout;
+	$(document).on('keyup', '.bootstrap-select.searchEmployeePayroll input.form-control', async (e) => {
+		// clearTimeout(employeeSearchTimeout);
+		console.log(e)
+		const searchTerm = $(this).val();
+		const payrollId = $('#payroll_id_for_add').val();
+		const select = $('#search_employee_for_payroll');
+		const formData = {search:searchTerm, payroll_id:payrollId}
+		if(payrollId) {
+			try {
+		        let response = await send_payrollPost('search search_employees_for_payroll', formData);
+		        console.log(response)
+		        let res = JSON.parse(response);
+		        if(!res.error) {
+					$('#searchEmployeePayroll').html(res.options)
+					$('.my-select').selectpicker('refresh');
+				} 
+		    } catch (err) {
+		        console.error('Error occurred during form submission:', err);
+		    }
+		}
+		
+	});
+
+
+	// Handle form submission for adding employees to payroll
+	$('#addEmployeeToPayrollForm').on('submit',  function(e) {
+		e.preventDefault();
+		const form = $(this);
+		add_employeeToPayroll(form);
+		return false
+	});
     
 });
 
 async function handleNotificationSubmit(form) {
-	clearErrors();
-    let error = validateForm(form)
+    clearErrors();
+
+    let error = validateForm(form);
     if (error) return false;
 
-	let payroll_id = $(form).find('.payroll_id').val();
-	let current_status = $(form).find('.current_status').val();
-	let next_user = $(form).find('#nextUserSelect').val();
-	let message = $(form).find('#notificationMessage').val();
+    let payroll_id = $(form).find('.payroll_id').val();
+    let current_status = $(form).find('.selected_status').val();
+    let next_user = $(form).find('#nextUserSelect').val();
+    let message = $(form).find('#notificationMessage').val();
+    let status = $(form).find('.selected_status').val(); // explicit status field
 
     let formData = {
-        payroll_id:payroll_id,
-        current_status:current_status,
-        next_user:next_user,
-        message:message
+        payroll_id: payroll_id,
+        current_status: current_status,
+        next_user: next_user,
+        message: message,
+        status: status // server now handles status + workflow + payroll_details
     };
 
 	console.log(formData)
 	// return false;
 
+    // Confirm with the user before submitting
+    const result = await swal({
+        title: 'Are you sure?',
+        text: "You're about to finalize this payroll. No further actions can be performed after finishing.",
+        icon: 'warning',
+        buttons: {
+            cancel: {
+                text: 'Cancel',
+                visible: true,
+                className: 'btn btn-secondary'
+            },
+            confirm: {
+                text: 'Yes, I am sure',
+                className: 'btn btn-danger'
+            }
+        },
+        dangerMode: true
+    });
+
+    if (!result) {
+        return false; // User cancelled
+    }
+
     try {
         let response = await send_payrollPost('update notify_next_person', formData);
-        console.log(response)
+        console.log(response);
+
         if (response) {
             let res = JSON.parse(response);
-            if(res.error) {
-                toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 3000 }).then(() => {
+
+            if (res.error) {
+                toaster.warning(res.msg || 'Something went wrong.', 'Sorry', {
+                    top: '30%',
+                    right: '20px',
+                    hide: true,
+                    duration: 3000
+                }).then(() => {
                     location.reload();
                 });
             } else {
-                toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:1000 }).then(() => {
+                toaster.success(res.msg || 'Notification sent successfully.', 'Success', {
+                    top: '20%',
+                    right: '20px',
+                    hide: true,
+                    duration: 1000
+                }).then(() => {
                     location.reload();
                 });
             }
         } else {
-            console.log('Failed to update payroll next action.' + response);
+            console.error('Failed to update payroll next action.', response);
         }
     } catch (err) {
         console.error('Error occurred during form submission:', err);
+        swal("Error", "An error occurred while submitting the form. Please try again.", "error");
     }
 
     return false;
 }
 
+async function add_employeeToPayroll(form) {
+	const submitBtn = form.find('button[type="submit"]');
+	const payrollId =$(form).find('#payroll_id_for_add').val();
+
+	// Get selected employee IDs
+	const selectedEmployees =$(form).find('#searchEmployeePayroll').val();
+	console.log(selectedEmployees)
+	if (!selectedEmployees || selectedEmployees.length === 0) {
+		swal("Error", "Please select at least one employee.", "error");
+		return;
+	}
+
+	let formData = {
+		payroll_id: payrollId,
+		employee_ids: selectedEmployees
+	}
+
+	console.log(formData)
+	// return false;
+
+	try {
+		const response = await send_payrollPost('save add_employees_to_payroll', formData);
+		console.log(response);
+
+		if (response) {
+			let res = JSON.parse(response);
+
+			if (res.error) {
+				toaster.warning(res.msg || 'Something went wrong.', 'Sorry', {
+					top: '30%',
+					right: '20px',
+					hide: true,
+					duration: 3000
+				}).then(() => {
+					location.reload();
+				});
+			} else {
+				toaster.success(res.msg || 'Notification sent successfully.', 'Success', {
+					top: '20%',
+					right: '20px',
+					hide: true,
+					duration: 1000
+				}).then(() => {
+					location.reload();
+				});
+			}
+		} else {
+			console.error('Failed to update payroll next action.', response);
+		}
+	} catch (err) {
+		console.error('Error occurred during form submission:', err);
+		swal("Error", "An error occurred while submitting the form. Please try again.", "error");
+	}
+
+	return false;
+}

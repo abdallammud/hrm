@@ -3,7 +3,7 @@
 $servername = "localhost";
 $username   = "root";
 $password   = "";
-$db = "asheeri_2";
+$db = "hrm_app";
 
 // $servername = "localhost";
 // $username   = "u138037914_hrm";
