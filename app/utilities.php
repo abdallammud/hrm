@@ -119,7 +119,8 @@ function getWorkdaysInMonth($yearMonth, $workdaysInWeek = 0) {
 
     // Validate the workdaysInWeek
     if ($workdaysInWeek < 1 || $workdaysInWeek > 7) {
-        throw new InvalidArgumentException("Workdays in a week must be between 1 and 7.");
+        // throw new InvalidArgumentException("Workdays in a week must be between 1 and 7.");
+        $workdaysInWeek = return_setting('working_days');
     }
 
     // Get the first and last days of the month
