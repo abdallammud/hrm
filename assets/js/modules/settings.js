@@ -33,6 +33,11 @@ async function change_settings(type, isOption = false) {
         return false;
     }
 
+    if (type === 'disabled_features') {
+        $('#disabledFeaturesModal').modal('show');
+        return false;
+    }
+
     let data = await get_setting(type);
     let modal = $('#change_setting');
 
@@ -121,6 +126,44 @@ $(document).on('submit', '.changeSettingForm',  (e) => {
     handleChangeSettings(form);
     return false;
 });
+
+$(document).on('submit', '#disabledFeaturesForm',  (e) => {
+    let form = $(e.target);
+    handleChangeDisabledFeatures(form);
+    return false;
+});
+
+async function handleChangeDisabledFeatures (form) {
+    clearErrors();
+    let disabled_features = [];
+    // Get all unchecked checkboxes
+    $(form).find('input[type=checkbox]:not(:checked)').each(function() {
+        disabled_features.push($(this).val());
+    });
+    console.log(disabled_features)
+
+    let data = {type: 'disabled_features', value: disabled_features};
+    try {
+        let response = await send_settingsPost('update setting', data);
+        console.log(response)
+        if (response) {
+            let res = JSON.parse(response)
+            $('#change_setting').modal('hide');
+            if(res.error) {
+                toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            } else {
+                toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:2000 }).then(() => {
+                    location.reload();
+                });
+            }
+        } else {
+            console.log('Failed to save state.' + response);
+        }
+    } catch (err) {
+        console.error('Error occurred during form submission:', err);
+    }
+    return false;
+}
 
 async function handleChangeSettings(form) {
     clearErrors();
