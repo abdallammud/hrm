@@ -35,7 +35,34 @@
     </div>
 </div>
 
-<!-- Original Settings Modal -->
+<!-- Logo Upload Modal -->
+<div class="modal fade" id="uploadLogoModal" tabindex="-1" role="dialog" aria-labelledby="uploadLogoModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="project" style="width:500px;">
+        <form class="modal-content" id="logoUploadForm" style="border-radius: 14px 14px 0px 0px; margin-top: -15px;" method="post" enctype="multipart/form-data">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload System Logo</h5>
+                <button type="button" class="close modal-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert smt-10 alert-info"><i class="fa fa-info-circle"></i> Recommended PNG or JPG. Max 2MB. Will be stored in <code>assets/images/</code>.</div>
+                <input type="hidden" name="type" value="system_logo" class="settingTypeLogo">
+                <div class="form-group">
+                    <label for="logoFile">Select logo</label>
+                    <input type="file" class="form-control" id="logoFile" name="logoFile" accept="image/png,image/jpeg,image/jpg" required>
+                    <div class="form-text">Preferably transparent PNG; will be resized by browser constraints when displayed.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary cursor" data-bs-dismiss="modal" style="min-width:100px;">Cancel</button>
+                <button type="submit" class="btn btn-primary cursor" style="min-width:100px;">Upload</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Original Settings Modal (updated to include color input option) -->
 <div class="modal fade" data-bs-focus="false" id="change_setting" tabindex="-1" role="dialog" aria-labelledby="change_settingLabel" aria-hidden="true">
     <div class="modal-dialog" role="project" style="width:500px;">
         <form class="modal-content changeSettingForm" id="changeSettingForm" style="border-radius: 14px 14px 0px 0px; margin-top: -15px;">
@@ -49,7 +76,6 @@
                 <div id="forSettings">
                     <div class="row">
                         <div class="col col-xs-12">
-                            <label class="label required d-none" for="settingDetails">Details</label>
                             <input type="hidden" id="settingType" class="settingType" name="">
                             <input type="hidden" id="settingSection" class="settingSection" name="">
                             <input type="hidden" id="settingRemarks" class="settingRemarks" name="">
@@ -57,7 +83,18 @@
                             <span class="form-error text-danger">This is error</span>
                         </div>
                     </div>
-                    <div class="row">
+
+                    <div class="row color-row d-none">
+                        <div class="col col-xs-12">
+                            <div class="form-group">
+                                <label class="label required" for="settingColor">Choose color</label>
+                                <input type="color" class="form-control settingColor" id="settingColor" name="settingColor" style="height:42px;">
+                                <small class="form-text text-muted">Selected color will be stored as <code>rgb(r,g,b)</code>.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row value-row">
                         <div class="col col-xs-12">
                             <div class="form-group">
                                 <label class="label required" for="settingValue">Setting</label>
@@ -66,6 +103,7 @@
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
             <div class="modal-footer">

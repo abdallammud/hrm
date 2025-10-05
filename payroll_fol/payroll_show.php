@@ -77,10 +77,10 @@ $columns = get_columns('showpayrollDT', 'show_columns');
     <div class="page-breadcrumb d-sm-flex align-items-center">
         <h5 class="spy-10">Payroll details</h5>
         <div class="ms-auto d-sm-flex">
-            <div class="btn-group smr-10">
-                <a href="<?= baseUri(); ?>/payroll" class="btn btn-secondary"> Back</a>
+            <div class=" smr-10">
+                <a href="<?= baseUri(); ?>/payroll" class="btn smr-10 btn-secondary"> Back</a>
                 <?php if ($payrollInfo['status'] !== 'Approved'): ?>
-                    <button type="button" class="btn btn-primary sml-10" id="openAddEmployeeModalBtn">
+                    <button type="button" class="btn btn-primary" id="openAddEmployeeModalBtn" style="font-size: 14px;" data-bs-toggle="modal" data-bs-target="#addEmployeeToPayrollModal">
                         <i class="bi bi-plus-circle"></i> Add Employee
                     </button>
                 <?php endif; ?>
@@ -155,12 +155,7 @@ $columns = get_columns('showpayrollDT', 'show_columns');
                     </div>
                 </div>
 
-                <div class="col-ms-12 col-md-6 col-lg-2">
-                    <button style="font-size: 14px;" class="btn sml-10 smt-23 spy-10 btn-lg btn-success cursor" type="button" data-bs-toggle="modal" data-bs-target="#addEmployeeToPayrollModal">
-                        Add Employee
-                    </button>
-                </div>
-
+                
                 
             </div>
 

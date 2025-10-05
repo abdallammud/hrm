@@ -60,7 +60,7 @@ if ($user_id > 0) {
 				</a>
 			</li> -->
             <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle dropdown-toggle-nocaret position-relative " data-bs-auto-close="outside" data-bs-toggle="dropdown" href="javascript:;" aria-expanded="true"><i class="material-icons-outlined">notifications</i>
+                <a class="nav-link dropdown-toggle dropdown-toggle-nocaret position-relative " data-bs-auto-close="outside" data-bs-toggle="dropdown" href="javascript:;" aria-expanded="true"><i class="bi bi-bell"></i>
                 <span class="badge-notify"><?php echo $notificationsCount; ?></span>
                 </a>
                 <div class="dropdown-menu dropdown-notify dropdown-menu-end shadow " data-bs-popper="static">
@@ -131,7 +131,7 @@ if ($user_id > 0) {
 							}
 							echo '</div>';
 						} else {
-							echo "<p style='color:#666;'>No new notifications 🎉</p>";
+							echo "<p style='color:#666; padding:10px;'>No new notifications 🎉</p>";
 						}
 							
 						?>

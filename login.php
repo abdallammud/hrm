@@ -5,7 +5,7 @@
 			<div class="row g-4">
 				<div class="col-lg-12 d-flex">
 					<div class="card-body">
-						<img src="assets/images/<?=get_logo_name_from_url();?>" class="mb-4" width="145" alt="">
+						<img src="<?=$GLOBALS['logo']?>" class="mb-4" width="145" alt="">
 						<h4 class="fw-bold">Login</h4>
 						<p class="mb-0">Please login to continue to your account</p>
 

@@ -4,6 +4,37 @@ require('UserClass.php');
 require('sys_permissions.php');
 session_start();
 $userClass = $GLOBALS['userClass'];
+$logo = 'logo.png';
+$get_settings = "SELECT * FROM `sys_settings` WHERE `type` LIKE 'system_logo'";
+$settingSet = $GLOBALS['conn']->query($get_settings);
+$settingSet->num_rows;
+if($settingSet->num_rows > 0) {
+	$logo = $settingSet->fetch_assoc()['value'];
+}
+
+function baseUri2() {
+    // Check if we are on HTTPS or HTTP
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+    
+    // Get the server name and the current path
+    $host = $_SERVER['HTTP_HOST'];
+    $path = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
+    
+    // Determine if it's a live environment or a local project directory
+    if ($host === 'localhost' || $host === '127.0.0.1') {
+        // For local development (e.g., subfolder)
+        $baseUri = $protocol . $host . $path;
+    } else {
+        // For production (e.g., domain)
+        $baseUri = $protocol . $host;
+    }
+
+    $GLOBALS['baseUri'] = $baseUri;
+
+    return $baseUri;
+}
+$GLOBALS['logo'] = baseUri2().'/assets/images/'.$logo;
+
 if(isset($_GET['action'])) {
 	if($_GET['action'] == 'login') {
 		$result['msg'] = 'Correct action';

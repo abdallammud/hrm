@@ -1,6 +1,8 @@
 <?php
 require('init.php');
+use App\myEmail;
 
+$mailer = new myEmail();
 if(isset($_GET['action'])) {
 	if(isset($_GET['endpoint'])) {
 		// Save data
@@ -929,6 +931,28 @@ if(isset($_GET['action'])) {
 						'added_by' => $_SESSION['user_id'],
 					];
 					$notificationsClass->create($notificationData);
+
+					$link = baseUri();
+					// remove /app from last 
+					$link = substr($link, 0, -4);
+					$link .= '/payroll/'.$payroll_id;
+
+					$email = [
+						'to' => $userInfo['email'],
+						'fullname' => $userInfo['full_name'],
+						'subject' => 'Payroll Notification',
+						'body' => 'You have a new payroll notification. Click the button below to view. '.$message,
+						'buttonText' => 'View Payroll',
+						'buttonLink' => $link,
+						
+					];
+					
+					try {
+						$mailer->send($email);
+						// echo "Email sent successfully!";
+					} catch (Exception $e) {
+						// echo "Failed: " . $e->getMessage();
+					}
 			
 					if ($result['id']) {
 						$result['msg'] = 'Notification sent successfully';

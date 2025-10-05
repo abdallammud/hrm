@@ -220,6 +220,13 @@ function settingsArray() {
             'details' => 'System secondary color', 
             'remarks' => 'required'
         ],
+        'system_logo' => [
+            'type' => 'system_logo',
+            'value' => 'logo.png', 
+            'section' => 'system', 
+            'details' => 'System Logo', 
+            'remarks' => 'required'
+        ],
         'disabled_features' => [
             'type' => 'disabled_features',
             'value' => '[]', 
@@ -781,50 +788,7 @@ function processBatchEmployees($batchData, $employeeClass, $userId) {
 }
 
 
-// Send email
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
 
-// require_once ('vendor/autoload.php'); // Make sure PHPMailer is loaded
-
-function send_email(array $args): array {
-    // Required
-    if (empty($args['to']) || empty($args['subject']) || empty($args['message'])) {
-        return ['success' => false, 'message' => 'Missing required fields: to, subject, or message'];
-    }
-
-    // Default SMTP credentials
-    $from_email = $args['from_email'] ?? 'caaaqil94@gmail.com';
-    $from_password = $args['from_password'] ?? 'hooyomcn94';
-
-    $mail = new PHPMailer(true);
-
-    try {
-        // SMTP settings
-        $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
-        $mail->SMTPAuth   = true;
-        $mail->Username   = $from_email;
-        $mail->Password   = $from_password;
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
-
-        // Sender and recipient
-        $mail->setFrom($from_email, 'Mailer');
-        $mail->addAddress($args['to']);
-
-        // Content
-        $mail->isHTML(true);
-        $mail->Subject = $args['subject'];
-        $mail->Body    = $args['message'];
-        $mail->AltBody = strip_tags($args['message']);
-
-        $mail->send();
-        return ['success' => true, 'message' => 'Email sent successfully'];
-    } catch (Exception $e) {
-        return ['success' => false, 'message' => "Mailer Error: {$mail->ErrorInfo}"];
-    }
-}
 
 
 ?>

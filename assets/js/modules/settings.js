@@ -1,6 +1,5 @@
 async function send_settingsPost(str, data) {
     let [action, endpoint] = str.split(' ');
-
     try {
         const response = await $.post(`${base_url}/app/settings_controller.php?action=${action}&endpoint=${endpoint}`, data);
         return response;
@@ -10,108 +9,205 @@ async function send_settingsPost(str, data) {
     }
 }
 
+// new: send form-data (files)
+async function send_settingsFormData(action, endpoint, formData) {
+    try {
+        const response = await $.ajax({
+            url: `${base_url}/app/settings_controller.php?action=${action}&endpoint=${endpoint}`,
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+        });
+        return response;
+    } catch (error) {
+        console.error('Error occurred during the request:', error);
+        return null;
+    }
+}
+
 async function change_settings(type, isOption = false) {
-	let data = await get_setting(type);
-    console.log(data)
+    // special case: logo
+    if (type === 'system_logo' || type === 'logo') {
+        $('#uploadLogoModal').modal('show');
+        return false;
+    }
+
+    let data = await get_setting(type);
     let modal = $('#change_setting');
-    if(type == 'disabled_features') {
-        modal = $('#disabledFeaturesModal');
-    }
-    if(data) {
-    	let res = JSON.parse(data);
-    	$(modal).find('.settingType').val(type);
-    	$(modal).find('.settingSection').val(res.section);
-    	$(modal).find('.settingRemarks').val(res.remarks);
-    	$(modal).find('.settingDetails').val(res.details);
-    	$(modal).find('.settingValue').val(res.value);
 
-    	if(res.remarks != 'required') $(modal).find('.settingValue').removeClass('validate')
+    console.log(data)
+
+    // color determines UI
+    let isColor = (type.indexOf('color') !== -1) || (type === 'system_color');
+
+    if (data) {
+        let res = JSON.parse(data);
+        $(modal).find('.settingType').val(type);
+        $(modal).find('.settingSection').val(res.section);
+        $(modal).find('.settingRemarks').val(res.remarks);
+        $(modal).find('.settingDetails').val(res.details || '');
+        $(modal).find('.settingValue').val(res.value);
+
+        // if color setting, show the color input and set its value from the stored rgb
+        if (isColor) {
+            let rgb = res.value || 'rgb(0,0,0)';
+            // convert rgb(...) -> hex for input[type=color]
+            let hex = rgbToHex(rgb);
+            $(modal).find('.color-row').removeClass('d-none');
+            $(modal).find('.value-row').addClass('d-none');
+            $(modal).find('.settingColor').val(hex);
+            // make value field optional
+            $(modal).find('.settingValue').removeClass('validate');
+        } else {
+            $(modal).find('.color-row').addClass('d-none');
+            $(modal).find('.value-row').removeClass('d-none');
+            if (res.remarks !== 'required') $(modal).find('.settingValue').removeClass('validate');
+        }
+    } else {
+        // no existing setting record: prepare for new
+        $(modal).find('.settingType').val(type);
+        $(modal).find('.settingSection').val('');
+        $(modal).find('.settingRemarks').val('');
+        $(modal).find('.settingDetails').val('');
+        $(modal).find('.settingValue').val('');
+        if ((type.indexOf('color') !== -1) || (type === 'system_color')) {
+            $(modal).find('.color-row').removeClass('d-none');
+            $(modal).find('.value-row').addClass('d-none');
+            $(modal).find('.settingColor').val('#000000');
+        } else {
+            $(modal).find('.color-row').addClass('d-none');
+            $(modal).find('.value-row').removeClass('d-none');
+        }
     }
 
-	$(modal).modal('show');
+    $(modal).modal('show');
 }
 
 async function get_setting(type) {
-	let data = {type};
-	let response = await send_settingsPost('get setting', data);
-	return response;
+    let data = {type};
+    let response = await send_settingsPost('get setting', data);
+    return response;
 }
 
-$(document).on('submit', '.changeSettingForm', async (e) => {
-	let form = $(e.target);
-	clearErrors();
+// helper: convert rgb(...) to hex
+function rgbToHex(rgb) {
+    // rgb expected in format: "rgb(r,g,b)" or "rgba(r,g,b,a)" or hex already
+    if (!rgb) return '#000000';
+    rgb = rgb.trim();
+    if (rgb.indexOf('#') === 0) return rgb;
+    let m = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+    if (!m) return '#000000';
+    let r = parseInt(m[1]), g = parseInt(m[2]), b = parseInt(m[3]);
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+// helper: convert hex to rgb string "rgb(r,g,b)"
+function hexToRgbString(hex) {
+    if (!hex) return 'rgb(0,0,0)';
+    // normalize
+    hex = hex.replace('#','');
+    if (hex.length === 3) hex = hex.split('').map(c => c+c).join('');
+    let bigint = parseInt(hex, 16);
+    let r = (bigint >> 16) & 255;
+    let g = (bigint >> 8) & 255;
+    let b = bigint & 255;
+    return `rgb(${r},${g},${b})`;
+}
+
+// existing submit handler (unchanged logic except color handling)
+$(document).on('submit', '.changeSettingForm',  (e) => {
+    let form = $(e.target);
+    handleChangeSettings(form);
+    return false;
+});
+
+async function handleChangeSettings(form) {
+    clearErrors();
     let error = validateForm(form);
-    if (error) return false;
+    // if (error) return false;
 
-	let settingType = $(form).find('.settingType').val();
-	let settingSection = $(form).find('.settingSection').val();
-	let settingRemarks = $(form).find('.settingRemarks').val();
-	let settingDetails = $(form).find('.settingDetails').val();
-	let settingValue = $(form).find('.settingValue').val();
+    console.log(form)
 
-	let formData = {
+    let settingType = $(form).find('.settingType').val();
+    let settingSection = $(form).find('.settingSection').val();
+    let settingRemarks = $(form).find('.settingRemarks').val();
+    let settingDetails = $(form).find('.settingDetails').val();
+    let settingValue = $(form).find('.settingValue').val();
+
+    // If color UI is visible, get color and convert hex -> rgb string
+    let modal = $('#change_setting');
+    if (!modal.find('.color-row').hasClass('d-none') && settingType.indexOf('color') !== -1) {
+        let hex = modal.find('.settingColor').val();
+        settingValue = hexToRgbString(hex);
+    }
+
+    let formData = {
         type: settingType,
-        details:settingDetails,
-        value:settingValue,
-        section:settingSection,
+        details: settingDetails,
+        value: settingValue,
+        section: settingSection,
         remarks: settingRemarks
     };
+
+    console.log(formData)
+    // return false;
 
     try {
         let response = await send_settingsPost('update setting', formData);
         console.log(response)
         if (response) {
             let res = JSON.parse(response)
-            $('#add_project').modal('hide');
+            $('#change_setting').modal('hide');
             if(res.error) {
-            	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
             } else {
-            	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:2000 }).then(() => {
-            		location.reload();
-            	});
-            	console.log(res)
+                toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:2000 }).then(() => {
+                    location.reload();
+                });
             }
         } else {
             console.log('Failed to save state.' + response);
         }
-
-    } catch (err) {
-        console.error('Error occurred during form submission:', err);
-    }
-	return false;
-})
-$('#disabledFeaturesForm').on('submit', async (e) => {
-    e.preventDefault();
-    let form = $(e.target);
-    let disabledFeatures = [];
-    form.find('.form-check-input').each((index, input) => {
-        if (!$(input).is(':checked')) {
-            disabledFeatures.push($(input).val());
-        }
-    });
-    console.log(disabledFeatures);
-    // return false;
-
-    try {
-        let response = await send_settingsPost('update setting', {type: 'disabled_features', value: disabledFeatures});
-        console.log(response)
-        if (response) {
-            let res = JSON.parse(response)
-            $('#disabledFeaturesModal').modal('hide');
-            if(res.error) {
-            	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
-            } else {
-            	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:2000 }).then(() => {
-            		location.reload();
-            	});
-            	console.log(res)
-            }
-        } else {
-            console.log('Failed to save state.' + response);
-        }
-
     } catch (err) {
         console.error('Error occurred during form submission:', err);
     }
     return false;
-})
+}
+
+// logo upload form submit
+$('#logoUploadForm').on('submit', async (e) => {
+    e.preventDefault();
+    clearErrors();
+    let form = document.getElementById('logoUploadForm');
+    let fileInput = $('#logoFile');
+    if (!fileInput.val()) {
+        toaster.warning('Please choose a file', 'Validation', { top: '30%', right: '20px', hide: true, duration: 3000 });
+        return false;
+    }
+    let fd = new FormData(form);
+    // include required fields
+    fd.append('type', 'system_logo');
+
+    console.log(fd)
+
+    try {
+        let response = await send_settingsFormData('update', 'setting', fd);
+        if (response) {
+            let res = JSON.parse(response);
+            $('#uploadLogoModal').modal('hide');
+            if (res.error) {
+                toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            } else {
+                toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:2000 }).then(() => {
+                    location.reload();
+                });
+            }
+        } else {
+            console.log('Failed to save state.' + response);
+        }
+    } catch (err) {
+        console.error('Error occurred during logo upload:', err);
+    }
+    return false;
+});
