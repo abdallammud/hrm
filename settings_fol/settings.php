@@ -29,7 +29,7 @@
 				<table class="table table-striped table-bordered" style="width:100%">
 					<?php
 					$systemSettings = getSettingsBySection('system');
-					echo $GLOBALS['logoPath'];
+					// echo $GLOBALS['logoPath'];
 					foreach ($systemSettings as $setting) {
 						// Determine if this is a color setting (type contains 'color') or a logo
 						$isColor = (strpos($setting['type'], 'color') !== false) || ($setting['type'] === 'system_color');
