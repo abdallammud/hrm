@@ -50,7 +50,7 @@ $primary_color = explode(",", hexToRgb($primary_color));
 $secondary_color =explode(",", hexToRgb($secondary_color));
 
 $logo = get_logo_name_from_url();
-$pdf->Image('./assets/images/'.$logo, 10, 10, 30);
+$pdf->Image($GLOBALS['logoPath'], 10, 10, 30);
 
 $pdf->SetFont('helvetica', 'B', 16);
 $y = 10;

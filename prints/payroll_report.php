@@ -132,9 +132,7 @@ $p1 = intval($primary_color[1] ?? 0);
 $p2 = intval($primary_color[2] ?? 0);
 
 $logo = get_logo_name_from_url();
-if ($logo && file_exists('./assets/images/'.$logo)) {
-    $pdf->Image('./assets/images/'.$logo, 10, 10, 30);
-}
+$pdf->Image($GLOBALS['logoPath'], 10, 10, 30);
 
 // Company header
 $pdf->SetFont('aefurat','B',16);

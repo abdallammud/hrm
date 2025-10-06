@@ -43,7 +43,7 @@ $pdf->AddPage();
 
 $pdf->SetFont('aefurat', '', 12);
 // $pdf->Image('./assets/images/banner.png', 0, 0, 280, 40); // Adjust size as needed
-$pdf->Image('./assets/images/logo.png', 10, 10, 30);
+$pdf->Image($GLOBALS['logoPath'], 10, 10, 30);
 // Set header rectangle
 $pdf->SetFillColor($primary_color[0], $primary_color[1], $primary_color[2]);
 $pdf->SetDrawColor($primary_color[0], $primary_color[1], $primary_color[2]);

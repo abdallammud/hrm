@@ -63,7 +63,7 @@ $pdf->SetAutoPageBreak(TRUE, 15);
 // Page start
 $pdf->AddPage();
 $pdf->SetFont('dejavusans', '', 12);
-$pdf->Image('./assets/images/logo.png', 15, 10, 30);
+$pdf->Image($GLOBALS['logoPath'], 15, 10, 30);
 
 // Company header
 $y = 40;
