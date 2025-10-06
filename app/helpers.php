@@ -162,6 +162,17 @@ function get_setting($type) {
     return $setting;
 }
 
+
+$GLOBALS['MAIL'] = [
+    'host'     => 'smtp.gmail.com',
+    'port'     => 587,
+    'username' => 'random.my.gm@gmail.com',
+    'password' => 'esez afrv dnpe nukx', // ⚠️ Use App Password, not Gmail password
+    'secure'   => 'tls',        // 'tls' or 'ssl'
+    'from'     => 'random.my.gm@gmail.com',
+    'fromName' => 'SUPPORT CENTER',
+    'replyTo'  => 'no-reply@yourdomain.com'
+];
 function settingsArray() {
     $defaultValue = array(
         'staff_prefix' => [
@@ -232,6 +243,13 @@ function settingsArray() {
             'value' => '[]', 
             'section' => 'admin', 
             'details' => 'Disabled features', 
+            'remarks' => 'required'
+        ],
+        'email_config' => [
+            'type' => 'email_config',
+            'value' => json_encode($GLOBALS['MAIL']), 
+            'section' => 'email', 
+            'details' => 'Email configuration', 
             'remarks' => 'required'
         ],
 

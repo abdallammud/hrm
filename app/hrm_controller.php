@@ -133,12 +133,24 @@ if(isset($_GET['action'])) {
 				        $fileType = $_FILES['file']['type'];
 
 				        // Validate file type and size
-				        if ($fileType != 'text/csv') {
-				            $result['error'] = true;
+						// $allowedMimeTypes = ['text/csv', 'application/csv', 'application/vnd.ms-excel', 'text/plain'];
+
+						// if (!in_array($fileType, $allowedMimeTypes)) {
+						// 	$result['error'] = true;
+				        //     $result['msg'] = "Invalid file type. Please upload a valid CSV file.";
+						// 	$result['file_type'] = $fileType;
+				        //     echo json_encode($result);
+				        //     exit();
+						// }
+
+						$fileName = $_FILES['file']['name'];
+						if (strtolower(pathinfo($fileName, PATHINFO_EXTENSION)) !== 'csv') {
+							$result['error'] = true;
 				            $result['msg'] = "Invalid file type. Please upload a valid CSV file.";
+							$result['file_type'] = $fileType;
 				            echo json_encode($result);
 				            exit();
-				        }
+						}
 
 				        // First pass: Count total rows for progress tracking
 				        $totalRows = 0;

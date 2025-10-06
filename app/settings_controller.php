@@ -70,6 +70,43 @@ if(isset($_GET['action'])) {
 
                     echo json_encode($result);
                     exit();
+                } 
+                $post = $_POST;
+                if($post['type'] == 'email_config') {
+                    check_auth('edit_settings');
+                
+                    // Ensure it's valid JSON string
+                    $jsonValue = $post['value'];
+                    // $isJson = json_decode($jsonValue, true);
+                
+                    // if (json_last_error() !== JSON_ERROR_NONE) {
+                    //     echo json_encode(['error' => true, 'msg' => 'Invalid email configuration data']);
+                    //     exit();
+                    // }
+                
+                    $sql = "SELECT * FROM sys_settings WHERE `type` = 'email_config'";
+                    $exists = $GLOBALS['conn']->query($sql)->num_rows;
+                
+                    if($exists == 0) {
+                        $data = [
+                            'type' => 'email_config',
+                            'details' => 'Email configuration settings',
+                            'value' => json_encode($post['value']),
+                            'section' => 'email',
+                            'remarks' => 'required'
+                        ];
+                        $done = $settingsClass->create($data);
+                    } else {
+                        $sql = "UPDATE sys_settings SET `value` = '".json_encode($post['value'])."' WHERE `type` = 'email_config'";
+                        $done = $GLOBALS['conn']->query($sql);
+                    }
+                
+                    if($done) {
+                        echo json_encode(['error' => false, 'msg' => 'Email configuration saved successfully']);
+                    } else {
+                        echo json_encode(['error' => true, 'msg' => 'Failed to save email configuration']);
+                    }
+                    exit();
                 }
 
                 // Regular settings (non-file)
