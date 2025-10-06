@@ -38,6 +38,11 @@ async function change_settings(type, isOption = false) {
         return false;
     }
 
+    if (type === 'email_config') {
+        $('#emailConfigModal').modal('show');
+        return false;
+    }
+
     let data = await get_setting(type);
     let modal = $('#change_setting');
 
@@ -132,6 +137,13 @@ $(document).on('submit', '#disabledFeaturesForm',  (e) => {
     handleChangeDisabledFeatures(form);
     return false;
 });
+
+$(document).on('submit', '#emailConfigForm',  (e) => {
+    let form = $(e.target);
+    saveEmailConfig(form);
+    return false;
+});
+
 
 async function handleChangeDisabledFeatures (form) {
     clearErrors();
@@ -254,3 +266,61 @@ $('#logoUploadForm').on('submit', async (e) => {
     }
     return false;
 });
+
+// Email config form submit
+async function saveEmailConfig(form) {
+    clearErrors();
+    let data = {};
+
+    // formData.forEach(item => data[item.name] = item.value);
+    let host = $(form).find('input[name=host]').val();
+    let port = $(form).find('input[name=port]').val();
+    let username = $(form).find('input[name=username]').val();
+    let password = $(form).find('input[name=password]').val();
+    let from = $(form).find('input[name=from]').val();
+    let from_name = $(form).find('input[name=fromName]').val();
+    let secure = $(form).find('select[name=secure]').val();
+    let replyTo = $(form).find('input[name=replyTo]').val();
+
+   
+    let finalData = {
+        type: 'email_config',
+        details: 'Email configuration settings',
+        value: {
+            host:host,
+            port:port,
+            username:username,
+            password:password,
+            from:from,
+            fromName:from_name,
+            secure:secure,
+            replyTo:replyTo
+        },
+        section: 'email',
+        remarks: 'required'
+    };
+
+    console.log(finalData)
+    // return false;
+
+    try {
+        let response = await send_settingsPost('update setting', finalData);
+        console.log(response)
+        if (response) {
+            let res = JSON.parse(response);
+            $('#emailConfigModal').modal('hide');
+            if (res.error) {
+                toaster.warning(res.msg, 'Error', { top: '30%', right: '20px', hide: true, duration: 4000 });
+            } else {
+                toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 2000 }).then(() => {
+                    location.reload();
+                });
+            }
+        }
+    } catch (err) {
+        console.error('Error saving email config:', err);
+        toaster.warning('Unexpected error occurred', 'Error', { top: '30%', right: '20px', hide: true, duration: 4000 });
+    }
+
+    return false;
+}

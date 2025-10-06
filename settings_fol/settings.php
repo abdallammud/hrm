@@ -134,6 +134,42 @@
 		</div>
 	</div>
 
+	<div class="col-md-12 col-lg-6">
+		<div class="card border-primary mb-3">
+			<div class="card-header bold">Email Settings</div>
+			<div class="card-body">
+				<table class="table table-striped table-bordered" style="width:100%">
+					<?php
+					$emailSettings = getSettingsBySection('email');
+					// var_dump($featuresSettings);
+					foreach ($emailSettings as $setting) { 
+						$email_config = get_setting('email_config');
+						$email_config = json_decode($email_config['value'], true);
+						foreach($email_config as $key => $value) {
+							$keyText = ucwords(str_replace('_', ' ', $key));
+							if($key == 'fromName') $keyText = 'From Name';
+							if($key == 'from') $keyText = 'From';
+							if($key == 'replyTo') $keyText = 'Reply To';
+
+							if($key == 'secure') $keyText = 'Security';
+							if($key == 'password') $value = '********';
+							
+						
+						?>
+					    <tr>
+					        <td><?=$keyText;?></td>
+					        <td class="d-flex align-items-center justify-content-between">
+					            <span><?=($value)?></span>
+					            <i onclick="return change_settings(`<?=$setting['type'];?>`)" class="fa cursor fa-pencil-alt"></i>
+					        </td>
+					    </tr>
+					<?php }  }
+					?>
+				</table>
+			</div>
+		</div>
+	</div>
+
 </div>
 
 <?php require('settings_edit.php'); ?>

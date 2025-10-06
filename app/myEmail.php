@@ -9,6 +9,27 @@ use PHPMailer\PHPMailer\Exception;
 // require_once baseUri() . "PHPMailer/SMTP.php";
 // require_once baseUri() . "PHPMailer/Exception.php";
 
+$get_settings = "SELECT * FROM `sys_settings` WHERE `type` LIKE 'email_config'";
+$settingSet = $GLOBALS['conn']->query($get_settings);
+$settingSet->num_rows;
+if($settingSet->num_rows > 0) {
+	$GLOBALS['MAIL'] = $settingSet->fetch_assoc()['value'];
+    $GLOBALS['MAIL'] = json_decode($GLOBALS['MAIL'], true);
+} else  {
+    $GLOBALS['MAIL'] = [
+        'host'     => 'smtp.gmail.com',
+        'port'     => 587,
+        'username' => 'random.my.gm@gmail.com',
+        'password' => 'esez afrv dnpe nukx', // ⚠️ Use App Password, not Gmail password
+        'secure'   => 'tls',        // 'tls' or 'ssl'
+        'from'     => 'random.my.gm@gmail.com',
+        'fromName' => 'SUPPORT CENTER',
+        'replyTo'  => 'no-reply@yourdomain.com'
+    ];
+}
+
+// var_dump($GLOBALS['MAIL']);
+
 class myEmail {
     private $mailer;
 

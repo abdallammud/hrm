@@ -113,3 +113,71 @@
         </form>
     </div>
 </div>
+
+<!-- Email Config Modal -->
+<div class="modal fade "  id="emailConfigModal" tabindex="-1" role="dialog" aria-labelledby="emailConfigModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document" style="max-width: 600px;">
+    <form class="modal-content" id="emailConfigForm">
+    <div class="modal-header">
+        <h5 class="modal-title">Email Configuration</h5>
+        <button type="button" class="close modal-close" data-bs-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <?php 
+    $email_config = get_setting('email_config');
+    $email_config = json_decode($email_config['value'], true);
+    ?>
+
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label required">SMTP Host</label>
+            <input type="text" class="form-control" name="host" value="<?=$email_config['host'];?>" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label required">SMTP Port</label>
+            <input type="number" class="form-control" name="port" value="<?=$email_config['port'];?>" required>
+          </div>
+
+          <div class="col-md-6 mt-3">
+            <label class="form-label required">Email</label>
+            <input type="email" class="form-control" name="username" value="<?=$email_config['username'];?>" required>
+          </div>
+          <div class="col-md-6 mt-3">
+            <label class="form-label required">Password</label>
+            <input type="password" class="form-control" name="password" value="<?=$email_config['password'];?>" required>
+          </div>
+
+          <div class="col-md-6 mt-3">
+            <label class="form-label required">Security</label>
+            <select class="form-control" name="secure" required>
+              <option value="tls" <?=($email_config['secure'] == 'tls') ? 'selected' : ''?>>TLS</option>
+              <option value="ssl" <?=($email_config['secure'] == 'ssl') ? 'selected' : ''?>>SSL</option>
+            </select>
+          </div>
+
+          <div class="col-md-6 mt-3">
+            <label class="form-label required">From Email</label>
+            <input type="email" class="form-control" name="from" value="<?=$email_config['from'];?>" required>
+          </div>
+
+          <div class="col-md-6 mt-3">
+            <label class="form-label required">From Name</label>
+            <input type="text" class="form-control" name="fromName" value="<?=$email_config['fromName'];?>" required>
+          </div>
+
+          <div class="col-md-6 mt-3">
+            <label class="form-label required">Reply-To Email</label>
+            <input type="email" class="form-control" name="replyTo" value="<?=$email_config['replyTo'];?>" required>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Settings</button>
+      </div>
+    </form>
+  </div>
+</div>
