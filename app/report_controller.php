@@ -382,6 +382,100 @@ if(isset($_GET['action'])) {
 		    } else {
 		        $result['msg'] = "No records found";
 		    }
+		} else if($report == 'payroll') {
+			$month = isset($_POST['month']) ? $_POST['month'] : date('Y-m');
+			$month = date('Y-m', strtotime($month));
+
+			if (isset($_POST['order']) && isset($_POST['order'][0])) {
+			    $orderColumnMap = ['staff_no', 'full_name', 'earnings', 'total_deductions', 'net_salary'];
+			    // var_dump($_POST['order']);
+			    $orderByIndex = (int)$_POST['order'][0]['column'];
+			    $orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
+			    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+			}
+		    // Base query
+		    $query = "SELECT `staff_no`, `full_name`, (`allowance` + `bonus` + `commission`) AS earnings, (`loan` + `advance` + `deductions`) AS total_deductions, (`base_salary` + (`allowance` + `bonus` + `commission`) - (`loan` + `advance` + `deductions`) - `tax`) AS net_salary, base_salary FROM `payroll_details` WHERE `month` LIKE '$month' ";
+
+		    // Add search functionality
+		    if ($searchParam) {
+		        $query .= " AND (`staff_no` LIKE '%" . escapeStr($searchParam) . "%' OR `full_name` LIKE '%" . escapeStr($searchParam) . "%'  )";
+		    }
+
+			// Add ordering
+		    $query .= " ORDER BY `staff_no` $order LIMIT $start, $length";
+
+		    // Execute query
+		    $employees = $GLOBALS['conn']->query($query);
+
+		    // Count total records for pagination
+		    $countQuery = "SELECT COUNT(*) as total FROM `payroll_details` WHERE `month` LIKE '$month'";
+		    if ($searchParam) {
+		        $countQuery .= " AND (`staff_no` LIKE '%" . escapeStr($searchParam) . "%' OR `full_name` LIKE '%" . escapeStr($searchParam) . "%'  )";
+		    }
+
+		    $totalRecordsResult = $GLOBALS['conn']->query($countQuery);
+			if($totalRecordsResult) {
+				$record = $totalRecordsResult->fetch_assoc();
+				$totalRecords = isset($record['total']) ? $record['total'] : 0;
+			}
+
+		    if ($employees->num_rows > 0) {
+		        while ($row = $employees->fetch_assoc()) {
+		            $result['data'][] = $row;
+		        }
+		        $result['iTotalRecords'] = $totalRecords;
+		        $result['iTotalDisplayRecords'] = $totalRecords;
+		        $result['msg'] = $employees->num_rows . " records were found.";
+		    } else {
+		        $result['msg'] = "No records found";
+		    }
+		} else if($report == 'taxation') {
+			$month = isset($_POST['month']) ? $_POST['month'] : date('Y-m');
+			$month = date('Y-m', strtotime($month));
+
+			if (isset($_POST['order']) && isset($_POST['order'][0])) {
+			    $orderColumnMap = ['staff_no', 'full_name', 'earnings', 'total_deductions', 'net_salary'];
+			    // var_dump($_POST['order']);
+			    $orderByIndex = (int)$_POST['order'][0]['column'];
+			    $orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
+			    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+			}
+		    // Base query
+		    $query = "SELECT `staff_no`, `full_name`, (`allowance` + `bonus` + `commission`) AS earnings, (`loan` + `advance` + `deductions`) AS total_deductions, (`base_salary` + (`allowance` + `bonus` + `commission`) - (`loan` + `advance` + `deductions`) - `tax`) AS net_salary, base_salary, tax FROM `payroll_details` WHERE `month` LIKE '$month' ";
+
+		    // Add search functionality
+		    if ($searchParam) {
+		        $query .= " AND (`staff_no` LIKE '%" . escapeStr($searchParam) . "%' OR `full_name` LIKE '%" . escapeStr($searchParam) . "%'  )";
+		    }
+
+			// Add ordering
+		    $query .= " ORDER BY `staff_no` $order LIMIT $start, $length";
+
+		    // Execute query
+		    $employees = $GLOBALS['conn']->query($query);
+
+		    // Count total records for pagination
+		    $countQuery = "SELECT COUNT(*) as total FROM `payroll_details` WHERE `month` LIKE '$month'";
+		    if ($searchParam) {
+		        $countQuery .= " AND (`staff_no` LIKE '%" . escapeStr($searchParam) . "%' OR `full_name` LIKE '%" . escapeStr($searchParam) . "%'  )";
+		    }
+
+		    $totalRecordsResult = $GLOBALS['conn']->query($countQuery);
+			if($totalRecordsResult) {
+				$record = $totalRecordsResult->fetch_assoc();
+				$totalRecords = isset($record['total']) ? $record['total'] : 0;
+			}
+
+		    if ($employees->num_rows > 0) {
+		        while ($row = $employees->fetch_assoc()) {
+		            $result['data'][] = $row;
+		        }
+		        $result['iTotalRecords'] = $totalRecords;
+		        $result['iTotalDisplayRecords'] = $totalRecords;
+		        $result['msg'] = $employees->num_rows . " records were found.";
+		    } else {
+		        $result['msg'] = "No records found";
+		    }
 		}
 
 		echo json_encode($result);

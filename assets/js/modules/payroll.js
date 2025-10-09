@@ -1612,6 +1612,9 @@ async function handleNotificationSubmit(form) {
         status: status // server now handles status + workflow + payroll_details
     };
 
+	// Add form button loading 
+	form_loading(form)
+
 	console.log(formData)
 	// return false;
 

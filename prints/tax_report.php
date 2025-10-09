@@ -39,7 +39,7 @@ if(isset($_GET['report'])) {
     $payroll_id = $result->fetch_assoc()['id'];
 
     $showColumns = [
-        'staff_no' , 'full_name' ,  'gross_salary', 'earnings' , 'deductions' , 'tax' , 'net_salary' 
+        'staff_no' , 'full_name' , 'net_salary' , 'tax' 
     ];
 }
 
@@ -165,7 +165,7 @@ $pdf->Cell(130, 7, $companyInfo['contact_email'], 0, 0, 'R');
 
 $pdf->SetFont('aefurat','B',12);
 $pdf->SetXY(158, 30);
-$pdf->Cell(130, 7, strtoupper($monthName . " payroll report"), 0, 0, 'R');
+$pdf->Cell(130, 7, strtoupper($monthName . " Tax report"), 0, 0, 'R');
 
 $pdf->SetFont('aefurat','',10);
 $pdf->SetXY(158, 36);
@@ -175,36 +175,7 @@ $pdf->SetDrawColor($p0, $p1, $p2);
 $pdf->Line(10, 45, 287, 45);
 $pdf->Ln(15);
 
-// Add mini table for payroll work flow
-$workflow = json_decode($payrollInfo['workflow'] ?? '[]', true) ?: [];
 $yy = 45;
-if(count($workflow) > 0) {
-    $pdf->SetDrawColor(0,0,0);
-    $pdf->SetFont('aefurat','B',12);
-    $pdf->SetXY(9, $yy);
-    $pdf->Cell(278, 7, "Payroll Workflow History", 0, 0, 'L');
-    $yy += 7;
-    $pdf->SetFont('aefurat','',10);
-    $reversed_workflow = array_reverse($workflow);
-    foreach ($reversed_workflow as $step) {
-        $workflowStatus = $step['status'] ?? 'Unknown';
-       
-        $pdf->SetXY(10, $yy);
-        $pdf->Cell(30, 7, "$workflowStatus by", 1, 0, 'L');
-        $action_text = $step['action'] ?? '';
-        $action_parts = explode(' by ', $action_text, 2);
-        $roleName = $GLOBALS['userClass']->get_roleName($step['user_id']);
-        $user_name = isset($action_parts[1]) ? htmlspecialchars($action_parts[1]) : '';
-        if ($user_name) {
-            $pdf->SetXY(40, $yy);
-            $pdf->Cell(130, 7, "$user_name ($roleName) On ". (isset($step['date']) ? date("M d, Y h:i A", strtotime($step['date'])) : ''), 1, 0, 'L');
-        }
-        $yy += 7;
-    }
-}
-
-
-
 $pdf->SetXY(10, $yy + 7);
 // Table header
 $pdf->SetFont('aefurat','B',10);
@@ -214,7 +185,7 @@ $pdf->SetDrawColor(0,0,0);
 
 
 $pageWidth = 278;  // width for A4 landscape content area
-$fullNameWidth = 70;
+$fullNameWidth = 140;
 $remainingColumns = array_diff($showColumns, ['full_name']);
 $remainingWidth = $pageWidth - $fullNameWidth;
 $dynamicWidth = count($remainingColumns) > 0 ? floor($remainingWidth / count($remainingColumns)) : $remainingWidth;
@@ -230,6 +201,7 @@ $pdf->Ln();
 $pdf->SetFont('aefurat','',9);
 $pdf->SetTextColor(0,0,0);
 
+$total_salary = $total_tax = 0;
 // Table Data
 foreach ($data as $row) {
     foreach ($showColumns as $col) {
@@ -246,8 +218,25 @@ foreach ($data as $row) {
             $pdf->Cell($width, 7, $text, 1, 0, 'L');
         }
     }
+
+    $total_tax += $row['tax'];
+    $total_salary += $row['net_salary'];
     $pdf->Ln();
 }
 
-$pdf->Output("$monthName payroll report.pdf","I");
+$pdf->setXY(150, $yy +21);
+$pdf->SetFont('aefurat','B',10);
+$pdf->SetFillColor($p0, $p1, $p2);
+// $pdf->SetTextColor(255,255,255);
+$pdf->SetDrawColor(0,0,0);
+
+// $pdf->Cell($fullNameWidth, 8, 'Total', 1, 0, 'L', true);
+$pdf->Cell($dynamicWidth, 8, "Total", 1, 0, 'L');
+$pdf->Cell($dynamicWidth, 8, function_exists('formatMoney') ? formatMoney($total_salary) : number_format((float)$total_salary,2), 1, 0, 'L');
+$pdf->Cell($dynamicWidth, 8, function_exists('formatMoney') ? formatMoney($total_tax) : number_format((float)$total_tax,2), 1, 0, 'L');
+$pdf->Ln();
+
+
+
+$pdf->Output("$monthName Tax report.pdf","I");
 ?>

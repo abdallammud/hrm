@@ -1,7 +1,7 @@
 <!-- Payroll History Modal -->
 <div class="modal fade" id="payrollHistoryModal" tabindex="-1" aria-labelledby="payrollHistoryModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document" style="width:500px;">
-        <div class="modal-content" id="generatePayrollForm" style="border-radius: 14px 14px 0px 0px; margin-top: -15px;">
+        <div class="modal-content" id="generatePayrollForm" style="border-radius: 14px 14px 0px 0px; margin-top: -15px; width: 700px;">
             <div class="modal-header">
                 <h5 class="modal-title" id="payrollHistoryModalLabel">
                     <i class="bi bi-clock-history"></i> Payroll Workflow History
@@ -12,6 +12,9 @@
             </div>
 
             <div class="modal-body">
+                <div class="alert smt-10 alert-info">
+                    <i class="fa fa-info-circle"></i> Last User notified: <strong><?= $lastUserNotifiedName ?></strong> (<?= $lastUserNotifiedRole ?>)
+                </div>
                 <?php
                 // Show workflow history (most recent first)
                 $reversed_workflow = array_reverse($workflow);
@@ -51,9 +54,10 @@
                         $action_text = $step['action'] ?? '';
                         // If action contains " by X", try to get the user name
                         $action_parts = explode(' by ', $action_text, 2);
+                        $roleName = $GLOBALS['userClass']->get_roleName($step['user_id']);
                         $user_name = isset($action_parts[1]) ? htmlspecialchars($action_parts[1]) : '';
                         if ($user_name) {
-                            echo '      <div class="text-muted">By: ' . $user_name . '</div>';
+                            echo '      <div class="text-muted">By: ' . $user_name . ' (' . $roleName . ')</div>';
                         }
                         echo '    </div>';
                         echo '  </div>';

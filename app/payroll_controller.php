@@ -770,6 +770,8 @@ if(isset($_GET['action'])) {
 						$finished = array_values(array_filter($finished, function ($record) use ($currentUser) {
 							return !isset($record['next_user']) || (string)$record['next_user'] !== $currentUser;
 						}));
+						
+						$workflow = [];
 					}
 			
 					// Append to workflow
@@ -918,6 +920,11 @@ if(isset($_GET['action'])) {
 					$details = $conn->prepare("UPDATE `payroll_details` SET `status`=? WHERE `payroll_id` = ?");
 					$details->bind_param("si", $status, $payroll_id);
 					$details->execute();
+
+					$link = baseUri();
+					// remove /app from last 
+					$link = substr($link, 0, -4);
+					$link .= '/payroll/'.$payroll_id;
 			
 					// Create notification for the next person
 					$notificationData = [
@@ -929,14 +936,11 @@ if(isset($_GET['action'])) {
 						'details' => 'Payroll action required: ' . $status,
 						'message' => $message,
 						'added_by' => $_SESSION['user_id'],
+						'link' => $link
 					];
 					$notificationsClass->create($notificationData);
 
-					$link = baseUri();
-					// remove /app from last 
-					$link = substr($link, 0, -4);
-					$link .= '/payroll/'.$payroll_id;
-
+					// Send email
 					$email = [
 						'to' => $userInfo['email'],
 						'fullname' => $userInfo['full_name'],

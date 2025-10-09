@@ -72,6 +72,12 @@ $canShowApprove = ($_SESSION['approve_payroll'] === 'on') && ($canReReview || !i
 $canShowReject = ($_SESSION['reject_payroll'] === 'on') && ($canReReview || !in_array('Rejected', $myWorkflowStatuses, true)) && !$isCreator;
 
 $columns = get_columns('showpayrollDT', 'show_columns');
+
+// Get last user notified from finished
+$lastUserNotified = end($finished);
+$lastUserNotifiedName = $lastUserNotified ? $GLOBALS['userClass']->get($lastUserNotified['next_user']) : null;
+$lastUserNotifiedName = $lastUserNotifiedName ? $lastUserNotifiedName['full_name'] : '';
+$lastUserNotifiedRole = $lastUserNotified ? $GLOBALS['userClass']->get_roleName($lastUserNotified['next_user']) : null;
 ?>
 <div class="page content header">
     <div class="page-breadcrumb d-sm-flex align-items-center">

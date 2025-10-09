@@ -21,6 +21,8 @@ if(isset($_GET['print'])) {
 		require('prints/componsation.php');
 	} else if($_GET['print'] == 'deductions') {
 		require('prints/deductions.php');
+	} else if($_GET['print'] == 'taxation') {
+		require('prints/tax_report.php');
 	} 
 
 

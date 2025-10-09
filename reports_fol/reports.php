@@ -68,7 +68,33 @@
 						</p>
 					</div>
 				</a>
-			</div>	    
+
+				<a href="<?=baseUri();?>/reports/payroll" class="col-md-12 report col-lg-4 ">
+					<div class="report-inner">
+						<i class="material-icons-outlined icon smr-10">calculate</i>
+						<p>
+							Payroll Report
+							<span class="material-icons-outlined">
+								arrow_right_alt
+							</span>	
+						</p>
+					</div>
+				</a>
+
+				<a href="<?=baseUri();?>/reports/taxation" class="col-md-12 report col-lg-4 ">
+					<div class="report-inner">
+						<i class="material-icons-outlined icon smr-10">margin</i>
+						<p>
+							Taxation Report
+							<span class="material-icons-outlined">
+								arrow_right_alt
+							</span>	
+						</p>
+					</div>
+				</a>
+			</div>	 
+			
+			 
 		</div>
 	</div>
 

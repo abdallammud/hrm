@@ -86,137 +86,137 @@ document.addEventListener("DOMContentLoaded", function() {
     })
 });
 
-async function show_report(e) {
-	e.preventDefault();
-	let form = $(e.target);
-	let report = $(form).find('#slcReport').val();
-	if(!report) {
-		swal('Sorry', 'Please select valid report', 'error');
-		return false;
-	}
-	let month = $(form).find('#slcMonth').val();
+// async function show_report(e) {
+// 	e.preventDefault();
+// 	let form = $(e.target);
+// 	let report = $(form).find('#slcReport').val();
+// 	if(!report) {
+// 		swal('Sorry', 'Please select valid report', 'error');
+// 		return false;
+// 	}
+// 	let month = $(form).find('#slcMonth').val();
 
-	let formData = {report:report}
+// 	let formData = {report:report}
 
-	$('#reportDataTable').html('')
-	$('#reportDataTable thead').remove()
+// 	$('#reportDataTable').html('')
+// 	$('#reportDataTable thead').remove()
 
-	if(report == 'allEmployees') {
-		var datatable = $('#reportDataTable').DataTable({
-			"processing": true,
-			"serverSide": true,
-			"bDestroy": true,
-			// "paging": false,
-			"serverMethod": 'post',
-			"ajax": {
-				"url": `${base_url}/app/report_controller.php?action=report&report=allEmployees`,
-				"method":"POST",
-				"data": {
-		            "report": report
-	            },
-				/*dataFilter: function(data) {
-					console.log(data)
-				}*/
-			}, 
+// 	if(report == 'allEmployees') {
+// 		var datatable = $('#reportDataTable').DataTable({
+// 			"processing": true,
+// 			"serverSide": true,
+// 			"bDestroy": true,
+// 			// "paging": false,
+// 			"serverMethod": 'post',
+// 			"ajax": {
+// 				"url": `${base_url}/app/report_controller.php?action=report&report=allEmployees`,
+// 				"method":"POST",
+// 				"data": {
+// 		            "report": report
+// 	            },
+// 				/*dataFilter: function(data) {
+// 					console.log(data)
+// 				}*/
+// 			}, 
 			
-			columns: [
-				{title: "Staff No.", data: null, render: function(data, type, row) {
-		            return `<div class="flex center-items">
-			            	<span>${row.staff_no}</span>
-			            </div>`;
-		        }},
+// 			columns: [
+// 				{title: "Staff No.", data: null, render: function(data, type, row) {
+// 		            return `<div class="flex center-items">
+// 			            	<span>${row.staff_no}</span>
+// 			            </div>`;
+// 		        }},
 
-		        {title: "Full name", data: null, render: function(data, type, row) {
-		            return `<div>${row.full_name}</div>`;
-		        }},
+// 		        {title: "Full name", data: null, render: function(data, type, row) {
+// 		            return `<div>${row.full_name}</div>`;
+// 		        }},
 
-		        {title: "Phone number", data: null, render: function(data, type, row) {
-		            return `<div>${row.phone_number}</div>`;
-		        }},
+// 		        {title: "Phone number", data: null, render: function(data, type, row) {
+// 		            return `<div>${row.phone_number}</div>`;
+// 		        }},
 
-		       	{title: "Email", data: null, render: function(data, type, row) {
-		            return `<div>
-		            		${row.email}
-		            	</div>`;
-		        }},
+// 		       	{title: "Email", data: null, render: function(data, type, row) {
+// 		            return `<div>
+// 		            		${row.email}
+// 		            	</div>`;
+// 		        }},
 
-		        {title: "Department", data: null, render: function(data, type, row) {
-		            return `<div>${row.branch}</div>`;
-		        }},
+// 		        {title: "Department", data: null, render: function(data, type, row) {
+// 		            return `<div>${row.branch}</div>`;
+// 		        }},
 
-		        {title: "Location", data: null, render: function(data, type, row) {
-		            return `<div>${row.location_name}</div>`;
-		        }},
+// 		        {title: "Location", data: null, render: function(data, type, row) {
+// 		            return `<div>${row.location_name}</div>`;
+// 		        }},
 
-			]
-		})
+// 			]
+// 		})
 
-		let printHref = `${base_url}/pdf.php?print=employees`;
-		$('#printTag').attr('href', printHref)
-	} else if(report == 'attendance') {
-		var datatable = $('#reportDataTable').DataTable({
-			"processing": true,
-			"serverSide": true,
-			"bDestroy": true,
-			// "paging": false,
-			"serverMethod": 'post',
-			"ajax": {
-				"url": `${base_url}/app/report_controller.php?action=report&report=attendance`,
-				"method":"POST",
-				"data": {
-		            "report": report,
-		            "month": month,
-	            },
-				/*dataFilter: function(data) {
-					console.log(data)
-				}*/
-			}, 
+// 		let printHref = `${base_url}/pdf.php?print=employees`;
+// 		$('#printTag').attr('href', printHref)
+// 	} else if(report == 'attendance') {
+// 		var datatable = $('#reportDataTable').DataTable({
+// 			"processing": true,
+// 			"serverSide": true,
+// 			"bDestroy": true,
+// 			// "paging": false,
+// 			"serverMethod": 'post',
+// 			"ajax": {
+// 				"url": `${base_url}/app/report_controller.php?action=report&report=attendance`,
+// 				"method":"POST",
+// 				"data": {
+// 		            "report": report,
+// 		            "month": month,
+// 	            },
+// 				/*dataFilter: function(data) {
+// 					console.log(data)
+// 				}*/
+// 			}, 
 			
-			columns: [
-				{title: "Staff No.", data: null, render: function(data, type, row) {
-		            return `<div class="flex center-items">
-			            	<span>${row.staff_no}</span>
-			            </div>`;
-		        }},
+// 			columns: [
+// 				{title: "Staff No.", data: null, render: function(data, type, row) {
+// 		            return `<div class="flex center-items">
+// 			            	<span>${row.staff_no}</span>
+// 			            </div>`;
+// 		        }},
 
-		        {title: "Full name", data: null, render: function(data, type, row) {
-		            return `<div>${row.full_name}</div>`;
-		        }},
+// 		        {title: "Full name", data: null, render: function(data, type, row) {
+// 		            return `<div>${row.full_name}</div>`;
+// 		        }},
 
-		        {title: "Days worked", data: null, render: function(data, type, row) {
-		            return `<div>${row.worked_days}/${row.required_days}</div>`;
-		        }},
+// 		        {title: "Days worked", data: null, render: function(data, type, row) {
+// 		            return `<div>${row.worked_days}/${row.required_days}</div>`;
+// 		        }},
 
-		        {title: "Paid leave", data: null, render: function(data, type, row) {
-		            return `<div>${row.paid_leave_count}</div>`;
-		        }},
+// 		        {title: "Paid leave", data: null, render: function(data, type, row) {
+// 		            return `<div>${row.paid_leave_count}</div>`;
+// 		        }},
 
-		       	{title: "Un-paid leave", data: null, render: function(data, type, row) {
-		            return `<div>
-		            		${row.unpaid_leave_count}
-		            	</div>`;
-		        }},
+// 		       	{title: "Un-paid leave", data: null, render: function(data, type, row) {
+// 		            return `<div>
+// 		            		${row.unpaid_leave_count}
+// 		            	</div>`;
+// 		        }},
 
-		        {title: "Not hired days", data: null, render: function(data, type, row) {
-		            return `<div>${row.not_hired_count}</div>`;
-		        }},
+// 		        {title: "Not hired days", data: null, render: function(data, type, row) {
+// 		            return `<div>${row.not_hired_count}</div>`;
+// 		        }},
 
-		        {title: "Holidays", data: null, render: function(data, type, row) {
-		            return `<div>${row.holiday_count}</div>`;
-		        }},
+// 		        {title: "Holidays", data: null, render: function(data, type, row) {
+// 		            return `<div>${row.holiday_count}</div>`;
+// 		        }},
 
-			]
-		})
+// 			]
+// 		})
 
-		let printHref = `${base_url}/pdf.php?print=attendance&month=${month}`;
-		$('#printTag').attr('href', printHref)
-	}
+// 		let printHref = `${base_url}/pdf.php?print=attendance&month=${month}`;
+// 		$('#printTag').attr('href', printHref)
+// 	}
 
 	
 	
 
-	return false;
-}
+// 	return false;
+// }
 
 function display_report(filter = false) {
 	let reportPage = $('.page.reportShow');
@@ -458,6 +458,69 @@ function display_report(filter = false) {
 			]
 		});
 		let printHref = `${base_url}/pdf.php?print=deductions&month=${month}`;
+		$('#printTag').attr('href', printHref)
+	} else if(report == 'payroll') {
+		var datatable = $('#reportDataTable').DataTable({
+			"processing": true,
+			"serverSide": true,
+			"bDestroy": true,
+			"serverMethod": 'post',
+			"ajax": {
+				"url": `${base_url}/app/report_controller.php?action=report&report=payroll`,
+				"method":"POST",
+				"data": filterData,
+			},
+			columns: [
+				{title: "Staff No.", data: null, render: function(data, type, row) {
+					return `<div class='flex center-items'><span>${row.staff_no}</span></div>`;
+				}},
+				{title: "Full name", data: null, render: function(data, type, row) {
+					return `<div>${row.full_name}</div>`;
+				}},
+				{title: "Gross Salary", data: null, render: function(data, type, row) {
+					return `<div>${formatMoney(row.base_salary)}</div>`;
+				}},
+				{title: "Earnings", data: null, render: function(data, type, row) {
+					return `<div>${formatMoney(row.earnings)}</div>`;
+				}},
+				{title: "Deductions", data: null, render: function(data, type, row) {
+					return `<div>${formatMoney(row.total_deductions)}</div>`;
+				}},
+				{title: "Net Pay", data: null, render: function(data, type, row) {
+					return `<div>${formatMoney(row.net_salary)}</div>`;
+				}},
+			]
+		});
+		let printHref = `${base_url}/pdf.php?report=reports&print=payroll&month=${month}&state=${state}&department=${department}&location=${location}&salary=${salary}&salary_up=${salary_up}`;
+		$('#printTag').attr('href', printHref)
+	} else if(report == 'taxation') {
+		var datatable = $('#reportDataTable').DataTable({
+			"processing": true,
+			"serverSide": true,
+			"bDestroy": true,
+			"serverMethod": 'post',
+			"ajax": {
+				"url": `${base_url}/app/report_controller.php?action=report&report=taxation`,
+				"method":"POST",
+				"data": filterData,
+			},
+			columns: [
+				{title: "Staff No.", data: null, render: function(data, type, row) {
+					return `<div class='flex center-items'><span>${row.staff_no}</span></div>`;
+				}},
+				{title: "Full name", data: null, render: function(data, type, row) {
+					return `<div>${row.full_name}</div>`;
+				}},
+				{title: "Net Pay", data: null, render: function(data, type, row) {
+					return `<div>${formatMoney(row.net_salary)}</div>`;
+				}},
+
+				{title: "Tax", data: null, render: function(data, type, row) {
+					return `<div>${formatMoney(row.tax)}</div>`;
+				}}
+			]
+		});
+		let printHref = `${base_url}/pdf.php?report=reports&print=taxation&month=${month}&state=${state}&department=${department}&location=${location}&salary=${salary}&salary_up=${salary_up}`;
 		$('#printTag').attr('href', printHref)
 	}
 }

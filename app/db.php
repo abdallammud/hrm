@@ -1,9 +1,9 @@
 <?php 
 
-$servername = "localhost";
-$username   = "root";
-$password   = "";
-$db = "hrm_app";
+// $servername = "localhost";
+// $username   = "root";
+// $password   = "";
+// $db = "test_edurdur";
 
 $servername = "localhost";
 $username   = "u138037914_hrm";

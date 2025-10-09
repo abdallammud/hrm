@@ -103,10 +103,14 @@ if ($user_id > 0) {
 							while ($row = $result->fetch_assoc()) {
 								$priority = getPriorityIcon($row['priority']);
 								$dateLabel = formatRelativeDate($row['added_date']);
+								// $row['link'] = '';
+								// if($row['subject'] == 'Payroll Notification'){
+								// 	$row['link'] = baseUri() . '/payroll/';
+								// }
 								?>
 
 								<div data-id="<?php echo $row['id']; ?>">
-									<a class="dropdown-item border-bottom py-2" href="javascript:;">
+									<a class="dropdown-item border-bottom py-2" target="_blank" href="<?=$row['link'];?>">
 										<div class="d-flex align-items-center gap-3">
 											<div class="">
 												<i class="bi bi-bell" style="color:<?php echo $priority['color']; ?>; font-size: 28px;">
