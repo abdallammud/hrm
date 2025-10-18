@@ -228,3 +228,12 @@ function downloadCSV(data, filename = "data.csv") {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 }
+
+function addPrefixToNumber(num, targetLength) {
+  // Convert the number to a string
+  let numString = String(num);
+
+  // Use String.prototype.padStart() to add leading zeros
+  // until the string reaches the targetLength.
+  return numString.padStart(targetLength, '0');
+}

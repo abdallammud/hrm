@@ -812,7 +812,7 @@ if(isset($_GET['action'])) {
 
 					check_auth('edit_leave');
 					if($post['status'] == 'Approved') {
-						check_auth('approve_leaves');
+						// check_auth('approve_leaves');
 					}
 
 					// Call the create method

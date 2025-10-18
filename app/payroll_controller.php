@@ -218,6 +218,8 @@ if(isset($_GET['action'])) {
 				    			$get_employees .= " AND `branch_id` = '$ref_id'";
 				    		} else if($post['ref'] == 'Location') {
 				    			$get_employees .= " AND `location_id` = '$ref_id'";
+				    		} else if($post['ref'] == 'State') {
+				    			$get_employees .= " AND `state_id` = '$ref_id'";
 				    		}
 
 				    		$empSet = $GLOBALS['conn']->query($get_employees);
@@ -512,7 +514,6 @@ if(isset($_GET['action'])) {
 				exit();
 			}
 			
-
 			exit();
 		} 
 
@@ -940,7 +941,7 @@ if(isset($_GET['action'])) {
 					];
 					$notificationsClass->create($notificationData);
 
-					// Send email
+					// Send email	
 					$email = [
 						'to' => $userInfo['email'],
 						'fullname' => $userInfo['full_name'],
@@ -1781,6 +1782,38 @@ if(isset($_GET['action'])) {
 
 				$response['options'] = $options;
 				echo json_encode($response); exit();
+			} else if ($_GET['endpoint'] === 'state4Select') {
+				$searchFor = isset($_POST['searchFor']) ? $_POST['searchFor'] : '';
+				$search = isset($_POST['search']) ? $_POST['search'] : '';
+
+				$options = '';
+				$response = [];
+				$response['error'] = true;
+				if($search) {
+					$query = "SELECT * FROM `states` WHERE `status` = 'active' AND (`name` LIKE '$search%' ) ORDER BY `name` ASC LIMIT 10";
+                    $stateSet = $GLOBALS['conn']->query($query);
+                    if($stateSet->num_rows > 0) {
+                    	while($row = $stateSet->fetch_assoc()) {
+                    		$id = $row['id'];
+                    		$name = $row['name'];
+                    		$options .=  '<option value="'.$id.'">'.$name.'</option>';
+                    		$response['error'] = false;
+                    	}
+                    } 
+				} else {
+					$query = "SELECT * FROM `states` WHERE `status` = 'active' ORDER BY `name` ASC LIMIT 10";
+                    $stateSet = $GLOBALS['conn']->query($query);
+                    if($stateSet->num_rows > 0) {
+                    	while($row = $stateSet->fetch_assoc()) {
+                    		$id = $row['id'];
+                    		$name = $row['name'];
+                    		$options .=  '<option value="'.$id.'">'.$name.'</option>';
+                    	}
+                    } 
+				}
+
+				$response['options'] = $options;
+				echo json_encode($response); exit();
 			} else if ($_GET['endpoint'] === 'trans_for') {
 				$data = '';
 				if($_POST['transFor'] == 'Employee') {
@@ -1821,6 +1854,21 @@ if(isset($_GET['action'])) {
                         $locationSet = $GLOBALS['conn']->query($query);
                         if($locationSet->num_rows > 0) {
                         	while($row = $locationSet->fetch_assoc()) {
+                        		$id = $row['id'];
+                        		$name = $row['name'];
+
+                        		$data .= '<option value="'.$id.'">'.$name.'</option>';
+                        	}
+                        } 
+                        
+			       $data .= '</select>';
+				} else if($_POST['transFor'] == 'State') {
+					$data = '<label class="label required" for="searchState">State</label>
+                        <select class="my-select searchState" name="searchState" id="searchState" data-live-search="true" title="Search and select state">';
+                        $query = "SELECT * FROM `states` WHERE `status` = 'active' ORDER BY `name` ASC LIMIT 10";
+                        $stateSet = $GLOBALS['conn']->query($query);
+                        if($stateSet->num_rows > 0) {
+                        	while($row = $stateSet->fetch_assoc()) {
                         		$id = $row['id'];
                         		$name = $row['name'];
 

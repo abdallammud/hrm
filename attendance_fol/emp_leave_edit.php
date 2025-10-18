@@ -58,9 +58,9 @@
                                 <label class="label required" for="slcStatus">Status</label>
                                 <select  class="form-control " id="slcStatus" name="slcStatus">
                                     <option value="Request">Request</option>
-                                    <?php if(check_session('approve_leaves')) { ?>
+                                    <?php //if(check_session('approve_leaves')) { ?>
                                     	<option value="Approved">Approve</option>
-                                    <?php } ?>
+                                    <?php //} ?>
                                     <option value="Cancelled">Cancel</option>
                                 </select>
                                 <span class="form-error text-danger">This is error</span>

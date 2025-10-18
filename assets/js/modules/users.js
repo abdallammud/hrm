@@ -117,20 +117,25 @@ async function editUserModal(id) {
 }
 document.addEventListener("DOMContentLoaded", function() {
 	load_users();
-	$('#checkAll').on('change', (e) => {
+	$(document).on('change', '#checkAll', (e) => {
 		if($(e.target).is(':checked')) {
-			$('input.user_permission').attr('checked', true)
-			$('input.user_permission').prop('checked', true)
+			$('input.role_permission').attr('checked', true)
+			$('input.role_permission').prop('checked', true)
+
+			$('input.module').attr('checked', true)
+			$('input.module').prop('checked', true)
 		} else {
-			$('input.user_permission').attr('checked', false)
-			$('input.user_permission').prop('checked', false)
+			$('input.role_permission').attr('checked', false)
+			$('input.role_permission').prop('checked', false)
+
+			$('input.module').attr('checked', false)
+			$('input.module').prop('checked', false)
 		}
 	})
 
-	
-	$('input.user_permission').on('change', (e) => {
+	$(document).on('change', '.role_permission', (e) => {
 		let checkAll = true;
-		$('input.user_permission').each((i, el) => {
+		$('.role_permission').each((i, el) => {
 			if($(el).is(':checked')) {
 				// checkAll = true;
 			} else {checkAll  = false}
@@ -253,63 +258,67 @@ async function handle_addUserForm(form) {
 
 async function handle_editUserForm(form) {
 	clearErrors();
+
 	let full_name 	= $(form).find('#full_name4Edit').val();
-    let phone 		= $(form).find('#phone4Edit').val();
-    let email 		= $(form).find('#email4Edit').val();
-    let username 		= $(form).find('#username4Edit').val();
-    let sysRole 		= $(form).find('#sysRole4Edit').val();
-	let user_id 		= $(form).find('#userId4Edit').val();
-    let slcStatus 		= $(form).find('#slcStatus').val();
-	let reportsTo 		= $(form).find('#reportsTo').val();
+	let phone 		= $(form).find('#phone4Edit').val();
+	let email 		= $(form).find('#email4Edit').val();
+	let username 	= $(form).find('#username4Edit').val();
+	let sysRole 	= $(form).find('#sysRole4Edit').val();
+	let user_id 	= $(form).find('#userId4Edit').val();
+	let slcStatus 	= $(form).find('#slcStatus').val();
+	let reportsTo 	= $(form).find('#reportsTo').val();
+	let signature 	= $(form).find('#signature4Edit')[0]?.files[0] || null;
 
-    // return false;
-
-
-    // Input validation
-    let error = false;
-    error = !validateField(full_name, `Full name is required`, 'full_name') || error;
-    error = !validateField(username, `Username is required`, 'username') || error;
+	// Validate input
+	let error = false;
+	error = !validateField(full_name, `Full name is required`, 'full_name') || error;
+	error = !validateField(username, `Username is required`, 'username') || error;
 	error = !validateField(sysRole, `Please select user role`, 'sysRole') || error;
-    // error = !validateField(systemRole, `Please select user role`, 'systemRole') || error;
 
-    if (error) return false;
+	if (error) return false;
 
-    let formData = {
-        full_name: full_name,
-        phone:phone,
-        email:email,
-        username: username,
-        sysRole: sysRole,
-        user_id:user_id,
-        slcStatus:slcStatus,
-		reportsTo:reportsTo
-    };
+	let formData = new FormData();
+	formData.append('full_name', full_name);
+	formData.append('phone', phone);
+	formData.append('email', email);
+	formData.append('username', username);
+	formData.append('sysRole', sysRole);
+	formData.append('user_id', user_id);
+	formData.append('slcStatus', slcStatus);
+	formData.append('reportsTo', reportsTo);
 
-    try {
-        let response = await send_userPost('update user', formData);
-        console.log(response)
+	if (signature) {
+		formData.append('signature', signature);
+	}
 
-        if (response) {
-            let res = JSON.parse(response)
-            if(res.error) {
-            	toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
-            } else {
-            	toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration:2000 }).then(() => {
-            	}).then((e) => {
-            		window.location = `${base_url}/users`;
-            	});
-            	console.log(res)
-            }
-        } else {
-            console.log('Failed to save user.' + response);
-        }
+	try {
+		let response = await $.ajax({
+			url: `${base_url}/app/users_controller.php?action=update&endpoint=user`,
+			type: 'POST',
+			data: formData,
+			processData: false,
+			contentType: false,
+			cache: false,
+		});
 
-    } catch (err) {
-        console.error('Error occurred during form submission:', err);
-    }
+		if (response) {
+			let res = JSON.parse(response);
+			if (res.error) {
+				toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
+			} else {
+				toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 2000 })
+					.then(() => window.location = `${base_url}/users`);
+			}
+		} else {
+			console.log('Failed to save user.' + response);
+		}
+	} catch (err) {
+		console.error('Error occurred during form submission:', err);
+	}
 
-    return false
+	return false;
 }
+
 
 async function handle_changePasswordForm(form) {
 	let newPassword =  $(form).find('#newPassword').val();

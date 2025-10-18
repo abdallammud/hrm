@@ -1339,6 +1339,10 @@ async function handle_generatePayrollForm(form) {
 	    	ref_id = $(form).find('#searchEmployee').val();
 	    	ref_name = $(form).find('#searchEmployee option:selected').text();
 	    	err_mgs = 'employee';
+	    } else if(transFor == 'State') {
+	    	ref_id = $(form).find('#searchState').val();
+	    	ref_name = $(form).find('#searchState option:selected').text();
+	    	err_mgs = 'state';
 	    }
 	}
 
@@ -1445,7 +1449,7 @@ document.addEventListener("DOMContentLoaded", function() {
     	let formData = {search:search, searchFor:searchFor}
 		if(search) {
 			try {
-		        let response = await send_attendancePost('search location4Select', formData);
+		        let response = await send_payrollPost('search location4Select', formData);
 		        console.log(response)
 		        let res = JSON.parse(response);
 		        if(!res.error) {
@@ -1457,6 +1461,27 @@ document.addEventListener("DOMContentLoaded", function() {
 		    }
 		}
     })
+
+	// Search location
+    $(document).on('keyup', '.bootstrap-select.searchState input.form-control', async (e) => {
+    	let search = $(e.target).val();
+    	let searchFor = 'leave';
+    	let formData = {search:search, searchFor:searchFor}
+		if(search) {
+			try {
+		        let response = await send_payrollPost('search state4Select', formData);
+		        console.log(response)
+		        let res = JSON.parse(response);
+		        if(!res.error) {
+					$('#searchState').html(res.options)
+					$('.my-select').selectpicker('refresh');
+				} 
+		    } catch (err) {
+		        console.error('Error occurred during form submission:', err);
+		    }
+		}
+    })
+
 
 
 	// Payroll - Next Action Change Handler

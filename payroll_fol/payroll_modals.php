@@ -12,12 +12,16 @@
             </div>
 
             <div class="modal-body">
+                <?php
+                if($lastUserNotifiedName) {
+                ?>
                 <div class="alert smt-10 alert-info">
                     <i class="fa fa-info-circle"></i> Last User notified: <strong><?= $lastUserNotifiedName ?></strong> (<?= $lastUserNotifiedRole ?>)
                 </div>
                 <?php
+                }
                 // Show workflow history (most recent first)
-                $reversed_workflow = array_reverse($workflow);
+                $reversed_workflow = $workflow;
                 if (empty($reversed_workflow)) {
                     echo '<div class="text-muted">No workflow history available.</div>';
                 } else {
@@ -61,7 +65,7 @@
                         }
                         echo '    </div>';
                         echo '  </div>';
-                        echo '  <span class="text-dark align-self-center">' . (isset($step['date']) ? date("M d, Y h:i A", strtotime($step['date'])) : '') . '</span>';
+                        echo '  <span class=" align-self-center">' . (isset($step['date']) ? date("M d, Y h:i A", strtotime($step['date'])) : '') . '</span>';
                         echo '</li>';
                     }
                     echo '</ul>';

@@ -103,63 +103,87 @@ if(isset($_GET['action'])) {
 		// Update data
 		else if($_GET['action'] == 'update') {
 			$updated_date = date('Y-m-d H:i:s');
-			if($_GET['endpoint'] == 'user') {
-				
+			if ($_GET['endpoint'] == 'user') {
 				try {
-				    // Begin a transaction
-				    $GLOBALS['conn']->begin_transaction();
+					$GLOBALS['conn']->begin_transaction();
 
-					check_auth('edit_users'); 
+					check_auth('edit_users');
 
-				    // Prepare data from POST request (escaping input)
-				    $full_name 		= escapeStr($_POST['full_name'] ?? "");
-				    $phone 			= escapeStr($_POST['phone'] ?? "");
-				    $email 			= escapeStr($_POST['email'] ?? "");
-				    $user_id 		= escapeStr($_POST['user_id'] ?? null);
-				    $employee_id 	= escapeStr($_POST['employee_id'] ?? null);
-				    $username 		= escapeStr($_POST['username'] ?? null);
-				    $sysRole 		= escapeStr($_POST['sysRole'] ?? null);
-				    $slcStatus 		= escapeStr($_POST['slcStatus'] ?? 'Active');
+					$full_name 		= escapeStr($_POST['full_name'] ?? "");
+					$phone 			= escapeStr($_POST['phone'] ?? "");
+					$email 			= escapeStr($_POST['email'] ?? "");
+					$user_id 		= escapeStr($_POST['user_id'] ?? null);
+					$employee_id 	= escapeStr($_POST['employee_id'] ?? null);
+					$username 		= escapeStr($_POST['username'] ?? null);
+					$sysRole 		= escapeStr($_POST['sysRole'] ?? null);
+					$slcStatus 		= escapeStr($_POST['slcStatus'] ?? 'Active');
 					$reportsTo 		= $_POST['reportsTo'] ?? [];
 
 					$employee_id = $branch_id = 0;
 
-			    	$data = array(
-				        'full_name' => $full_name,
-				        'phone'   	=> $phone,
-				        'email'     => $email,
-				        'emp_id'    => $employee_id,
-				        'branch_id'     => $branch_id,
-				        'username'  	=> $username,
-				        'role'     		=> $sysRole,
-				        'status'     	=> $slcStatus,
-				        'updated_by'      => $_SESSION['user_id'],
-				        'updated_date' => $updated_date,
-				        'reports_to' => json_encode($reportsTo)
-				    );
+					$uploadDir = '../assets/docs/signature/';
+					if (!is_dir($uploadDir)) {
+						mkdir($uploadDir, 0777, true);
+					}
 
-				    $updateUser = $userClass->update($user_id, $data);
-				    // exit();
+					$signaturePath = null;
 
-				    $GLOBALS['conn']->commit();
+					// Handle file upload if present
+					if (isset($_FILES['signature']) && $_FILES['signature']['error'] === UPLOAD_ERR_OK) {
+						$fileTmpPath = $_FILES['signature']['tmp_name'];
+						$fileName = basename($_FILES['signature']['name']);
+						$fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
-			        // Return success response
-			        $result['msg'] = 'User updated successfully';
-			        $result['error'] = false;
-				   
+						$allowedExts = ['png', 'jpg', 'jpeg', 'gif'];
+						if (in_array($fileExt, $allowedExts)) {
+							$newFileName = 'sign_' . time() . '_' . $user_id . '.' . $fileExt;
+							$destPath = $uploadDir . $newFileName;
+
+							if (move_uploaded_file($fileTmpPath, $destPath)) {
+								$signaturePath = $newFileName;
+							} else {
+								throw new Exception('Failed to move uploaded file.');
+							}
+						} else {
+							throw new Exception('Invalid file type. Only JPG, PNG, and GIF allowed.');
+						}
+					}
+
+					$data = [
+						'full_name'    => $full_name,
+						'phone'        => $phone,
+						'email'        => $email,
+						'emp_id'       => $employee_id,
+						'branch_id'    => $branch_id,
+						'username'     => $username,
+						'role'         => $sysRole,
+						'status'       => $slcStatus,
+						'updated_by'   => $_SESSION['user_id'],
+						'updated_date' => $updated_date,
+						'reports_to'   => json_encode($reportsTo)
+					];
+
+					// Add signature path if uploaded
+					if ($signaturePath) {
+						$data['signature'] = $signaturePath;
+					}
+
+					$updateUser = $userClass->update($user_id, $data);
+
+					$GLOBALS['conn']->commit();
+
+					$result['msg'] = 'User updated successfully';
+					$result['error'] = false;
+
 				} catch (Exception $e) {
-				    // If any exception occurs, rollback the transaction
-				    $GLOBALS['conn']->rollback();
-
-				    // Return error response
-				    $result['msg'] = 'Error: Something went wrong';
-				    $result['sql_error'] = $e->getMessage(); // Get the error message from the exception
-				    $result['error'] = true;
+					$GLOBALS['conn']->rollback();
+					$result['msg'] = 'Error: Something went wrong';
+					$result['sql_error'] = $e->getMessage();
+					$result['error'] = true;
 				}
 
-				// Return the result as a JSON response
 				echo json_encode($result);
-			} else if($_GET['endpoint'] == 'role') {
+			}  else if($_GET['endpoint'] == 'role') {
 				$result = [];
 				try {
 				    // Begin a transaction
@@ -427,6 +451,10 @@ if(isset($_GET['action'])) {
 					</div>
 			
 					<h6 class="mt-3">Assign permission to this role</h6>
+					<div class="form-check smt-15 mb-2">
+						<input class="form-check-input module" type="checkbox" id="checkAll">
+						<label class="form-check-label fw-bold" for="checkAll">Check All</label>
+					</div>
 					<hr>
 			
 					<div class="permissions-list">
@@ -456,7 +484,7 @@ if(isset($_GET['action'])) {
 					foreach ($actions as $action_name => $action_code) {
 						$data .= '
 							<div class="form-check me-3">
-								<input class="form-check-input action '.$module_id.'" 
+								<input class="form-check-input role_permission action '.$module_id.'" 
 									data-module="'.$module_id.'" 
 									type="checkbox" 
 									id="'.$action_code->code.'4Edit"

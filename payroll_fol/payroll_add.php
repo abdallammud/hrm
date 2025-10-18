@@ -17,6 +17,7 @@
                                     <option value="All"> All</option>
                                     <option value="Department"> Department</option>
                                     <option value="Location"> Duty Location</option>
+                                    <option value="State"> State</option>
                                 </select>
                                 <span class="form-error text-danger">This is error</span>
                             </div>

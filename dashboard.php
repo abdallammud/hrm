@@ -6,7 +6,7 @@
             <ol class="breadcrumb mb-0 p-0">
               <li class="breadcrumb-item"><a href="javascript:;"><i class="bx bx-home-alt"></i></a>
               </li>
-              <li class="breadcrumb-item active" aria-current="page">Payroll</li>
+              <!-- <li class="breadcrumb-item active" aria-current="page">HRM Dashboard</li> -->
             </ol>
           </nav>
         </div>
@@ -15,211 +15,151 @@
       <!--end breadcrumb-->
 
 
-      <div class="row">
-        
+    <div class="row dashboard-cards">
+
         <div class="col-12 col-lg-3 col-xxl-3 d-flex">
-          <div class="card rounded-4 w-100">
+            <div class="card rounded-4 w-100 card-1">
             <div class="card-body">
-              <div class="mb-3 d-flex align-items-center justify-content-between">
-                <div
-                  class="wh-42 d-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary">
-                  <span class="material-icons-outlined fs-5">account_balance_wallet</span>
+                <div class="mb-3 d-flex align-items-center justify-content-between">
+                <div class="wh-42 icon-circle bg-primary text-white">
+                    <span class="bi bi-people"></span>
+                </div>
                 </div>
                 <div>
-                  <!-- <span class="text-success d-flex align-items-center">+24%<i
-                      class="material-icons-outlined">expand_less</i></span> -->
+                <h4 class="mb-0 total_employees">00</h4>
+                <p class="mb-3">Total Employees</p>
                 </div>
-              </div>
-              <div>
-                <h4 class="mb-0 company_balance">$00</h4>
-                <p class="mb-3">Operational Funds</p>
-                <div id="chart1"></div>
-              </div>
             </div>
-          </div>
-        </div>
-        <div class="col-12 col-lg-3 col-xxl-3 d-flex">
-          <div class="card rounded-4 w-100">
-            <div class="card-body">
-              <div class="mb-3 d-flex align-items-center justify-content-between">
-                <div
-                  class="wh-42 d-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10 text-success">
-                  <span class="material-icons-outlined fs-5">attach_money</span>
-                </div>
-                <div>
-                  <!-- <span class="text-success d-flex align-items-center">+14%<i
-                      class="material-icons-outlined">expand_less</i></span> -->
-                </div>
-              </div>
-              <div>
-                <h4 class="mb-0 total_expenses">$00</h4>
-                <p class="mb-3">Expenses</p>
-                <div id="chart2"></div>
-              </div>
             </div>
-          </div>
-        </div>
-        <div class="col-12 col-lg-3 col-xxl-3 d-flex">
-          <div class="card rounded-4 w-100">
-            <div class="card-body">
-              <div class="mb-3 d-flex align-items-center justify-content-between">
-                <div
-                  class="wh-42 d-flex align-items-center justify-content-center rounded-circle bg-info bg-opacity-10 text-info">
-                  <span class="material-icons-outlined fs-5">payments</span>
-                </div>
-                <div>
-                  <!-- <span class="text-danger d-flex align-items-center">-35%<i
-                      class="material-icons-outlined">expand_less</i></span> -->
-                </div>
-              </div>
-              <div>
-                <h4 class="mb-0 upcoming_salary">$00</h4>
-                <p class="mb-3">Pending Approvals</p>
-                <div id="chart3"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-12 col-lg-3 col-xxl-3 d-flex">
-          <div class="card rounded-4 w-100">
-            <div class="card-body">
-              <div class="mb-3 d-flex align-items-center justify-content-between">
-                <div
-                  class="wh-42 d-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-10 text-warning">
-                  <span class="material-icons-outlined fs-5">calendar_month</span>
-                </div>
-                <div>
-                  <!-- <span class="text-success d-flex align-items-center">+18%<i
-                      class="material-icons-outlined">expand_less</i></span> -->
-                </div>
-              </div>
-              <div>
-                <h4 class="mb-0 coming_date"><?=date('F d, Y');?></h4>
-                <p class="mb-3">Next Payroll Run</p>
-                <div id="chart4"></div>
-              </div>
-            </div>
-          </div>
         </div>
 
-      </div><!--end row-->
+        <div class="col-12 col-lg-3 col-xxl-3 d-flex">
+            <div class="card rounded-4 w-100 card-2">
+            <div class="card-body">
+                <div class="mb-3 d-flex align-items-center justify-content-between">
+                <div class="wh-42 icon-circle bg-success text-white">
+                    <span class="bi bi-person-plus"></span>
+                </div>
+                </div>
+                <div>
+                <h4 class="mb-0 total_new_employees">00</h4>
+                <p class="mb-3">New Employees</p>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <!-- <div class="col-12 col-lg-2 col-xxl-2 d-flex">
+            <div class="card rounded-4 w-100 card-3">
+            <div class="card-body">
+                <div class="mb-3 d-flex align-items-center justify-content-between">
+                <div class="wh-42 icon-circle bg-info text-white">
+                    <span class="bi bi-ticket"></span>
+                </div>
+                </div>
+                <div>
+                <h4 class="mb-0 on_leave">00</h4>
+                <p class="mb-3">Employees on Leave</p>
+                </div>
+            </div>
+            </div>
+        </div> -->
+
+        <div class="col-12 col-lg-3 col-xxl-3 d-flex">
+            <div class="card rounded-4 w-100 card-4">
+            <div class="card-body">
+                <div class="mb-3 d-flex align-items-center justify-content-between">
+                <div class="wh-42 icon-circle bg-warning text-white">
+                    <span class="bi bi-cash-stack"></span>
+                </div>
+                </div>
+                <div>
+                <h4 class="mb-0 operational_funds">$00</h4>
+                <p class="mb-3">Operational Funds</p>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-3 col-xxl-3 d-flex">
+            <div class="card rounded-4 w-100 card-6">
+            <div class="card-body">
+                <div class="mb-3 d-flex align-items-center justify-content-between">
+                <div class="wh-42 icon-circle bg-purple text-white">
+                    <span class="bi bi-wallet2"></span>
+                </div>
+                </div>
+                <div>
+                <h4 class="mb-0 this_month_salary">$00</h4>
+                <p class="mb-3">This Month Salary</p>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <!-- <div class="col-12 col-lg-2 col-xxl-2 d-flex">
+            <div class="card rounded-4 w-100 card-6">
+            <div class="card-body">
+                <div class="mb-3 d-flex align-items-center justify-content-between">
+                <div class="wh-42 icon-circle bg-purple text-white">
+                    <span class="bi bi-credit-card"></span>
+                </div>
+                </div>
+                <div>
+                <h4 class="mb-0 expenses">$00</h4>
+                <p class="mb-3">Expenses</p>
+                </div>
+            </div>
+            </div>
+        </div> -->
+
+    </div><!--end row-->
 
 
       <div class="row">
         <div class="col-12 col-xl-4">
-          <div class="card w-100 rounded-4">
-            <div class="card-body">
-              <div class="d-flex flex-column gap-3">
-                <div class="d-flex align-items-start justify-content-between">
-                  <div class="">
-                    <h5 class="mb-0">Employment Status</h5>
-                  </div>
-                  <!-- <div class="dropdown">
-                    <a href="javascript:;" class="dropdown-toggle-nocaret options dropdown-toggle"
-                      data-bs-toggle="dropdown">
-                      <span class="material-icons-outlined fs-5">more_vert</span>
-                    </a>
-                    <ul class="dropdown-menu">
-                      <li><a class="dropdown-item" href="javascript:;">Action</a></li>
-                      <li><a class="dropdown-item" href="javascript:;">Another action</a></li>
-                      <li><a class="dropdown-item" href="javascript:;">Something else here</a></li>
-                    </ul>
-                  </div> -->
+            <div class="card rounded-4 gender-chart-card">
+                <div class="card-body text-center">
+                    <h5 class="chart-title mb-3">Employee Gender Distribution</h5>
+                    <div class="chart-container">
+                    <canvas id="employeeGenderChart"></canvas>
+                    </div>
                 </div>
-                
-                <div class="d-flex flex-column gap-3">
-                  <?php 
-                  $totalEmployeesQuery = "SELECT COUNT(*) AS total_employees FROM employees";
-                  $totalResult = $GLOBALS['conn']->query($totalEmployeesQuery);
-                  $totalEmployees = $totalResult->fetch_assoc()['total_employees'];
-
-                  ?>
-                  <div class="d-flex align-items-center justify-content-between">
-                    <p class="mb-0 d-flex align-items-center gap-2 w-40"><span
-                        class="material-icons-outlined fs-6 text-primary">fiber_manual_record</span>Total Employees</p>
-                    <div class="">
-                      <p class="mb-0"><?=$totalEmployees;?></p>
-                    </div>
-                  </div>
-                  <?php 
-                  $contractTypesQuery = "SELECT ct.`name` AS 'contract_type', COUNT(e.`employee_id`) AS 'employee_count' FROM `contract_types` ct LEFT JOIN `employees` e ON e.`contract_type` = ct.`name` GROUP BY ct.`id`";
-                  $result = $GLOBALS['conn']->query($contractTypesQuery);
-                  while ($row = $result->fetch_assoc()) {
-                    $contractType = $row['contract_type'];
-                    $employeeCount = $row['employee_count'];
-                    $percentage = $totalEmployees > 0 ? round(($employeeCount / $totalEmployees) * 100, 2) : 0;
-
-                  ?>
-                  <div class="d-flex sflex border p-3 rounded-4 align-items-center justify-content-between">
-                    <p class="mb-0 d-flex align-items-center gap-2 sflex-basis-40"><span
-                        class="material-icons-outlined fs-6  text-primary">fiber_manual_record</span><?=$contractType;?></p>
-                    <div class=" sflex-basis-20">
-                      <p class="mb-0 " style="text-align: right;"><?=$employeeCount;?></p>
-                    </div>
-
-                    <div class="sflex-basis-20">
-                      <p class="mb-0 w-20" style="text-align: right;"><?=$percentage;?>%</p>
-                    </div>
-                  </div>
-                <?php } ?>
-                  
-                </div>
-              </div>
             </div>
-          </div>
         </div>
-        <div class="col-12 col-xl-8">
-          <div class="card w-100 rounded-4">
-            <div class="card-body" style="height: 343px;">
-              <div class="d-flex align-items-start justify-content-between mb-3">
-                <div class="">
-                  <h5 class="mb-0">Monthly salary</h5>
+
+        <div class="col-12 col-xl-4">
+            <div class="card rounded-4 gender-chart-card">
+                <div class="card-body text-center">
+                    <h5 class="chart-title mb-3">Employee Department Distribution</h5>
+                    <div class="d-flex align-items-start justify-content-between">
+                    <div class="">
+                        <h5 class="mb-0"></h5>
+                    </div>
+                    
                 </div>
-                <!-- <div class="dropdown">
-                  <a href="javascript:;" class="dropdown-toggle-nocaret options dropdown-toggle"
-                    data-bs-toggle="dropdown">
-                    <span class="material-icons-outlined fs-5">more_vert</span>
-                  </a>
-                  <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="javascript:;">Action</a></li>
-                    <li><a class="dropdown-item" href="javascript:;">Another action</a></li>
-                    <li><a class="dropdown-item" href="javascript:;">Something else here</a></li>
-                  </ul>
-                </div> -->
-              </div>
-              <div id="chart5"></div>
-              <!-- <div
-                class="d-flex flex-column flex-lg-row align-items-start justify-content-around border p-3 rounded-4 mt-3 gap-3">
-                <div class="d-flex align-items-center gap-4">
-                  <div class="">
-                    <p class="mb-0 data-attributes">
-                      <span
-                        data-peity='{ "fill": ["#2196f3", "rgb(255 255 255 / 12%)"], "innerRadius": 32, "radius": 40 }'>5/7</span>
-                    </p>
-                  </div>
-                  <div class="">
-                    <p class="mb-1 fs-6 fw-bold">Monthly</p>
-                    <h2 class="mb-0">65,127</h2>
-                    <p class="mb-0"><span class="text-success me-2 fw-medium">16.5%</span><span>55.21 USD</span></p>
-                  </div>
+                    <div class="chart-container">
+                    <canvas id="employeeDepartmentChart"></canvas>
+                    </div>
                 </div>
-                <div class="vr"></div>
-                <div class="d-flex align-items-center gap-4">
-                  <div class="">
-                    <p class="mb-0 data-attributes">
-                      <span
-                        data-peity='{ "fill": ["#ffd200", "rgb(255 255 255 / 12%)"], "innerRadius": 32, "radius": 40 }'>5/7</span>
-                    </p>
-                  </div>
-                  <div class="">
-                    <p class="mb-1 fs-6 fw-bold">Yearly</p>
-                    <h2 class="mb-0">984,246</h2>
-                    <p class="mb-0"><span class="text-success me-2 fw-medium">24.9%</span><span>267.35 USD</span></p>
-                  </div>
-                </div>
-              </div> -->
             </div>
-          </div>
+        </div>
+
+        <div class="col-12 col-xl-4">
+            <div class="card rounded-4 gender-chart-card">
+                <div class="card-body text-center">
+                    <h5 class="chart-title mb-3">Last 5 Months Payroll</h5>
+                    <div class="d-flex align-items-start justify-content-between">
+                    <div class="">
+                        <h5 class="mb-0"></h5>
+                    </div>
+                    
+                </div>
+                    <div class="chart-container">
+                    <canvas id="last5MonthsPayrollChart"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
       </div><!--end row-->
 
@@ -267,10 +207,133 @@
           </div>
         </div>
       </div>
-
+    
+      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
       <script src="<?=baseUri();?>/assets/js/modules/dashboard.js"></script>
+      
       <script type="text/javascript">
         
       </script>
 
-    
+
+<style>
+    .dashboard-cards {
+  /* gap: 1rem; */
+}
+
+.dashboard-cards .card {
+  border: none;
+  color: #222;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+  background: #fff;
+  cursor: pointer;
+}
+.card {
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+  cursor: pointer;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.dashboard-cards .icon-circle {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 18px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Unique gradient themes per card */
+.dashboard-cards .card-1 {
+  background: linear-gradient(135deg, #007bff1a, #007bff0d);
+  border-top: 4px solid #007bff;
+}
+.dashboard-cards .card-2 {
+  background: linear-gradient(135deg, #28a7451a, #28a7450d);
+  border-top: 4px solid #28a745;
+}
+.dashboard-cards .card-3 {
+  background: linear-gradient(135deg, #17a2b81a, #17a2b80d);
+  border-top: 4px solid #17a2b8;
+}
+.dashboard-cards .card-4 {
+  background: linear-gradient(135deg, #ffc1071a, #ffc1070d);
+  border-top: 4px solid #ffc107;
+}
+.dashboard-cards .card-5 {
+  background: linear-gradient(135deg, #dc35451a, #dc35450d);
+  border-top: 4px solid #dc3545;
+}
+.dashboard-cards .card-6 {
+  background: linear-gradient(135deg, #6f42c11a, #6f42c10d);
+  border-top: 4px solid #6f42c1;
+}
+
+/* Typography tweaks */
+.dashboard-cards .card h4 {
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: var(--bs-body-color);
+}
+
+.dashboard-cards .card p {
+  color: var(--bs-body-color);
+  margin-bottom: 0;
+  font-size: 0.9rem;
+}
+
+/* Optional: responsive spacing for smaller screens */
+@media (max-width: 991px) {
+  .dashboard-cards {
+    /* gap: 0.5rem; */
+  }
+  .dashboard-cards .card {
+    margin-bottom: 1rem;
+  }
+}
+
+.gender-chart-card {
+  border: none;
+  background: linear-gradient(135deg, #f8f9fa, #ffffff);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.gender-chart-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.chart-title {
+  font-weight: 600;
+  color: #333;
+  letter-spacing: 0.5px;
+}
+
+.chart-container {
+  position: relative;
+  height: 280px;
+  width: 280px;
+  margin: 0 auto;
+}
+
+canvas {
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .chart-container {
+    height: 220px;
+    width: 220px;
+  }
+}
+
+</style>

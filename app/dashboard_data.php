@@ -6,54 +6,113 @@ if(isset($_GET['action'])) {
 		// Save data
 		if($_GET['action'] == 'get') {
 			if($_GET['endpoint'] == 'cards') {
+				$month = isset($_GET['month']) ? $_GET['month'] : date('Y-m');
+				$month = date('Y-m', strtotime($month));
+
+				$data = [];
+
+				// Total employees
+				$employees = $GLOBALS['conn']->query("SELECT COUNT(`employee_id`) AS 'count' FROM `employees` WHERE `status` = 'Active'");
+				if($employees) {
+					$data['employees'] = $employees->fetch_assoc()['count'];
+				}
+
+				// Total new employees
+				$new_employees = $GLOBALS['conn']->query("SELECT COUNT(`employee_id`) AS 'count' FROM `employees` WHERE `added_date` LIKE '$month%' AND `status` = 'Active'");
+				if($new_employees) {
+					$data['new_employees'] = $new_employees->fetch_assoc()['count'];
+				}
+
+				// Total approved leave
+				$approved_leave = $GLOBALS['conn']->query("SELECT COUNT(`emp_id`) AS 'count' FROM `employee_leave` WHERE `status` = 'Approved' AND (`date_from` LIKE '$month%' OR `date_to` LIKE '$month%')");
+				if($approved_leave) {
+					$data['approved_leave'] = $approved_leave->fetch_assoc()['count'];
+				}
+
+				// Expenses
+				// SUM (AMOUTN) FROM fn_transactions WHERE TYPE == 'Expenses'
+				$expenses = $GLOBALS['conn']->query("SELECT SUM(`amount`) AS 'amount' FROM `fn_transactions` WHERE `type` = 'Expense' AND `added_date` LIKE '$month%' AND `status` = 'Active'");
+				if($expenses) {
+					$data['expenses'] = $expenses->fetch_assoc()['amount'];
+				}
+
+				// This month salary
+				$total_salary = 0;
+				$thisMonthSalary = $GLOBALS['conn']->query("SELECT `id`, `added_date`, (`base_salary` + (`allowance` + `bonus` + `commission`) - (`loan` + `advance` + `deductions`) - `tax`) AS net_salary FROM `payroll_details` WHERE `month` LIKE '$month%' AND `status` IN ('Paid', 'Pending', 'Reviewed', 'Validated', 'Approved')");
+				// var_dump($expenses);
+				if($thisMonthSalary) {
+					while($row = $thisMonthSalary->fetch_assoc()) {
+						$total_salary += $net_salary = $row['net_salary'];
+					}
+				}
+				$data['thisMonthSalary'] = $total_salary;
+
+				// Charts
+				// Employees gender pie chart male and female
+				$gender = $GLOBALS['conn']->query("SELECT `gender`, COUNT(`gender`) AS 'count' FROM `employees` WHERE `status` = 'Active' GROUP BY `gender`");
+				if($gender) {
+					$data['gender'] = $gender->fetch_all(MYSQLI_ASSOC);
+				}
+
+				// Employee by department
+				$sql = "SELECT b.name AS department, COUNT(e.branch_id) AS employee_count FROM employees e INNER JOIN branches b ON e.branch_id = b.id WHERE e.status = 'Active' GROUP BY e.branch_id, b.name ORDER BY b.name";
+				$result = $GLOBALS['conn']->query($sql);
+				$employeeCountsByBranch = [];
+				if ($result) {
+					$employeeCountsByBranch = $result->fetch_all(MYSQLI_ASSOC);
+					$data['employeeByDepartment'] = $employeeCountsByBranch; 
+					$result->free();
+				}
+
+				// Get total payroll for the last 5 months
+$last5Months = [];
+
+$query = "
+    SELECT 
+        CASE 
+            WHEN `month` REGEXP '^[0-9]{4}-[0-9]{2}' THEN LEFT(`month`, 7)
+            ELSE DATE_FORMAT(`month`, '%Y-%m')
+        END AS month_label,
+        SUM((`base_salary` + (`allowance` + `bonus` + `commission`) 
+             - (`loan` + `advance` + `deductions`) - `tax`)) AS total_salary
+    FROM `payroll_details`
+    WHERE `status` IN ('Paid', 'Pending', 'Reviewed', 'Validated', 'Approved')
+    GROUP BY month_label
+    ORDER BY month_label DESC
+    LIMIT 5
+";
+
+$result = $GLOBALS['conn']->query($query);
+
+if ($result && $result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        if (!empty($row['month_label'])) {
+            $last5Months[] = [
+                'month' => $row['month_label'],
+                'total_salary' => (float)$row['total_salary']
+            ];
+        }
+    }
+}
+
+// Reverse so it shows oldest → newest
+$last5Months = array_reverse($last5Months);
+
+$data['last5Months'] = $last5Months;
+
+				
+				
+
+
 				$company_balance = 0;
 				// Get balance 
 				$banks = $GLOBALS['conn']->query("SELECT SUM(`balance`) AS 'balance' FROM `bank_accounts` WHERE `status` = 'Active'");
 				if($banks) {
-					$company_balance = $banks->fetch_assoc()['balance'];
+					$data['company_balance'] = $banks->fetch_assoc()['balance'];
 				}
-
-				// Expenses
-				$currentMonth = date("Y-m");
-				$nextMonth = date('Y-m', strtotime("+1 month"));
-
-				$total_expenses = 0;
-				$nextMonth = new DateTime('first day of next month');
-				$nextMonth->modify('28 days');
-				$coming_date = $nextMonth->format('Y-m-d');
-				$expenses = $GLOBALS['conn']->query("SELECT `id`, `added_date`, (`base_salary` + (`allowance` + `bonus` + `commission`) - (`loan` + `advance` + `deductions`) - `tax`) AS net_salary FROM `payroll_details` WHERE `month` LIKE '$currentMonth%' AND `status` = 'Paid'");
-				// var_dump($expenses);
-				if($expenses) {
-					while($row = $expenses->fetch_assoc()) {
-						$total_expenses += $net_salary = $row['net_salary'];
-						$added_date = $row['added_date']; 
-						$coming_date = date('Y-m-d', strtotime('+1 month', strtotime($added_date))); 
-					}
-				}
-
-				$upcoming_salary = 0;
-				// Get balance 
-				$banks = $GLOBALS['conn']->query("SELECT SUM(`salary`) AS 'salary' FROM `employees` WHERE `status` = 'Active'");
-				if($banks) {
-					$upcoming_salary = $banks->fetch_assoc()['salary'];
-				}
-
-				$coming_date = new DateTime($coming_date);
-				$coming_date = $coming_date->format('F d, Y');
 			    
-				echo json_encode(['company_balance' => $company_balance, 'total_expenses' => $total_expenses, 'upcoming_salary' => $upcoming_salary, 'coming_date' => $coming_date]);
-			} else if($_GET['endpoint'] == 'chart_bar') {
-				$currentYear = date('Y');
-				$months = ['01' => 0, '02' => 0, '03' => 0, '04' => 0, '05' => 0, '06' => 0, '07' => 0, '08' => 0, '09' => 0, '10' => 0, '11' => 0, '12' => 0];
-				$query = "SELECT `month`, SUM(`base_salary` + (`allowance` + `bonus` + `commission`) - (`loan` + `advance` + `deductions`) - `tax`) AS net_salary FROM `payroll_details` WHERE `month` LIKE '$currentYear%' AND `status` = 'Paid' GROUP BY `month`";
-				$dataset = $GLOBALS['conn']->query($query);
-				while($row = $dataset->fetch_assoc()) {
-					$month = date('m', strtotime($row['month']));
-					$months[$month] = $row['net_salary'];
-				}
-				echo json_encode(array_values($months));
-				
-			}
+				echo json_encode($data);
+			} 
 		} 
 
 

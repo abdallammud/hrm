@@ -175,37 +175,10 @@ $pdf->SetDrawColor($p0, $p1, $p2);
 $pdf->Line(10, 45, 287, 45);
 $pdf->Ln(15);
 
-// Add mini table for payroll work flow
-$workflow = json_decode($payrollInfo['workflow'] ?? '[]', true) ?: [];
-$yy = 45;
-if(count($workflow) > 0) {
-    $pdf->SetDrawColor(0,0,0);
-    $pdf->SetFont('aefurat','B',12);
-    $pdf->SetXY(9, $yy);
-    $pdf->Cell(278, 7, "Payroll Workflow History", 0, 0, 'L');
-    $yy += 7;
-    $pdf->SetFont('aefurat','',10);
-    $reversed_workflow = array_reverse($workflow);
-    foreach ($reversed_workflow as $step) {
-        $workflowStatus = $step['status'] ?? 'Unknown';
-       
-        $pdf->SetXY(10, $yy);
-        $pdf->Cell(30, 7, "$workflowStatus by", 1, 0, 'L');
-        $action_text = $step['action'] ?? '';
-        $action_parts = explode(' by ', $action_text, 2);
-        $roleName = $GLOBALS['userClass']->get_roleName($step['user_id']);
-        $user_name = isset($action_parts[1]) ? htmlspecialchars($action_parts[1]) : '';
-        if ($user_name) {
-            $pdf->SetXY(40, $yy);
-            $pdf->Cell(130, 7, "$user_name ($roleName) On ". (isset($step['date']) ? date("M d, Y h:i A", strtotime($step['date'])) : ''), 1, 0, 'L');
-        }
-        $yy += 7;
-    }
-}
 
+$yy = $pdf->getY();
 
-
-$pdf->SetXY(10, $yy + 7);
+$pdf->SetXY(10, $yy);
 // Table header
 $pdf->SetFont('aefurat','B',10);
 $pdf->SetFillColor($p0, $p1, $p2);
@@ -248,6 +221,43 @@ foreach ($data as $row) {
     }
     $pdf->Ln();
 }
+
+$y = $pdf->getY()+10;
+
+// Add mini table for payroll work flow
+$workflow = json_decode($payrollInfo['workflow'] ?? '[]', true) ?: [];
+$yy = $y;
+$x = 10;
+if(count($workflow) > 0) {
+    $reversed_workflow = array_reverse($workflow);
+    foreach ($reversed_workflow as $step) {
+        $workflowStatus = $step['status'] ?? 'Unknown';
+        $pdf->SetFont('aefurat','B',12);
+        $pdf->SetXY($x, $yy);
+        $pdf->Cell(30, 7, "$workflowStatus by", 0, 0, 'L');
+        $pdf->SetFont('aefurat','B',10);
+        $action_text = $step['action'] ?? '';
+        $action_parts = explode(' by ', $action_text, 2);
+        $roleName = $GLOBALS['userClass']->get_roleName($step['user_id']);
+        $user_name = isset($action_parts[1]) ? htmlspecialchars($action_parts[1]) : '';
+        $signature = $GLOBALS['userClass']->get_signature($step['user_id']);
+        if ($user_name) {
+            $pdf->SetXY($x, $yy+7);
+            $pdf->Cell(60, 7, "$user_name ($roleName)", 0, 0, 'L');
+
+            $pdf->SetXY($x, $yy+12);
+            $pdf->Cell(60, 7, "On ". (isset($step['date']) ? date("M d, Y h:i A", strtotime($step['date'])) : ''), 0, 0, 'L');
+        }
+        $pdf->SetDrawColor(0,0,0);
+        // echo $signature;
+        // if(file_exists("./assets/docs/signature/".$signature)) {
+            $pdf->Image("assets/docs/signature/".$signature, $x, $yy+25, 50, 0.1);
+        // }
+        $pdf->Rect($x, $yy+25, 50, 0.1, "F");
+        $x += 60;
+    }
+}
+
 
 $pdf->Output("$monthName payroll report.pdf","I");
 ?>

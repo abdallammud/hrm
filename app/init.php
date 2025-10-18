@@ -1,4 +1,5 @@
 <?php 
+date_default_timezone_set('Africa/Mogadishu');
 require('db.php');
 require('utilities.php');
 require('config.php');

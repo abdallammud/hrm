@@ -86,6 +86,11 @@
                 </div>
 
                 <h6 class="mt-3">Assign permission to this role</h6>
+                <!-- Check all -->
+                <div class="form-check smt-15 mb-2">
+                    <input class="form-check-input module" type="checkbox" id="checkAll">
+                    <label class="form-check-label fw-bold" for="checkAll">Check All</label>
+                </div>
                 <hr>
 
                 <div class="permissions-list">
@@ -109,7 +114,7 @@
                             <div class="d-flex flex-wrap gap-3 ms-4">
                                 <?php foreach ($actions as $action_name => $action_code) { ?>
                                     <div class="form-check me-3">
-                                        <input class="form-check-input action <?=$module_id;?>" data-module="<?=$module_id;?>" type="checkbox" id="<?=$action_code->code;?>" value="<?=$action_code->code;?>">
+                                        <input class="form-check-input role_permission action <?=$module_id;?>" data-module="<?=$module_id;?>" type="checkbox" id="<?=$action_code->code;?>" value="<?=$action_code->code;?>">
                                         <label class="form-check-label" for="<?=$action_code->code;?>"><?=ucwords($action_name);?></label>
                                     </div>
                                 <?php } ?>

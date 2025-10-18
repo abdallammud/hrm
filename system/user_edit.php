@@ -103,6 +103,16 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="row">
+                    <div class="col col-xs-12 col-md-12 col-lg-12">
+                        <div class="form-group">
+                            <label class="label " for="signature4Edit">Signature</label>
+                            <input type="file"  class="form-control " id="signature4Edit" name="signature4Edit" placeholder="">
+                            <span class="form-error text-danger">This is error</span>
+                        </div>
+                    </div>
+                </div>
                 
             </div>
             <div class="modal-footer">

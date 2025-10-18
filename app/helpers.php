@@ -252,6 +252,13 @@ function settingsArray() {
             'details' => 'Email configuration', 
             'remarks' => 'required'
         ],
+        'dashboard_charts' => [
+            'type' => 'dashboard_charts',
+            'value' => '[]', 
+            'section' => 'admin', 
+            'details' => 'Dashboard charts', 
+            'remarks' => 'required'
+        ]
 
     );
 

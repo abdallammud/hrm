@@ -66,6 +66,11 @@ class Users extends Model {
         return $GLOBALS['sys_roles']->read($role_id)['name'];
     }
 
+    public function get_signature($user_id) {
+        $user = $this->read($user_id);
+        return $user['signature'];
+    }
+
     public function get_reportsTo($user_id) {
         $user = $this->read($user_id);
         $reportsTo = $user['reports_to'];

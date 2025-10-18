@@ -587,6 +587,38 @@ function handleStates() {
 	    // console.log(data)
 	    if(data) {
 	    	let res = JSON.parse(data)[0];
+            console.log(res)
+            
+            let taxGridHtml = ``
+            let tax_grid = res.tax_grid
+            if(tax_grid && tax_grid.length > 0) {
+                tax_grid.map((item) => {
+                    taxGridHtml += `<div class="row tax-grid-row" style="margin-top: 2px;">
+                        <div class="col-sm-4">
+                            <label class="label required">Min amount</label>
+                            <input type="text" onkeypress="return isNumberKey(event)" class="form-control min-amount col-sm-4 col-lg-4" value="${item.min}">
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="label required">Max amount</label>
+                            <input type="text" onkeypress="return isNumberKey(event)" class="form-control max-amount col-sm-4 col-lg-4" value="${item.max}">
+                        </div>
+                        <div class="col-sm-3">
+                            <label class="label required">Rate</label>
+                            <input type="text" onkeypress="return isNumberKey(event)" class="form-control rate col-sm-4 col-lg-4" value="${item.rate}">
+                            
+                        </div>
+                        <div class="col-sm-1">
+                            <label class="label required">&nbsp;</label>
+                            <i class="fa fa-trash-alt remove-tax-grid-row cursor mt-2"></i>
+                        </div>
+                        
+                    </div>`
+                })
+            }
+
+            if(taxGridHtml) {
+                $('.tax-gridRows').html(taxGridHtml)
+            }
 
 	    	$(modal).find('#state_id').val(id);
 	    	$(modal).find('#stateName').val(res.name);

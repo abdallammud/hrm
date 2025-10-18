@@ -13,7 +13,7 @@ async function send_reportPost(str, data) {
 document.addEventListener("DOMContentLoaded", function() {
 	$('.my-select').selectpicker({
 	    noneResultsText: "No results found"
-	});
+	});k
 
 	// Search employee
 	$(document).on('keyup', '.bootstrap-select.searchEmployee input.form-control', async (e) => {

@@ -19,6 +19,39 @@ class MYPDF extends TCPDF {
     }
 }
 
+$month = $_GET['month'] ?? '';
+$state = $_GET['state'] ?? '';
+$department = $_GET['department'] ?? '';
+$location = $_GET['location'] ?? '';
+$salary = $_GET['salary'] ?? '';
+$salary_up = $_GET['salary_up'] ?? '';
+
+$where = "WHERE pd.payroll_id = ?";
+
+if (!empty($month)) {
+    $where .= " AND pd.month LIKE ?";
+    $monthLike = "%$month%";
+} else {
+    $monthLike = '%';
+}
+
+if (!empty($state)) {
+    $where .= " AND e.state = '" . escapeStr($state) . "'";
+}
+if (!empty($department)) {
+    $where .= " AND e.department = '" . escapeStr($department) . "'";
+}
+if (!empty($location)) {
+    $where .= " AND e.location = '" . escapeStr($location) . "'";
+}
+if (!empty($salary)) {
+    $where .= " AND pd.base_salary >= " . floatval($salary);
+}
+if (!empty($salary_up)) {
+    $where .= " AND pd.base_salary <= " . floatval($salary_up);
+}
+
+
 $payroll_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $allColumns = [
     'employee_id' => 'Employee ID', 'staff_no' => 'Staff No', 'full_name' => 'Full Name', 'email' => 'Email',
@@ -96,9 +129,8 @@ $sql = "SELECT
     pd.status
 FROM payroll_details pd
 LEFT JOIN employees e ON pd.emp_id = e.employee_id
-WHERE pd.payroll_id = ? AND pd.month LIKE ?
-ORDER BY COALESCE(e.full_name, pd.full_name) ASC
-";
+$where
+ORDER BY COALESCE(e.full_name, pd.full_name) ASC";
 
 // prepare and execute
 $stmt = $GLOBALS['conn']->prepare($sql);
@@ -224,7 +256,8 @@ foreach ($data as $row) {
     $pdf->Ln();
 }
 
-$pdf->setXY(150, $yy +21);
+$y = $pdf->GetY();
+$pdf->setXY(150, $y);
 $pdf->SetFont('aefurat','B',10);
 $pdf->SetFillColor($p0, $p1, $p2);
 // $pdf->SetTextColor(255,255,255);

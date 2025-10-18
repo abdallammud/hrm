@@ -63,11 +63,14 @@ $canTakeAction = $hasActionPermission && ((!$isFinished && !$isRejected) || $can
 // Payroll creator can't reject their own payroll
 $isCreator = ((string)($payrollInfo['added_by'] ?? '') === $currentUserId);
 
+
+
 // Last user-specific status (if any)
 $lastStatus = $myWorkflowStatuses ? end($myWorkflowStatuses) : '';
 
 // Decide which options to show in select
 $canShowReview = ($_SESSION['review_payroll'] === 'on') && ($canReReview || !in_array('Reviewed', $myWorkflowStatuses, true)) && ($payrollInfo['status'] !== 'Rejected' || $canReReview);
+$canShowValidate = ($_SESSION['validate_payroll'] === 'on') && ($canReReview || !in_array('Validated', $myWorkflowStatuses, true)) && ($payrollInfo['status'] !== 'Rejected' || $canReReview);
 $canShowApprove = ($_SESSION['approve_payroll'] === 'on') && ($canReReview || !in_array('Approved', $myWorkflowStatuses, true));
 $canShowReject = ($_SESSION['reject_payroll'] === 'on') && ($canReReview || !in_array('Rejected', $myWorkflowStatuses, true)) && !$isCreator;
 
@@ -169,7 +172,7 @@ $lastUserNotifiedRole = $lastUserNotified ? $GLOBALS['userClass']->get_roleName(
             <div class="row">
                 <p class="bold">Payroll workflow</p>
 
-                <?php if ($canTakeAction): ?>
+                <?php if ($canTakeAction && $payrollInfo['status'] !== 'Approved'): ?>
                     <div class="col-md-3 col-lg-2 col-sm-12">
                         <div class="form-group">
                             <label class="label required">Next Action</label>
@@ -179,6 +182,9 @@ $lastUserNotifiedRole = $lastUserNotified ? $GLOBALS['userClass']->get_roleName(
                                 <?php if ($payrollInfo['status'] !== 'Approved'): ?>
                                     <?php if ($canShowReview): ?>
                                         <option value="Reviewed">Review</option>
+                                    <?php endif; ?>
+                                    <?php if ($canShowValidate): ?>
+                                        <option value="Validated">Validate</option>
                                     <?php endif; ?>
                                     <?php if ($canShowApprove): ?>
                                         <option value="Approved">Approve</option>
@@ -196,7 +202,7 @@ $lastUserNotifiedRole = $lastUserNotified ? $GLOBALS['userClass']->get_roleName(
 
                 <div class="col-md-5 col-lg-5 col-sm-12">
                     <div class="sflex">
-                        <?php if (count($myWorkflow) > 0 && $canTakeAction): ?>
+                        <?php if (count($myWorkflow) > 0 && $canTakeAction && $payrollInfo['status'] !== 'Approved'): ?>
                             <!-- We will intercept this button opening the modal and ensure an action is selected -->
                             <button style="font-size: 14px;" id="openNotifyModal" class="btn smt-23 spy-10 btn-lg btn-primary cursor">
                                 Finish and Notify Next Person

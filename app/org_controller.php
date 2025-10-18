@@ -1863,6 +1863,9 @@ if(isset($_GET['action'])) {
 
 					echo json_encode(array('details' => $details, 'tax' => $tax));
 				} else {
+					$stateInfo1 = $stateInfo[0];
+					$taxGrid = json_decode($stateInfo1['tax_grid']);
+					$stateInfo[0]['tax_grid'] = $taxGrid;
 					json($stateInfo);
 				}
 			} else if ($_GET['endpoint'] === 'location') {

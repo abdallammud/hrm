@@ -386,96 +386,212 @@ if(isset($_GET['action'])) {
 			$month = isset($_POST['month']) ? $_POST['month'] : date('Y-m');
 			$month = date('Y-m', strtotime($month));
 
+			// Filters
+			$gender = isset($_POST['gender']) ? $_POST['gender'] : '';
+			$state = isset($_POST['state']) ? $_POST['state'] : '';
+			$department = isset($_POST['department']) ? $_POST['department'] : '';
+			$location = isset($_POST['location']) ? $_POST['location'] : '';
+			$salary = isset($_POST['salary']) ? $_POST['salary'] : '';
+			$salary_up = isset($_POST['salary_up']) ? $_POST['salary_up'] : '';
+			$age = isset($_POST['age']) ? $_POST['age'] : '';
+
+			// Ordering
+			$orderBy = 'pd.staff_no';
+			$order = 'ASC';
 			if (isset($_POST['order']) && isset($_POST['order'][0])) {
-			    $orderColumnMap = ['staff_no', 'full_name', 'earnings', 'total_deductions', 'net_salary'];
-			    // var_dump($_POST['order']);
-			    $orderByIndex = (int)$_POST['order'][0]['column'];
-			    $orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
-			    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
-			}
-		    // Base query
-		    $query = "SELECT `staff_no`, `full_name`, (`allowance` + `bonus` + `commission`) AS earnings, (`loan` + `advance` + `deductions`) AS total_deductions, (`base_salary` + (`allowance` + `bonus` + `commission`) - (`loan` + `advance` + `deductions`) - `tax`) AS net_salary, base_salary FROM `payroll_details` WHERE `month` LIKE '$month' ";
-
-		    // Add search functionality
-		    if ($searchParam) {
-		        $query .= " AND (`staff_no` LIKE '%" . escapeStr($searchParam) . "%' OR `full_name` LIKE '%" . escapeStr($searchParam) . "%'  )";
-		    }
-
-			// Add ordering
-		    $query .= " ORDER BY `staff_no` $order LIMIT $start, $length";
-
-		    // Execute query
-		    $employees = $GLOBALS['conn']->query($query);
-
-		    // Count total records for pagination
-		    $countQuery = "SELECT COUNT(*) as total FROM `payroll_details` WHERE `month` LIKE '$month'";
-		    if ($searchParam) {
-		        $countQuery .= " AND (`staff_no` LIKE '%" . escapeStr($searchParam) . "%' OR `full_name` LIKE '%" . escapeStr($searchParam) . "%'  )";
-		    }
-
-		    $totalRecordsResult = $GLOBALS['conn']->query($countQuery);
-			if($totalRecordsResult) {
-				$record = $totalRecordsResult->fetch_assoc();
-				$totalRecords = isset($record['total']) ? $record['total'] : 0;
+				$orderColumnMap = ['pd.staff_no', 'pd.full_name', 'earnings', 'total_deductions', 'net_salary'];
+				$orderByIndex = (int)$_POST['order'][0]['column'];
+				$orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
+				$order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
 			}
 
-		    if ($employees->num_rows > 0) {
-		        while ($row = $employees->fetch_assoc()) {
-		            $result['data'][] = $row;
-		        }
-		        $result['iTotalRecords'] = $totalRecords;
-		        $result['iTotalDisplayRecords'] = $totalRecords;
-		        $result['msg'] = $employees->num_rows . " records were found.";
-		    } else {
-		        $result['msg'] = "No records found";
-		    }
+			// Base query with JOIN to employees
+			$query = "SELECT 
+						pd.staff_no, 
+						pd.full_name, 
+						pd.base_salary,
+						(pd.allowance + pd.bonus + pd.commission) AS earnings,
+						(pd.loan + pd.advance + pd.deductions) AS total_deductions,
+						(pd.base_salary + (pd.allowance + pd.bonus + pd.commission) - 
+						(pd.loan + pd.advance + pd.deductions) - pd.tax) AS net_salary,
+						e.gender, e.state, e.branch AS department, e.location_name AS location, e.salary AS base_salary_emp, e.date_of_birth
+					FROM payroll_details pd
+					INNER JOIN employees e ON pd.emp_id = e.employee_id
+					WHERE pd.month = '$month' AND e.status = 'Active'";
+
+			// Filters
+			if ($gender) $query .= " AND e.gender = '$gender'";
+			if ($state) $query .= " AND e.state_id = '$state'";
+			if ($department) $query .= " AND e.branch_id = '$department'";
+			if ($location) $query .= " AND e.location_id = '$location'";
+			if ($salary) $query .= " AND e.salary >= '$salary'";
+			if ($salary_up) $query .= " AND e.salary <= '$salary_up'";
+
+			// Handle age range
+			if ($age) {
+				if (strpos($age, '-') !== false) {
+					list($minAge, $maxAge) = explode('-', $age);
+					$query .= " AND TIMESTAMPDIFF(YEAR, e.date_of_birth, CURDATE()) BETWEEN '$minAge' AND '$maxAge'";
+				} else {
+					$query .= " AND TIMESTAMPDIFF(YEAR, e.date_of_birth, CURDATE()) >= '$age'";
+				}
+			}
+
+			// Search
+			if ($searchParam) {
+				$search = escapeStr($searchParam);
+				$query .= " AND (pd.staff_no LIKE '%$search%' 
+								OR pd.full_name LIKE '%$search%' 
+								OR e.branch LIKE '%$search%' 
+								OR e.location_name LIKE '%$search%' 
+								OR e.state LIKE '%$search%')";
+			}
+
+			// Order & limit
+			$query .= " ORDER BY $orderBy $order LIMIT $start, $length";
+
+			// Execute
+			$payroll = $GLOBALS['conn']->query($query);
+
+			// Count query for pagination
+			$countQuery = "SELECT COUNT(*) AS total 
+						FROM payroll_details pd 
+						INNER JOIN employees e ON pd.emp_id = e.employee_id
+						WHERE pd.month = '$month' AND e.status = 'Active'";
+
+			if ($gender) $countQuery .= " AND e.gender = '$gender'";
+			if ($state) $countQuery .= " AND e.state_id = '$state'";
+			if ($department) $countQuery .= " AND e.branch_id = '$department'";
+			if ($location) $countQuery .= " AND e.location_id = '$location'";
+			if ($salary) $countQuery .= " AND e.salary >= '$salary'";
+			if ($salary_up) $countQuery .= " AND e.salary <= '$salary_up'";
+			if ($searchParam) {
+				$countQuery .= " AND (pd.staff_no LIKE '%$search%' OR pd.full_name LIKE '%$search%' 
+								OR e.branch LIKE '%$search%' OR e.location_name LIKE '%$search%' OR e.state LIKE '%$search%')";
+			}
+
+			$totalResult = $GLOBALS['conn']->query($countQuery);
+			$totalRecords = 0;
+			if ($totalResult) {
+				$record = $totalResult->fetch_assoc();
+				$totalRecords = $record['total'] ?? 0;
+			}
+
+			// Format response
+			if ($payroll && $payroll->num_rows > 0) {
+				while ($row = $payroll->fetch_assoc()) {
+					$result['data'][] = $row;
+				}
+				$result['iTotalRecords'] = $totalRecords;
+				$result['iTotalDisplayRecords'] = $totalRecords;
+				$result['msg'] = $payroll->num_rows . " records were found.";
+			} else {
+				$result['msg'] = "No records found";
+			}
 		} else if($report == 'taxation') {
 			$month = isset($_POST['month']) ? $_POST['month'] : date('Y-m');
 			$month = date('Y-m', strtotime($month));
 
+			// Filters
+			$gender = isset($_POST['gender']) ? $_POST['gender'] : '';
+			$state = isset($_POST['state']) ? $_POST['state'] : '';
+			$department = isset($_POST['department']) ? $_POST['department'] : '';
+			$location = isset($_POST['location']) ? $_POST['location'] : '';
+			$salary = isset($_POST['salary']) ? $_POST['salary'] : '';
+			$salary_up = isset($_POST['salary_up']) ? $_POST['salary_up'] : '';
+			$age = isset($_POST['age']) ? $_POST['age'] : '';
+
+			$orderBy = 'pd.staff_no';
+			$order = 'ASC';
 			if (isset($_POST['order']) && isset($_POST['order'][0])) {
-			    $orderColumnMap = ['staff_no', 'full_name', 'earnings', 'total_deductions', 'net_salary'];
-			    // var_dump($_POST['order']);
-			    $orderByIndex = (int)$_POST['order'][0]['column'];
-			    $orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
-			    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
-			}
-		    // Base query
-		    $query = "SELECT `staff_no`, `full_name`, (`allowance` + `bonus` + `commission`) AS earnings, (`loan` + `advance` + `deductions`) AS total_deductions, (`base_salary` + (`allowance` + `bonus` + `commission`) - (`loan` + `advance` + `deductions`) - `tax`) AS net_salary, base_salary, tax FROM `payroll_details` WHERE `month` LIKE '$month' ";
-
-		    // Add search functionality
-		    if ($searchParam) {
-		        $query .= " AND (`staff_no` LIKE '%" . escapeStr($searchParam) . "%' OR `full_name` LIKE '%" . escapeStr($searchParam) . "%'  )";
-		    }
-
-			// Add ordering
-		    $query .= " ORDER BY `staff_no` $order LIMIT $start, $length";
-
-		    // Execute query
-		    $employees = $GLOBALS['conn']->query($query);
-
-		    // Count total records for pagination
-		    $countQuery = "SELECT COUNT(*) as total FROM `payroll_details` WHERE `month` LIKE '$month'";
-		    if ($searchParam) {
-		        $countQuery .= " AND (`staff_no` LIKE '%" . escapeStr($searchParam) . "%' OR `full_name` LIKE '%" . escapeStr($searchParam) . "%'  )";
-		    }
-
-		    $totalRecordsResult = $GLOBALS['conn']->query($countQuery);
-			if($totalRecordsResult) {
-				$record = $totalRecordsResult->fetch_assoc();
-				$totalRecords = isset($record['total']) ? $record['total'] : 0;
+				$orderColumnMap = ['pd.staff_no', 'pd.full_name', 'earnings', 'total_deductions', 'tax', 'net_salary'];
+				$orderByIndex = (int)$_POST['order'][0]['column'];
+				$orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
+				$order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
 			}
 
-		    if ($employees->num_rows > 0) {
-		        while ($row = $employees->fetch_assoc()) {
-		            $result['data'][] = $row;
-		        }
-		        $result['iTotalRecords'] = $totalRecords;
-		        $result['iTotalDisplayRecords'] = $totalRecords;
-		        $result['msg'] = $employees->num_rows . " records were found.";
-		    } else {
-		        $result['msg'] = "No records found";
-		    }
+			// Base query with join
+			$query = "SELECT 
+						pd.staff_no, 
+						pd.full_name, 
+						pd.base_salary,
+						(pd.allowance + pd.bonus + pd.commission) AS earnings,
+						(pd.loan + pd.advance + pd.deductions) AS total_deductions,
+						pd.tax,
+						(pd.base_salary + (pd.allowance + pd.bonus + pd.commission) - 
+						(pd.loan + pd.advance + pd.deductions) - pd.tax) AS net_salary,
+						e.gender, e.state, e.branch AS department, e.location_name AS location, e.salary AS base_salary_emp, e.date_of_birth
+					FROM payroll_details pd
+					INNER JOIN employees e ON pd.emp_id = e.employee_id
+					WHERE pd.month = '$month' AND e.status = 'Active'";
+
+			// Filters
+			if ($gender) $query .= " AND e.gender = '$gender'";
+			if ($state) $query .= " AND e.state_id = '$state'";
+			if ($department) $query .= " AND e.branch_id = '$department'";
+			if ($location) $query .= " AND e.location_id = '$location'";
+			if ($salary) $query .= " AND e.salary >= '$salary'";
+			if ($salary_up) $query .= " AND e.salary <= '$salary_up'";
+			if ($age) {
+				if (strpos($age, '-') !== false) {
+					list($minAge, $maxAge) = explode('-', $age);
+					$query .= " AND TIMESTAMPDIFF(YEAR, e.date_of_birth, CURDATE()) BETWEEN '$minAge' AND '$maxAge'";
+				} else {
+					$query .= " AND TIMESTAMPDIFF(YEAR, e.date_of_birth, CURDATE()) >= '$age'";
+				}
+			}
+
+			// Search
+			if ($searchParam) {
+				$search = escapeStr($searchParam);
+				$query .= " AND (pd.staff_no LIKE '%$search%' 
+								OR pd.full_name LIKE '%$search%' 
+								OR e.branch LIKE '%$search%' 
+								OR e.location_name LIKE '%$search%' 
+								OR e.state LIKE '%$search%')";
+			}
+
+			// Order & limit
+			$query .= " ORDER BY $orderBy $order LIMIT $start, $length";
+
+			// Execute
+			$payroll = $GLOBALS['conn']->query($query);
+
+			// Count
+			$countQuery = "SELECT COUNT(*) AS total 
+						FROM payroll_details pd 
+						INNER JOIN employees e ON pd.emp_id = e.employee_id
+						WHERE pd.month = '$month' AND e.status = 'Active'";
+
+			if ($gender) $countQuery .= " AND e.gender = '$gender'";
+			if ($state) $countQuery .= " AND e.state_id = '$state'";
+			if ($department) $countQuery .= " AND e.branch_id = '$department'";
+			if ($location) $countQuery .= " AND e.location_id = '$location'";
+			if ($salary) $countQuery .= " AND e.salary >= '$salary'";
+			if ($salary_up) $countQuery .= " AND e.salary <= '$salary_up'";
+			if ($searchParam) {
+				$countQuery .= " AND (pd.staff_no LIKE '%$search%' OR pd.full_name LIKE '%$search%' 
+								OR e.branch LIKE '%$search%' OR e.location_name LIKE '%$search%' OR e.state LIKE '%$search%')";
+			}
+
+			$totalResult = $GLOBALS['conn']->query($countQuery);
+			$totalRecords = 0;
+			if ($totalResult) {
+				$record = $totalResult->fetch_assoc();
+				$totalRecords = $record['total'] ?? 0;
+			}
+
+			// Response
+			if ($payroll && $payroll->num_rows > 0) {
+				while ($row = $payroll->fetch_assoc()) {
+					$result['data'][] = $row;
+				}
+				$result['iTotalRecords'] = $totalRecords;
+				$result['iTotalDisplayRecords'] = $totalRecords;
+				$result['msg'] = $payroll->num_rows . " records were found.";
+			} else {
+				$result['msg'] = "No records found";
+			}
 		}
 
 		echo json_encode($result);
