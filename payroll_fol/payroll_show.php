@@ -32,6 +32,10 @@ $workflow = json_decode($payrollInfo['workflow'] ?? '[]', true) ?: [];
 $myWorkflow = array_filter($workflow, fn($item) => (string)$item['user_id'] === (string)$_SESSION['user_id']);
 $myWorkflowStatuses = array_map(fn($item) => $item['status'], $myWorkflow);
 
+// Get last workflow obj and get a reason
+$lastWorkflowObj = end($workflow);
+$reason = $lastWorkflowObj['reason'] ?? '';
+
 $finished = json_decode($payrollInfo['finished'] ?? '[]', true) ?: [];
 $rejected = json_decode($payrollInfo['rejected'] ?? '[]', true) ?: [];
 

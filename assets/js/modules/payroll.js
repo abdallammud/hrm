@@ -1488,13 +1488,42 @@ document.addEventListener("DOMContentLoaded", function() {
 	$(document).on('change', '#next_action', async function (e) {
 		const status = $(e.target).val();
 		const payroll_id = $('.payroll_id').val();
-	
 		if (!status) return;
-	
-		// Show confirmation dialog
+
+		let reason = '';
+
+		// If Rejected, ask for reason
+		if (status === 'Rejected') {
+			reason = await swal({
+				title: 'Provide Rejection Reason',
+				text: 'Please enter a reason for rejecting this payroll:',
+				content: "input",
+				button: {
+					text: "Submit",
+					closeModal: false
+				}
+			});
+
+			// User canceled or left it empty
+			if (!reason || reason.trim() === '') {
+				swal.close();
+				toaster.warning('Rejection reason is required.', 'Warning', {
+					top: '30%',
+					right: '20px',
+					hide: true,
+					duration: 2000
+				});
+				$(e.target).val(''); // Reset the dropdown
+				return;
+			}
+
+			swal.close();
+		}
+
+		// Show confirmation dialog before updating
 		const result = await swal({
 			title: 'Are you sure?',
-			text: 'You want to update the payroll status?',
+			text: `You want to update the payroll status to "${status}"?`,
 			icon: 'warning',
 			buttons: {
 				cancel: {
@@ -1507,24 +1536,31 @@ document.addEventListener("DOMContentLoaded", function() {
 				}
 			}
 		});
-	
+
 		if (!result) return;
-	
-		const data = {
-			status: status,
-			id: payroll_id
+
+		const data = { 
+			status: status, 
+			id: payroll_id 
 		};
-	
+
+		if (status === 'Rejected') data.reason = reason; // Include reason only for rejection
+
+		console.log(data)
+		// return false;
+
 		try {
 			const response = await send_payrollPost('update payroll_status', data);
-			console.log(response)
+			console.log(response);
+
 			if (!response) {
 				console.error('Empty response from server.');
+				swal("Error", "No response received from the server.", "error");
 				return;
 			}
-	
+
 			const res = JSON.parse(response);
-	
+
 			if (res.error) {
 				toaster.warning(res.msg || 'Something went wrong.', 'Sorry', {
 					top: '30%',
@@ -1544,12 +1580,13 @@ document.addEventListener("DOMContentLoaded", function() {
 					location.reload();
 				});
 			}
+
 		} catch (err) {
 			console.error('Error occurred during payroll status update:', err);
 			swal("Error", "Failed to update payroll. Please try again.", "error");
 		}
 	});
-	
+
 
 
 	// Notify Next Person Form

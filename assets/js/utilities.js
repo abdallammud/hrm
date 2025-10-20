@@ -237,3 +237,46 @@ function addPrefixToNumber(num, targetLength) {
   // until the string reaches the targetLength.
   return numString.padStart(targetLength, '0');
 }
+
+function check_contractExpiredEmployees(page) {
+    if (page == 'employees') {
+       show_employee_contractExpiredModal();
+    } else {
+        // Redirect to hrm page
+        window.location.href = `${base_url}/employee`;
+    }
+}
+
+function show_employee_contractExpiredModal() {
+    // send post request to app/hrm_controller.php?action=get&endpoint=showEmployeeContractExpiredModal
+    $.post(`${base_url}/app/hrm_controller.php?action=get&endpoint=showEmployeeContractExpiredModal`, function(data) {
+        console.log(data)
+        let res = JSON.parse(data);
+        console.log(res)
+        let tbody = '';
+        res.forEach(element => {
+            tbody += `<tr>
+                    <td>${element.staff_no}</td>
+                    <td>${element.full_name}</td>
+                    <td>${formatDate(element.contract_end)}</td>
+                    <td>
+                        <a href="${base_url}/employees/show/${element.employee_id}" class="fa smr-10 fa-eye" aria-hidden="true"></a>
+                        <a href="${base_url}/employees/edit/${element.employee_id}" class="fa smr-10 fa-edit" aria-hidden="true"></a>
+                    </td>
+                </tr>`;
+        });
+        $('.contract-expired-body').html(tbody);
+        // Destroy inital datatable and then
+        if ($.fn.DataTable.isDataTable('#contractExpiredTable')) {
+            $('#contractExpiredTable').DataTable().destroy();
+        }
+        // initialize datatables with no pagination just search bar and make sure it show all data not first 10
+        $("#contractExpiredTable").DataTable({
+            "lengthChange": false,
+            "searching": true,
+            "info": true,
+            "autoWidth": false
+        });
+        $('#contractExpiredModal').modal('show');
+    })
+}

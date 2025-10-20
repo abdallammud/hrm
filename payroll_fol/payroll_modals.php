@@ -60,8 +60,12 @@
                         $action_parts = explode(' by ', $action_text, 2);
                         $roleName = $GLOBALS['userClass']->get_roleName($step['user_id']);
                         $user_name = isset($action_parts[1]) ? htmlspecialchars($action_parts[1]) : '';
+                        $reason = $step['reason'] ?? '';
                         if ($user_name) {
                             echo '      <div class="text-muted">By: ' . $user_name . ' (' . $roleName . ')</div>';
+                        }
+                        if ($reason) {
+                            echo '      <div class="text-muted">Reason: ' . $reason . '</div>';
                         }
                         echo '    </div>';
                         echo '  </div>';

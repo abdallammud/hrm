@@ -97,11 +97,22 @@
 </div>
 <?php 
 require('employees_upload.php');
+require('contract_expired.php');
 $columns = get_columns('employeesDT', 'show_columns');
 require('./customize_table.php');
+
+$contract_expired = isset($_GET['contract_expired']) ?? '';
  ?>
 <script type="text/javascript">
     var tableColumns = <?=json_encode($columns);?>;
+	var contract_expired = '<?=$contract_expired;?>';
+	// document loaded js not jquery
+	document.addEventListener('DOMContentLoaded', function() {
+		if(contract_expired) {
+			show_employee_contractExpiredModal()
+			contract_expired = '';
+		}
+	});
 </script>
 
 <style>

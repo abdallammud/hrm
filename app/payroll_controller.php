@@ -722,6 +722,7 @@ if(isset($_GET['action'])) {
 					$status = $post['status'] ?? null;
 					$payrollId = $post['id'] ?? null;
 					$emp_id = $post['emp_id'] ?? '';
+					$reason = $post['reason'] ?? '';
 			
 					if (!$status || !$payrollId) {
 						throw new Exception("Missing required data (status or id).");
@@ -780,6 +781,7 @@ if(isset($_GET['action'])) {
 						"action" => $status . " by " . $user_fullName,
 						"date" => $updated_date,
 						"status" => $status,
+						"reason" => $reason ?? '',
 						"user_id" => $_SESSION['user_id']
 					];
 					$workflow[] = $newWorkflow;

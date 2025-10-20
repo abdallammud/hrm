@@ -44,6 +44,13 @@ if ($user_id > 0) {
 		$notificationsCount = $result->num_rows;
 	}
 }
+
+// Check for employees with expired contracts and add as motification from table employees where contract_end < current month 
+$sql = "SELECT * FROM employees WHERE contract_end < CURRENT_DATE()";
+$contractExpired = $conn->query($sql);
+$contractPriority = ['icon' => '⚠️', 'color' => 'red'];
+$page = isset($_GET['tab']) ? $_GET['tab'] : 'dashboard'; 
+if ($contractExpired->num_rows > 0) $notificationsCount++;
 ?>
 <header class="top-header">
 	<nav class="navbar navbar-expand align-items-center gap-4">
@@ -134,10 +141,37 @@ if ($user_id > 0) {
 								<?php
 							}
 							echo '</div>';
+						} 
+
+						
+						if ($contractExpired->num_rows > 0) { ?>
+							<div data-id="<?php echo $row['id']; ?>">
+									<a class="dropdown-item border-bottom cursor py-2" target="_blank" onclick="check_contractExpiredEmployees('<?= $page ?>')">
+										<div class="d-flex align-items-center gap-3">
+											<div class="">
+												<i class="bi bi-bell" style="color:<?php echo $contractPriority['color']; ?>; font-size: 28px;">
+													
+												</i>
+											</div>
+											<div class="">
+												<h5 class="notify-title">Employees contract expired</h5>
+												<p class="mb-0 notify-desc">Employees contract expired</p>
+												<p class="mb-0 notify-time">Check employees with contract expired</p>
+											</div>
+											<div onclick="markAsRead('all')" class="notify-close position-absolute end-0 me-3">
+												<i class="material-icons-outlined fs-6">close</i>
+											</div>
+										</div>
+									</a>
+								</div>
+						
+						
+						<?php 
+						
 						} else {
 							echo "<p style='color:#666; padding:10px;'>No new notifications 🎉</p>";
 						}
-							
+						
 						?>
                     
                         <div class="ps__rail-x" style="left: 0px; bottom: 0px;">

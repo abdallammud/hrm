@@ -1559,6 +1559,15 @@ if(isset($_GET['action'])) {
 				}
 				echo json_encode($data);
 				exit();
+			} else if ($_GET['endpoint'] == 'showEmployeeContractExpiredModal') {
+				$sql = "SELECT * FROM employees WHERE contract_end < NOW() AND status = 'active'";
+				$result = $GLOBALS['conn']->query($sql);
+				$data = array();
+				while($row = $result->fetch_assoc()) {
+					$data[] = $row;
+				}
+				echo json_encode($data);
+				exit();
 			}
 
 			exit();

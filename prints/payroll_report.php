@@ -249,11 +249,11 @@ if(count($workflow) > 0) {
             $pdf->Cell(60, 7, "On ". (isset($step['date']) ? date("M d, Y h:i A", strtotime($step['date'])) : ''), 0, 0, 'L');
         }
         $pdf->SetDrawColor(0,0,0);
-        // echo $signature;
+        // echo "assets/docs/signature/".$signature;
         // if(file_exists("./assets/docs/signature/".$signature)) {
-            $pdf->Image("assets/docs/signature/".$signature, $x, $yy+25, 50, 0.1);
+            $pdf->Image("assets/docs/signature/".$signature, $x, $yy+17, 50);
         // }
-        $pdf->Rect($x, $yy+25, 50, 0.1, "F");
+        $pdf->Rect($x, $yy+27, 50, 0.1, "F");
         $x += 60;
     }
 }
