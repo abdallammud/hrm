@@ -49,7 +49,10 @@ if ($user_id > 0) {
 $sql = "SELECT * FROM employees WHERE contract_end < CURRENT_DATE()";
 $contractExpired = $conn->query($sql);
 $contractPriority = ['icon' => '⚠️', 'color' => 'red'];
-$page = isset($_GET['tab']) ? $_GET['tab'] : 'dashboard'; 
+$page = isset($_GET['tab']) ? $_GET['tab'] : 'dashboard';
+if(isset($_GET['action'])) {
+	$page = 'employees';
+}
 if ($contractExpired->num_rows > 0) $notificationsCount++;
 ?>
 <header class="top-header">

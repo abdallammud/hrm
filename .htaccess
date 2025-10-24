@@ -7,6 +7,7 @@ RewriteRule ^/?$ index.php?menu=dashboard [NC,L]
 RewriteRule ^dashboard/?$ index.php?menu=dashboard [NC,L]
 
 RewriteRule ^employees/?$ index.php?menu=hrm&tab=employees [NC,L]
+RewriteRule ^employee/?$ index.php?menu=hrm&tab=employees&contract_expired=1 [NC,L]
 RewriteRule ^employees/add/?$ index.php?menu=hrm&tab=employees&action=add [NC,L]
 RewriteRule ^employees/edit/([0-9-]+)$ index.php?menu=hrm&tab=employees&action=edit&employee_id=$1 [NC,L]
 RewriteRule ^employees/show/([0-9-]+)$ index.php?menu=hrm&tab=employees&action=show&employee_id=$1 [NC,L]

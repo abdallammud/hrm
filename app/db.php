@@ -5,6 +5,8 @@ $username   = "root";
 $password   = "";
 $db = "hrm_app";
 
+$pass = "wArdi4wxfhn#";
+
 // $servername = "localhost";
 // $username   = "u138037914_hrm";
 // $password   = "|8nJaj9eU";

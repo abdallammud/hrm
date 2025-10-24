@@ -86,6 +86,14 @@ class TrainingTypesClass extends Model {
     }
 }
 
+class GrantCodesClass extends Model {
+    public function __construct() {
+        parent::__construct('grant_codes');
+    }
+}
+
 $GLOBALS['financialAccountsClass'] = $financialAccountsClass = new FinancialAccountsClass();
 $GLOBALS['trainingOptionsClass'] = $trainingOptionsClass = new TrainingOptionsClass();
 $GLOBALS['trainingTypesClass'] = $trainingTypesClass = new TrainingTypesClass();
+$GLOBALS['grantCodesClass'] = $grantCodesClass = new GrantCodesClass();
+

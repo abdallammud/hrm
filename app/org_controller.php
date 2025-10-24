@@ -288,6 +288,7 @@ if(isset($_GET['action'])) {
 				    $data = array(
 				        'name' => $post['name'], 
 				        'comments' => $post['comments'], 
+				        'grant_code_id' => $post['grant_code_id'],	
 				        'added_by' => $_SESSION['user_id']
 				    );
 
@@ -544,6 +545,33 @@ if(isset($_GET['action'])) {
 				}
 
 				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
+			} else if($_GET['endpoint'] == 'grant_code') {
+				try {
+					$post = escapePostData($_POST);
+					$data = array(
+						'name' => $post['name'],
+						'added_by' => $_SESSION['user_id']
+					);
+
+					check_exists('grant_codes', ['name' => $post['name']]);
+					check_auth('create_budget_codes');
+
+					$result['id'] = $grantCodesClass->create($data);
+
+					if ($result['id']) {
+						$result['msg'] = 'Grant code created successfully';
+						$result['error'] = false;
+					} else {
+						$result['msg'] = 'Something went wrong, please try again';
+						$result['error'] = true;
+					}
+
+				} catch (Exception $e) {
+					$result['msg'] = 'Error: Something went wrong';
+					$result['sql_error'] = $e->getMessage();
+					$result['error'] = true;
+				}
 				echo json_encode($result);
 			}
 
@@ -851,6 +879,7 @@ if(isset($_GET['action'])) {
 				    $post = escapePostData($_POST);
 				    $data = array(
 				        'name' => $post['name'], 
+						'grant_code_id' => $post['grant_code_id'],
 				        'comments' => isset($post['comments']) ? $post['comments']: "Active",
 				        'status' => isset($post['slcStatus']) ? $post['slcStatus']: "",
 				        'updated_by' => $_SESSION['user_id'],
@@ -1127,6 +1156,35 @@ if(isset($_GET['action'])) {
 				}
 
 				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
+			} else if ($_GET['endpoint'] == 'grant_code') {
+				try {
+					$post = escapePostData($_POST);
+					$data = array(
+						'name' => $post['name'],
+						'status' => $post['slcStatus'] ?? 'Active',
+						'updated_by' => $_SESSION['user_id'],
+						'updated_date' => $updated_date
+					);
+
+					check_exists('grant_codes', ['name' => $post['name']], ['id' => $post['id']]);
+					check_auth('edit_budget_codes');
+
+					$result['id'] = $grantCodesClass->update($post['id'], $data);
+
+					if ($result['id']) {
+						$result['msg'] = 'Grant code updated successfully';
+						$result['error'] = false;
+					} else {
+						$result['msg'] = 'Something went wrong, please try again';
+						$result['error'] = true;
+					}
+
+				} catch (Exception $e) {
+					$result['msg'] = 'Error: Something went wrong';
+					$result['sql_error'] = $e->getMessage();
+					$result['error'] = true;
+				}
 				echo json_encode($result);
 			}
 
@@ -1495,11 +1553,11 @@ if(isset($_GET['action'])) {
 				    $order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
 				}
 			    // Base query
-			    $query = "SELECT * FROM `budget_codes` WHERE `id` IS NOT NULL";
+			    $query = "SELECT b.name, b.comments, b.id, b.status, g.name as grant_code FROM `budget_codes` b INNER JOIN `grant_codes` g ON b.grant_code_id = g.id WHERE b.`id` IS NOT NULL";
 
 			    // Add search functionality
 			    if ($searchParam) {
-			        $query .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%' OR `comments` LIKE '%" . escapeStr($searchParam) . "%' )";
+			        $query .= " AND (b.`name` LIKE '%" . escapeStr($searchParam) . "%' OR b.`comments` LIKE '%" . escapeStr($searchParam) . "%' OR g.`name` LIKE '%" . escapeStr($searchParam) . "%' )";
 			    }
 
 			    // Add ordering
@@ -1509,9 +1567,9 @@ if(isset($_GET['action'])) {
 			    $budget_codes = $GLOBALS['conn']->query($query);
 
 			    // Count total records for pagination
-			    $countQuery = "SELECT COUNT(*) as total FROM `budget_codes` WHERE `id` IS NOT NULL";
+			    $countQuery = "SELECT COUNT(*) as total FROM `budget_codes` b INNER JOIN `grant_codes` g ON b.grant_code_id = g.id WHERE b.`id` IS NOT NULL";
 			    if ($searchParam) {
-			        $query .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%' OR `comments` LIKE '%" . escapeStr($searchParam) . "%' )";
+			        $countQuery .= " AND (b.`name` LIKE '%" . escapeStr($searchParam) . "%' OR b.`comments` LIKE '%" . escapeStr($searchParam) . "%' OR g.`name` LIKE '%" . escapeStr($searchParam) . "%' )";
 			    }
 
 			    // Execute count query
@@ -1815,6 +1873,48 @@ if(isset($_GET['action'])) {
 			    } else {
 			        $result['msg'] = "No records found";
 			    }
+			} else if ($_GET['endpoint'] === 'grant_codes') {
+				$orderBy = 'name';
+				$order = 'ASC';
+				$searchParam = $_POST['search']['value'] ?? '';
+				$start = $_POST['start'] ?? 0;
+				$length = $_POST['length'] ?? 10;
+
+				if (isset($_POST['order']) && isset($_POST['order'][0])) {
+					$orderColumnMap = ['name'];
+					$orderByIndex = (int)$_POST['order'][0]['column'];
+					$orderBy = $orderColumnMap[$orderByIndex] ?? $orderBy;
+					$order = strtoupper($_POST['order'][0]['dir']) === 'DESC' ? 'DESC' : 'ASC';
+				}
+
+				$query = "SELECT * FROM `grant_codes` WHERE `id` IS NOT NULL";
+				if ($searchParam) {
+					$query .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%')";
+				}
+
+				$query .= " ORDER BY `$orderBy` $order LIMIT $start, $length";
+
+				$grant_codes = $GLOBALS['conn']->query($query);
+
+				$countQuery = "SELECT COUNT(*) as total FROM `grant_codes` WHERE `id` IS NOT NULL";
+				if ($searchParam) {
+					$countQuery .= " AND (`name` LIKE '%" . escapeStr($searchParam) . "%')";
+				}
+
+				$totalRecordsResult = $GLOBALS['conn']->query($countQuery);
+				$totalRecords = $totalRecordsResult->fetch_assoc()['total'];
+
+				if ($grant_codes->num_rows > 0) {
+					while ($row = $grant_codes->fetch_assoc()) {
+						$result['data'][] = $row;
+					}
+					$result['iTotalRecords'] = $totalRecords;
+					$result['iTotalDisplayRecords'] = $totalRecords;
+					$result['msg'] = $grant_codes->num_rows . " records were found.";
+				} else {
+					$result['msg'] = "No records found";
+				}
+
 			}
 
 			echo json_encode($result);
@@ -1894,6 +1994,8 @@ if(isset($_GET['action'])) {
 				json(get_data('training_options', array('id' => $_POST['id'])));
 			} else if ($_GET['endpoint'] === 'training_types') {
 				json(get_data('training_types', array('id' => $_POST['id'])));
+			} else if ($_GET['endpoint'] === 'grant_code' && $_GET['action'] == 'get') {
+				json(get_data('grant_codes', array('id' => $_POST['id'])));
 			}
 
 			exit();
@@ -2304,6 +2406,34 @@ if(isset($_GET['action'])) {
 				}
 
 				// Return the result as a JSON response (for example in an API)
+				echo json_encode($result);
+			} else if ($_GET['endpoint'] === 'grant_code' && $_GET['action'] == 'delete') {
+				try {
+					$post = escapePostData($_POST);
+					check_auth('delete_budget_codes');
+					$deleted = $grantCodesClass->delete($post['id']);
+
+					// Check if this grant code id is found in table budget_codes column grant_code_id
+					$found = get_data('budget_codes', array('grant_code_id' => $post['id']));
+					if ($found) {
+						$result['msg'] = 'Grant code is being used in budget codes, please remove it first';
+						$result['error'] = true;
+						return json_encode($result);
+					}
+					if ($deleted) {
+						$result['msg'] = 'Grant code deleted successfully';
+						$result['error'] = false;
+					} else {
+						$result['msg'] = 'Something went wrong, please try again';
+						$result['error'] = true;
+					}
+
+				} catch (Exception $e) {
+					$result['msg'] = 'Error: Something went wrong';
+					$result['sql_error'] = $e->getMessage();
+					$result['error'] = true;
+				}
+
 				echo json_encode($result);
 			}
 

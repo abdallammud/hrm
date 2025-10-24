@@ -241,7 +241,9 @@ if(isset($_GET['action'])) {
 								    $position 	= $row['position'];
 								    $salary 	= $row['salary'];
 
-								    
+									$contract_end = date ('Y-m-d', strtotime($row['contract_end']));
+
+									$currentDate = date('Y-m-d');
 
 								    foreach ($post['month'] as $month) {
 								    	$month = date('Y-m', strtotime($month));
@@ -297,6 +299,25 @@ if(isset($_GET['action'])) {
 									    $taxRate = getTaxRate($total_earnings, $state_id);
 									    $total_earnings -= $taxRate;
 
+										// Compare contract end to current data and if contract ended make everything 0
+										$remarks = '';
+										$out_of_contract = 0;
+										if ($contract_end < $currentDate) {
+											$allowance = 0;
+											$bonus = 0;
+											$commission = 0;
+											$extraHours = 0;
+											$deduction = 0;
+											$loan = 0;
+											$advance = 0;
+											$unpaidDaysCost = 0;
+											$taxRate = 0;
+											$salary = 0;
+
+											$remarks = "Out of contract";
+											$out_of_contract = 1;
+										}
+
 									    // Insert to details table
 									    $detailsData = [
 									    	'payroll_id' => $payroll_id,
@@ -322,6 +343,8 @@ if(isset($_GET['action'])) {
 									    	'unpaid_hours' => $underHours,
 									    	'bank_name' => $paymentBank,
 									    	'bank_number' => $paymentAccount,
+											'remarks' => $remarks,
+											'out_of_contract' => $out_of_contract,
 									    	'added_by' => $_SESSION['user_id']
 									    ];
 
@@ -411,6 +434,9 @@ if(isset($_GET['action'])) {
 						$state_id       = $row['state_id'];
 						$workDays       = $row['work_days'];
 						$workHours      = $row['work_hours'];
+
+						$contract_end   = $row['contract_end'];
+						$currentDate    = date('Y-m-d');
 			
 						foreach ($months_arr as $month) {
 							$month = date('Y-m', strtotime($month));
@@ -466,6 +492,13 @@ if(isset($_GET['action'])) {
 							// Apply tax
 							$taxRate = getTaxRate($total_earnings, $state_id);
 							$total_earnings -= $taxRate;
+
+							$remarks = '';
+							$out_of_contract = 0;
+							if ($contract_end < $currentDate) {
+								$remarks = "Out of contract";
+								$out_of_contract = 1;
+							}
 			
 							// Insert into payroll_details
 							$detailsData = [
@@ -485,6 +518,8 @@ if(isset($_GET['action'])) {
 								'extra_hours' => $extraHours,
 								'commission' => $commission,
 								'tax' => $taxRate,
+								'remarks' => $remarks,
+								'out_of_contract' => $out_of_contract,
 								'advance' => $advance,
 								'loan' => $loan,
 								'deductions' => $deduction,
@@ -716,7 +751,7 @@ if(isset($_GET['action'])) {
 
 			    echo 'updated'; exit();
 
-			} else if ($_GET['endpoint'] == 'payroll_status') {
+			} else if($_GET['endpoint'] == 'payroll_status') {
 				try {
 					$post = escapePostData($_POST);
 					$status = $post['status'] ?? null;
@@ -819,7 +854,7 @@ if(isset($_GET['action'])) {
 			
 				echo json_encode($result);
 				exit;
-			} else if ($_GET['endpoint'] == 'notify_next_person') {
+			} else if($_GET['endpoint'] == 'notify_next_person') {
 				try {
 					$post = escapePostData($_POST);
 			
@@ -1193,18 +1228,26 @@ if(isset($_GET['action'])) {
 				$length = isset($_POST['length']) ? intval($_POST['length']) : 10;
 				// limit page size to avoid heavy queries
 				if ($length <= 0 || $length > 200) $length = 25;
-			
+
 				$payroll_id = isset($_POST['payroll_id']) ? intval($_POST['payroll_id']) : 0;
 				$month_raw = isset($_POST['month']) ? trim($_POST['month']) : '';
 				// keep backward-compatible logic: if month provided use exact match, otherwise wildcard
 				$monthLike = ($month_raw !== '') ? $month_raw : '%';
-			
+
 				$searchParam = isset($_POST['search']['value']) ? trim($_POST['search']['value']) : '';
-			
+
+				// read single-value filters (int)
+				$stateFilter = isset($_POST['state_id']) ? intval($_POST['state_id']) : 0;
+				$branchFilter = isset($_POST['branch_id']) ? intval($_POST['branch_id']) : 0;
+				$locationFilter = isset($_POST['location_id']) ? intval($_POST['location_id']) : 0;
+				$projectFilter = isset($_POST['project_id']) ? intval($_POST['project_id']) : 0;
+				$budgetCodeFilter = isset($_POST['budget_code_id']) ? intval($_POST['budget_code_id']) : 0;
+
 				// Map datatable column index -> safe DB expression
 				$orderColumnIndex = isset($_POST['order'][0]['column']) ? intval($_POST['order'][0]['column']) : 2;
 				$orderDir = (isset($_POST['order'][0]['dir']) && strtoupper($_POST['order'][0]['dir']) === 'DESC') ? 'DESC' : 'ASC';
-			
+				$order = $orderDir; // keep compatibility with existing usage where $order was used
+
 				$orderColumnMap = [
 					0 => 'pd.id',
 					1 => 'COALESCE(e.staff_no, pd.staff_no)',
@@ -1227,14 +1270,14 @@ if(isset($_GET['action'])) {
 					18 => 'COALESCE(e.payment_account, pd.bank_number)',
 					19 => 'pd.id'
 				];
-			
+
 				$orderBy = isset($orderColumnMap[$orderColumnIndex]) ? $orderColumnMap[$orderColumnIndex] : 'COALESCE(e.full_name, pd.full_name)';
-			
+
 				// Base WHERE (use prepared params)
 				$whereClauses = ['pd.payroll_id = ?', 'pd.month LIKE ?'];
 				$params = [$payroll_id, $monthLike];
 				$paramTypes = 'is';
-			
+
 				// Add search
 				if ($searchParam !== '') {
 					$whereClauses[] = '(' .
@@ -1246,9 +1289,38 @@ if(isset($_GET['action'])) {
 					$params[] = $like; $params[] = $like; $params[] = $like;
 					$paramTypes .= 'sss';
 				}
-			
+
+				// Add simple single-value filters (state, branch, location) applied against employees table
+				if ($stateFilter > 0) {
+					$whereClauses[] = 'e.state_id = ?';
+					$params[] = $stateFilter;
+					$paramTypes .= 'i';
+				}
+				if ($branchFilter > 0) {
+					$whereClauses[] = 'e.branch_id = ?';
+					$params[] = $branchFilter;
+					$paramTypes .= 'i';
+				}
+				if ($locationFilter > 0) {
+					$whereClauses[] = 'e.location_id = ?';
+					$params[] = $locationFilter;
+					$paramTypes .= 'i';
+				}
+
+				// For project and budget code filters, use EXISTS subqueries to avoid duplication and heavy joins
+				if ($projectFilter > 0) {
+					$whereClauses[] = 'EXISTS (SELECT 1 FROM employee_projects ep WHERE ep.emp_id = pd.emp_id AND ep.project_id = ?)';
+					$params[] = $projectFilter;
+					$paramTypes .= 'i';
+				}
+				if ($budgetCodeFilter > 0) {
+					$whereClauses[] = 'EXISTS (SELECT 1 FROM employee_budget_codes ebc WHERE ebc.emp_id = pd.emp_id AND ebc.code_id = ?)';
+					$params[] = $budgetCodeFilter;
+					$paramTypes .= 'i';
+				}
+
 				$whereSql = implode(' AND ', $whereClauses);
-			
+
 				// Columns to select (only what's needed)
 				$select = "pd.id, pd.payroll_id, pd.emp_id,
 					COALESCE(e.staff_no, pd.staff_no) AS staff_no,
@@ -1261,11 +1333,13 @@ if(isset($_GET['action'])) {
 					(pd.allowance + pd.bonus + pd.commission) AS earnings,
 					(pd.loan + pd.advance + pd.deductions) AS total_deductions,
 					pd.tax,
+					pd.out_of_contract,
+					pd.remarks,
 					(pd.base_salary + (pd.allowance + pd.bonus + pd.commission) - (pd.loan + pd.advance + pd.deductions) - pd.tax) AS net_salary,
 					COALESCE(e.payment_bank, pd.bank_name) AS bank_name,
 					COALESCE(e.payment_account, pd.bank_number) AS bank_number,
-					pd.status, pd.paid_by, COALESCE(e.state_id, NULL) AS state_id";
-			
+					pd.status, pd.paid_by, COALESCE(e.state_id, NULL) AS state_id, e.branch_id, e.location_id";
+
 				// Main query with ordering and limit
 				$sql = "SELECT $select
 						FROM payroll_details pd
@@ -1273,11 +1347,11 @@ if(isset($_GET['action'])) {
 						WHERE $whereSql
 						ORDER BY $orderBy $order
 						LIMIT ?, ?";
-			
+
 				// Append start/length params (integers)
 				$params[] = $start; $params[] = $length;
 				$paramTypes .= 'ii';
-			
+
 				// Prepare & execute
 				$stmt = $GLOBALS['conn']->prepare($sql);
 				if (!$stmt) {
@@ -1285,23 +1359,22 @@ if(isset($_GET['action'])) {
 					echo json_encode($result);
 					exit;
 				}
-			
+
 				// bind params (using argument unpacking)
 				$stmt->bind_param($paramTypes, ...$params);
 				$stmt->execute();
 				$res = $stmt->get_result();
-			
+
 				// Count total matching (filtered) rows
 				$countSql = "SELECT COUNT(*) AS total
-							 FROM payroll_details pd
-							 LEFT JOIN employees e ON pd.emp_id = e.employee_id
-							 WHERE $whereSql";
+							FROM payroll_details pd
+							LEFT JOIN employees e ON pd.emp_id = e.employee_id
+							WHERE $whereSql";
 				$countStmt = $GLOBALS['conn']->prepare($countSql);
 				if (!$countStmt) {
 					$totalFiltered = 0;
 				} else {
-					// bind the same params except the LIMITs (so copy first N params)
-					// Determine how many params were for WHERE: it's total params minus 2 (start, length)
+					// determine how many params were for WHERE: it's total params minus 2 (start, length)
 					$whereParamCount = count($params) - 2;
 					$whereParams = array_slice($params, 0, $whereParamCount);
 					$whereTypes = substr($paramTypes, 0, $whereParamCount);
@@ -1311,7 +1384,7 @@ if(isset($_GET['action'])) {
 					$totalFiltered = ($cntRes && $cntRes->num_rows) ? intval($cntRes->fetch_assoc()['total']) : 0;
 					$countStmt->close();
 				}
-			
+
 				// Count total records for this payroll_id (unfiltered by search) for pagination
 				$totalSql = "SELECT COUNT(*) as total FROM payroll_details WHERE payroll_id = ?";
 				$totalStmt = $GLOBALS['conn']->prepare($totalSql);
@@ -1323,7 +1396,7 @@ if(isset($_GET['action'])) {
 					if ($totalRes && $totalRes->num_rows) $totalRecords = intval($totalRes->fetch_assoc()['total']);
 					$totalStmt->close();
 				}
-			
+
 				// Build response
 				$result = [
 					'draw' => $draw,
@@ -1334,7 +1407,7 @@ if(isset($_GET['action'])) {
 					'iTotalRecords' => $totalRecords,
 					'iTotalDisplayRecords' => $totalFiltered
 				];
-			
+
 				if ($res && $res->num_rows > 0) {
 					while ($row = $res->fetch_assoc()) {
 						$emp_id = $row['emp_id'];
@@ -1345,37 +1418,125 @@ if(isset($_GET['action'])) {
 							$monthFormatted = date('F Y', strtotime($row['month']));
 						}
 						$net_salary = $row['net_salary'];
-			
+
 						// Use joined state_id (from employees)
 						$state_id = isset($row['state_id']) ? $row['state_id'] : null;
 						$taxPercentage = ($state_id !== null) ? getTaxPercentage($net_salary, $state_id) : '';
-			
+
 						// Resolve paid_by name (existing helper)
 						$paid_by_name = $userClass->get_emp($paid_by);
 						if (is_array($paid_by_name) && isset($paid_by_name['full_name'])) $paid_by_name = $paid_by_name['full_name'];
-			
+
 						$row['txtStatus'] = $row['status'];
 						$row['taxRate'] = $taxPercentage;
 						$row['paid_by'] = $paid_by_name;
 						$row['month'] = $monthFormatted;
-			
+
 						// optional: cast numeric fields to float for JSON consumers
 						$row['base_salary'] = floatval($row['base_salary']);
 						$row['earnings'] = floatval($row['earnings']);
 						$row['total_deductions'] = floatval($row['total_deductions']);
 						$row['tax'] = floatval($row['tax']);
 						$row['net_salary'] = floatval($row['net_salary']);
-			
+
 						$result['data'][] = $row;
 					}
 					$result['msg'] = $res->num_rows . " records were found.";
 				} else {
 					$result['msg'] = "No records found";
 				}
-			
+
+				// --- Build filters arrays (distinct ids) from employees included in this payroll ---
+				// Note: these run separately but are small and use indexed fields (payroll_id, emp_id).
+				$filters = [
+					'state_ids' => [],
+					'branch_ids' => [],
+					'location_ids' => [],
+					'project_ids' => [],
+					'budget_code_ids' => []
+				];
+
+				// 1) states, branches, locations from employees joined to payroll_details
+				$filterSql = "SELECT DISTINCT COALESCE(e.state_id, NULL) AS state_id,
+									DISTINCT COALESCE(e.branch_id, NULL) AS branch_id,
+									DISTINCT COALESCE(e.location_id, NULL) AS location_id
+							FROM payroll_details pd
+							LEFT JOIN employees e ON pd.emp_id = e.employee_id
+							WHERE pd.payroll_id = ?";
+				// Because some MySQL versions reject selecting multiple DISTINCT columns together as intended,
+				// run separate simpler queries for each to avoid ambiguity and keep performance predictable.
+
+				// states
+				$sSql = "SELECT DISTINCT e.state_id AS id FROM payroll_details pd LEFT JOIN employees e ON pd.emp_id = e.employee_id WHERE pd.payroll_id = ? AND e.state_id IS NOT NULL";
+				$sStmt = $GLOBALS['conn']->prepare($sSql);
+				if ($sStmt) {
+					$sStmt->bind_param('i', $payroll_id);
+					$sStmt->execute();
+					$sRes = $sStmt->get_result();
+					if ($sRes) {
+						while ($r = $sRes->fetch_assoc()) $filters['state_ids'][] = intval($r['id']);
+					}
+					$sStmt->close();
+				}
+
+				// branches
+				$bSql = "SELECT DISTINCT e.branch_id AS id FROM payroll_details pd LEFT JOIN employees e ON pd.emp_id = e.employee_id WHERE pd.payroll_id = ? AND e.branch_id IS NOT NULL";
+				$bStmt = $GLOBALS['conn']->prepare($bSql);
+				if ($bStmt) {
+					$bStmt->bind_param('i', $payroll_id);
+					$bStmt->execute();
+					$bRes = $bStmt->get_result();
+					if ($bRes) {
+						while ($r = $bRes->fetch_assoc()) $filters['branch_ids'][] = intval($r['id']);
+					}
+					$bStmt->close();
+				}
+
+				// locations
+				$lSql = "SELECT DISTINCT e.location_id AS id FROM payroll_details pd LEFT JOIN employees e ON pd.emp_id = e.employee_id WHERE pd.payroll_id = ? AND e.location_id IS NOT NULL";
+				$lStmt = $GLOBALS['conn']->prepare($lSql);
+				if ($lStmt) {
+					$lStmt->bind_param('i', $payroll_id);
+					$lStmt->execute();
+					$lRes = $lStmt->get_result();
+					if ($lRes) {
+						while ($r = $lRes->fetch_assoc()) $filters['location_ids'][] = intval($r['id']);
+					}
+					$lStmt->close();
+				}
+
+				// project_ids: from employee_projects where emp_id is in payroll_details
+				$pSql = "SELECT DISTINCT ep.project_id AS id FROM employee_projects ep WHERE ep.emp_id IN (SELECT emp_id FROM payroll_details WHERE payroll_id = ?)";
+				$pStmt = $GLOBALS['conn']->prepare($pSql);
+				if ($pStmt) {
+					$pStmt->bind_param('i', $payroll_id);
+					$pStmt->execute();
+					$pRes = $pStmt->get_result();
+					if ($pRes) {
+						while ($r = $pRes->fetch_assoc()) $filters['project_ids'][] = intval($r['id']);
+					}
+					$pStmt->close();
+				}
+
+				// budget_code_ids: from employee_budget_codes where emp_id is in payroll_details
+				$bcSql = "SELECT DISTINCT ebc.code_id AS id FROM employee_budget_codes ebc WHERE ebc.emp_id IN (SELECT emp_id FROM payroll_details WHERE payroll_id = ?)";
+				$bcStmt = $GLOBALS['conn']->prepare($bcSql);
+				if ($bcStmt) {
+					$bcStmt->bind_param('i', $payroll_id);
+					$bcStmt->execute();
+					$bcRes = $bcStmt->get_result();
+					if ($bcRes) {
+						while ($r = $bcRes->fetch_assoc()) $filters['budget_code_ids'][] = intval($r['id']);
+					}
+					$bcStmt->close();
+				}
+
+				$result['filters'] = $filters;
+
 				echo json_encode($result);
 				exit;
 			}
+
 			
 
 

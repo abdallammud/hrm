@@ -1698,6 +1698,12 @@ function load_budgetCodes() {
 	                </div>`;
 	        }},
 
+            { title: `Grant code`, data: null, render: function(data, type, row) {
+	            return `<div>
+	            		<span>${row.grant_code}</span>
+	                </div>`;
+	        }},
+
 	        { title: "Action", data: null, render: function(data, type, row) {
 	            return `<div class="sflex scenter-items">
             		<span data-recid="${row.id}" class="fa edit_budgetCodeInfo smt-5 cursor smr-10 fa-pencil"></span>
@@ -1724,11 +1730,11 @@ function handleBudgetCodes() {
 	    let modal = $('#edit_budgetCode');
 
 	    let data = await get_budgetCode(id);
-	    console.log(data)
+	    // console.log(data)
 	    if(data) {
 	    	let res = JSON.parse(data)[0];
-	    	console.log(res)
 	    	$(modal).find('#budget_codeID').val(id);
+            $(modal).find('#slcGrantCode4Edit').val(res.grant_code_id);
 	    	$(modal).find('#budgetCode4Edit').val(res.name);
 	    	$(modal).find('#comments4Edit').val(res.comments);
 	    	$(modal).find('#slcStatus').val(res.status);
@@ -1786,12 +1792,14 @@ async function handle_addBudgetCodeForm(form) {
 
     let name 	= $(form).find('#budgetCode').val();
     let comments = $(form).find('#comments').val();
+    let grantCode = $(form).find('#slcGrantCode').val();
 
     if (error) return false;
 
     let formData = {
         name: name,
-        comments:comments
+        comments:comments,
+        grant_code_id:grantCode
     };
 
     form_loading(form);
@@ -1828,6 +1836,7 @@ async function handle_editBudgetCodeForm(form) {
     console.log(form)
 
     let id 	= $(form).find('#budget_codeID').val();
+    let grantCode = $(form).find('#slcGrantCode4Edit').val();
    	let name 	= $(form).find('#budgetCode4Edit').val();
    	let comments 	= $(form).find('#comments4Edit').val();
     let slcStatus 	= $(form).find('#slcStatus').val();
@@ -1836,6 +1845,7 @@ async function handle_editBudgetCodeForm(form) {
 
     let formData = {
     	id:id,
+        grant_code_id:grantCode,
         name: name,
         comments: comments,
         slcStatus:slcStatus
@@ -1871,6 +1881,204 @@ async function get_budgetCode(id) {
 	let data = {id};
 	let response = await send_orgPost('get budget_code', data);
 	return response;
+}
+
+// Grant codes
+function load_grantCodes() {
+    var datatable = $('#grantCodesDT').DataTable({
+        "processing": true,
+        "serverSide": true,
+        "bDestroy": true,
+        "searching": false,  
+        "info": false,
+        "columnDefs": [
+            { "orderable": false, "searchable": false, "targets": [2] }
+        ],
+        "serverMethod": 'post',
+        "ajax": {
+            "url": "./app/org_controller.php?action=load&endpoint=grant_codes",
+            "method": "POST",
+            // dataFilter: function(data) {
+			// 	console.log(data)
+			// }
+        },
+        "createdRow": function(row, data, dataIndex) {
+            $(row).addClass('table-row ' + data.status.toLowerCase());
+        },
+        columns: [
+            { title: `Name`, data: null, render: function(data, type, row) {
+                return `<div><span>${row.name}</span></div>`;
+            }},
+            { title: `Status`, data: null, render: function(data, type, row) {
+                return `<div><span>${row.status}</span></div>`;
+            }},
+            { title: "Action", data: null, render: function(data, type, row) {
+                return `<div class="sflex scenter-items">
+                    <span data-recid="${row.id}" class="fa edit_grantCodeInfo smt-5 cursor smr-10 fa-pencil"></span>
+                    <span data-recid="${row.id}" class="fa delete_grantCode smt-5 cursor fa-trash"></span>
+                </div>`;
+            }},
+        ]
+    });
+
+    return false;
+}
+
+function handleGrantCodes() {
+    $('#addGrantCodeForm').on('submit', (e) => {
+        handle_addGrantCodeForm(e.target);
+        return false;
+    });
+
+    load_grantCodes();
+
+    // Edit Grant Code
+    $(document).on('click', '.edit_grantCodeInfo', async (e) => {
+        let id = $(e.currentTarget).data('recid');
+        let modal = $('#edit_grantCode');
+
+        let data = await get_grantCode(id);
+        if (data) {
+            let res = JSON.parse(data)[0];
+            $(modal).find('#grantCode_id').val(id);
+            $(modal).find('#grantCode4Edit').val(res.name);
+            $(modal).find('#slcStatus').val(res.status);
+        }
+
+        $(modal).modal('show');
+    });
+
+    // Edit form submit
+    $('#editGrantCodeForm').on('submit', (e) => {
+        handle_editGrantCodeForm(e.target);
+        return false;
+    });
+
+    // Delete Grant Code
+    $(document).on('click', '.delete_grantCode', async (e) => {
+        let id = $(e.currentTarget).data('recid');
+        swal({
+            title: "Are you sure?",
+            text: `You are going to delete this grant code.`,
+            icon: "warning",
+            className: 'warning-swal',
+            buttons: ["Cancel", "Yes, delete"],
+        }).then(async (confirm) => {
+            if (confirm) {
+                let data = { id: id };
+                try {
+                    let response = await send_orgPost('delete grant_code', data);
+                    console.log(response)
+                    if (response) {
+                        let res = JSON.parse(response);
+                        if (res.error) {
+                            toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
+                        } else {
+                            toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                                $('#grantCodesDT').DataTable().ajax.reload(null, false);
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error occurred during deletion:', err);
+                }
+            }
+        });
+    });
+
+    $('#slcGrantCode, #slcGrantCode4Edit').on('change', function() {
+        // Find text of the selected option
+        let grantCode = $(this).find('option:selected').text();
+        if (grantCode) {
+            console.log(grantCode)
+            let firstThree = grantCode.substring(0, 3); 
+            console.log(firstThree)
+            
+            $('#budgetCode').val(firstThree);
+            // $('#budgetCode4Edit').val(firstThree);
+        } else {
+            $('#budgetCode').val('');
+            // $('#budgetCode4Edit').val('');
+        }
+    });
+}
+
+async function handle_addGrantCodeForm(form) {
+    clearErrors();
+    let error = validateForm(form);
+
+    let name = $(form).find('#grantCode').val();
+
+    if (error) return false;
+
+    let formData = {
+        name: name
+    };
+
+    form_loading(form);
+
+    try {
+        let response = await send_orgPost('save grant_code', formData);
+        if (response) {
+            let res = JSON.parse(response);
+            $('#add_grantCode').modal('hide');
+            if (res.error) {
+                toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            } else {
+                toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                    $('#add_grantCode').modal('hide');
+                    form_loadingUndo(form);
+                    $('#grantCodesDT').DataTable().ajax.reload(null, false);
+                });
+            }
+        }
+    } catch (err) {
+        console.error('Error occurred during form submission:', err);
+    }
+}
+
+async function handle_editGrantCodeForm(form) {
+    clearErrors();
+    let error = validateForm(form);
+
+    let id = $(form).find('#grantCode_id').val();
+    let name = $(form).find('#grantCode4Edit').val();
+    let slcStatus = $(form).find('#slcStatus').val();
+
+    if (error) return false;
+
+    let formData = {
+        id: id,
+        name: name,
+        slcStatus: slcStatus
+    };
+
+    form_loading(form);
+    try {
+        let response = await send_orgPost('update grant_code', formData);
+        console.log(response)
+        if (response) {
+            let res = JSON.parse(response);
+            $('#edit_grantCode').modal('hide');
+            if (res.error) {
+                toaster.warning(res.msg, 'Sorry', { top: '30%', right: '20px', hide: true, duration: 5000 });
+            } else {
+                toaster.success(res.msg, 'Success', { top: '20%', right: '20px', hide: true, duration: 1000 }).then(() => {
+                    $('#edit_grantCode').modal('hide');
+                    form_loadingUndo(form);
+                    $('#grantCodesDT').DataTable().ajax.reload(null, false);
+                });
+            }
+        }
+    } catch (err) {
+        console.error('Error occurred during form submission:', err);
+    }
+}
+
+async function get_grantCode(id) {
+    let data = { id };
+    let response = await send_orgPost('get grant_code', data);
+    return response;
 }
 
 // banks
@@ -3720,4 +3928,5 @@ document.addEventListener("DOMContentLoaded", function() {
     handleFinancialAccounts();
     handleTrainingOptions();
     handleTrainingTypes();
+    handleGrantCodes();
 });

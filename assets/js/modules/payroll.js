@@ -531,196 +531,6 @@ function load_payroll() {
 
 // Payroll
 function load_showPayroll(payroll_id, month) {
-	function set_actions(row) {
-		let actions = `<a title="View payslip" data-recid="${row.id}" data-emp_id="${row.emp_id}" class="fa show_payslip smt-5 cursor smr-10 fa-eye"></a>`;
-		if(row.status == 'Pending') {
-			actions += `<a title="Approve payroll" data-recid="${row.payroll_id}" data-emp_id="${row.emp_id}" class="fa approve_payrollBtn smt-5 cursor smr-10 fa-check"></a>`;
-		} else if(row.status == 'Approved') {
-			actions += `<a title="Pay payroll" data-recid="${row.payroll_id}" data-detail_id="${row.id}" class="fa pay_payrollBtn smt-5 cursor smr-10 fa-dollar-sign"></a>`;
-		}
-
-		actions += `<a data-recid="${row.id}" data-emp_id="${row.emp_id}" class="fa delete_payrollDetail smt-5 cursor smr-10 fa-trash"></a>`;
-
-		return actions;
-	}
-	var datatable = $('#showpayrollDT').DataTable({
-		// let datatable = new DataTable('#companyDT', {
-	    "processing": true,
-	    "serverSide": true,
-	    "bDestroy": true,
-	    // "searching": false,  
-	    "info": false,
-	    "columnDefs": [
-	        { "orderable": false, "searchable": false,  "targets": [0] }  // Disable search on first and last columns
-	    ],
-
-	    "serverMethod": 'post',
-	    "ajax": {
-	        "url": `${base_url}/app/payroll_controller.php?action=load&endpoint=payroll_details`,
-	        "method": "POST",
-	        "data": {
-	            "payroll_id": payroll_id,
-	            "month": month,
-	        },
-		    /*dataFilter: function(data) {
-				console.log(data)
-			}*/
-	    },
-	    
-	    "createdRow": function(row, data, dataIndex) { 
-	    	// Add your custom class to the row 
-	    	// $(row).addClass('table-row ' +data.status.toLowerCase());
-	    	// $('#showpayrollDT_wrapper').find('td').css('display', 'none')
-	    	//
-	    	tableColumns.map((column) => {
-	    		// $('#showpayrollDT_wrapper').find('td.'+column).css('display', 'flex')
-	    		// $('#showpayrollDT_wrapper').find('th.'+column).css('display', 'flex')
-	    	})
-	    },
-	    "drawCallback": function(settings) {
-	    	$('#showpayrollDT_wrapper').find('td').css('display', 'none');
-	    	$('#showpayrollDT_wrapper').find('th').css('display', 'none');
-	    	tableColumns.map((column) => {
-	    		$('#showpayrollDT_wrapper').find('td.'+column).css('display', 'table-cell');
-	    		$('#showpayrollDT_wrapper').find('th.'+column).css('display', 'table-cell');
-	    	});
-	    	// Always show the checkbox column
-	    	$('#showpayrollDT_wrapper').find('td.bulk-checkbox').css('display', 'table-cell');
-	    	$('#showpayrollDT_wrapper').find('th:first-child').css('display', 'table-cell');
-	    },
-	    columns: [
-
-	    	{ title: `<input type="checkbox" class="select-all-checkbox">`, data: null, className: "bulk-checkbox", render: function(data, type, row) {
-	            return `<div> 
-	            		<input type="checkbox" class="row-checkbox" data-id="${row.id}" data-emp_id="${row.emp_id}" data-payroll_id="${row.payroll_id}" >
-	                </div>`;
-	        }},
-	        
-			{ title: `Staff No. `, data: null,  className: "staff_no", render: function(data, type, row) {
-	            return `<div> 
-	            		<span>${row.staff_no} </span>
-	                </div>`;
-	        }},
-
-	        { title: `Full name `, data: null, className: "full_name", render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.full_name} </span>
-	                </div>`;
-	        }},
-
-	        { title: `Email `, data: null,  className: "email", render: function(data, type, row) {
-	            return `<div> 
-	            		<span>${row.email} </span>
-	                </div>`;
-	        }},
-
-	        { title: `Contract type `, data: null,  className: "contract_type", render: function(data, type, row) {
-	            return `<div> 
-	            		<span>${row.contract_type} </span>
-	                </div>`;
-	        }},
-
-	        { title: `Job title `, data: null,  className: "job_title", render: function(data, type, row) {
-	            return `<div> 
-	            		<span>${row.job_title} </span>
-	                </div>`;
-	        }},
-
-	        { title: `Month `, data: null,  className: "month", render: function(data, type, row) {
-	            return `<div> 
-	            		<span>${row.month} </span>
-	                </div>`;
-	        }},
-
-	         { title: `Required days `, data: null,  className: "required_days", render: function(data, type, row) {
-	            return `<div> 
-	            		<span>${row.required_days} </span>
-	                </div>`;
-	        }},
-
-	        { title: `Days worked `, data: null,  className: "days_worked", render: function(data, type, row) {
-	            return `<div> 
-	            		<span>${row.days_worked} </span>
-	                </div>`;
-	        }},
-
-	        { title: `Unpaid days `, data: null,  className: "unpaid_days", render: function(data, type, row) {
-	            return `<div> 
-	            		<span>${row.unpaid_days} </span>
-	                </div>`;
-	        }},
-
-	        { title: `Unpaid hours `, data: null,  className: "unpaid_hours", render: function(data, type, row) {
-	            return `<div> 
-	            		<span>${row.unpaid_hours} </span>
-	                </div>`;
-	        }},
-
-	        { title: `Gross salary `, data: null, className: "gross_salary", render: function(data, type, row) {
-	            return `<div>
-	            		<span>${formatMoney(row.base_salary)} </span>
-	                </div>`;
-	        }},
-
-	        { title: `Earnings `, data: null, className: "earnings", render: function(data, type, row) {
-	            return `<div>
-	            		<span>${formatMoney(row.earnings)} </span>
-	                </div>`;
-	        }},
-
-	        { title: `Deductions `, data: null, className: "total_deductions", render: function(data, type, row) {
-	            return `<div>
-	            		<span>${formatMoney(row.total_deductions)} </span>
-	                </div>`;
-	        }},
-
-	        { title: `Tax `, data: null, className: "tax", render: function(data, type, row) {
-	            return `<div>
-	            		<span>${formatMoney(row.tax)} -  (${row.taxRate}%)</span>
-	                </div>`;
-	        }},
-
-	        { title: `Net salary `, data: null, className: "net_salary", render: function(data, type, row) {
-	            return `<div>
-	            		<span>${formatMoney(row.net_salary)} </span>
-	                </div>`;
-	        }},
-
-	        { title: `Status `, data: null, className: "status", render: function(data, type, row) {
-	            return `<div>
-	            		<span>${row.txtStatus} </span>
-	                </div>`;
-	        }},
-
-	        { title: `Bank name `, data: null,  className: "bank_name", render: function(data, type, row) {
-	            return `<div> 
-	            		<span>${row.bank_name} </span>
-	                </div>`;
-	        }},
-
-	        { title: `Account number `, data: null,  className: "bank_number", render: function(data, type, row) {
-	            return `<div> 
-	            		<span>${row.bank_number} </span>
-	                </div>`;
-	        }},
-
-	        { title: "Action", data: null, className: "action", render: function(data, type, row) {
-	            return `<div class="sflex scenter-items">
-            		${set_actions(row)}
-                </div>`;
-	        }},
-	    ]
-	});
-
-	// Add event handlers for bulk action checkboxes
-	$(document).on('change', '.select-all-checkbox', function() {
-		const isChecked = $(this).prop('checked');
-		$('.row-checkbox').prop('checked', isChecked);
-	});
-
-	return false;
-}
-function load_showPayroll(payroll_id, month) {
     function set_actions(row) {
         let actions = `<a title="View payslip" data-recid="${row.id}" data-emp_id="${row.emp_id}" class="fa show_payslip smt-5 cursor smr-10 fa-eye"></a>`;
         if(row.status == 'Pending') {
@@ -731,6 +541,12 @@ function load_showPayroll(payroll_id, month) {
         actions += `<a data-recid="${row.id}" data-emp_id="${row.emp_id}" class="fa delete_payrollDetail smt-5 cursor smr-10 fa-trash"></a>`;
         return actions;
     }
+
+	let department = $('#slcDepartment').val();
+	let location = $('#slcDutyLocation').val();
+	let state = $('#slcState').val();
+	let project = $('#slcProject').val();
+	let budget_code = $('#slcBudgetCode').val();
 
     var datatable = $('#showpayrollDT').DataTable({
         processing: true,
@@ -912,6 +728,130 @@ function load_showPayroll(payroll_id, month) {
 
     return false;
 }
+function load_showPayroll(payroll_id, month) {
+    function set_actions(row) {
+        let actions = `<a title="View payslip" data-recid="${row.id}" data-emp_id="${row.emp_id}" class="fa show_payslip smt-5 cursor smr-10 fa-eye"></a>`;
+        if (row.status == 'Pending') {
+            actions += `<a title="Approve payroll" data-recid="${row.payroll_id}" data-emp_id="${row.emp_id}" class="fa approve_payrollBtn smt-5 cursor smr-10 fa-check"></a>`;
+        } else if (row.status == 'Approved') {
+            actions += `<a title="Pay payroll" data-recid="${row.payroll_id}" data-detail_id="${row.id}" class="fa pay_payrollBtn smt-5 cursor smr-10 fa-dollar-sign"></a>`;
+        }
+        actions += `<a data-recid="${row.id}" data-emp_id="${row.emp_id}" class="fa delete_payrollDetail smt-5 cursor smr-10 fa-trash"></a>`;
+        return actions;
+    }
+
+    const table = $('#showpayrollDT').DataTable({
+        processing: true,
+        serverSide: true,
+        bDestroy: true,
+        info: false,
+        order: [],
+        columnDefs: [
+            { orderable: false, searchable: false, targets: [0, 19] }
+        ],
+        serverMethod: 'post',
+        ajax: {
+            url: `${base_url}/app/payroll_controller.php?action=load&endpoint=payroll_details`,
+            method: "POST",
+            data: function (d) {
+                // Core identifiers
+                d.payroll_id = payroll_id;
+                d.month = month;
+
+                // Attach current filter values (use 0 if blank)
+                d.branch_id = $('#slcDepartment').val() || 0;
+                d.location_id = $('#slcDutyLocation').val() || 0;
+                d.state_id = $('#slcState').val() || 0;
+                d.project_id = $('#slcProject').val() || 0;
+                d.budget_code_id = $('#slcBudgetCode').val() || 0;
+            },
+            dataFilter: function (data) {
+                try {
+                    const json = JSON.parse(data);
+
+                    if (json.filters) {
+                        // Hide options not in filters arrays
+                        updateFilterVisibility('#slcDepartment', json.filters.branch_ids);
+                        updateFilterVisibility('#slcDutyLocation', json.filters.location_ids);
+                        updateFilterVisibility('#slcState', json.filters.state_ids);
+                        updateFilterVisibility('#slcProject', json.filters.project_ids);
+                        updateFilterVisibility('#slcBudgetCode', json.filters.budget_code_ids);
+                    }
+
+                    return JSON.stringify(json);
+                } catch (e) {
+                    console.error("Invalid JSON from server:", data);
+                    return data;
+                }
+            }
+        },
+        createdRow: function (row, data) { 
+			// Add class to row if out of contract
+			if (data.out_of_contract == 1) {
+				$(row).addClass('out-of-contract');
+				// Set bg for this row
+				$(row).css('background-color', '#f0ad4e');
+			}
+		 },
+        drawCallback: function () {
+            $('#showpayrollDT_wrapper').find('td, th').hide();
+            tableColumns.forEach(column => {
+                $('#showpayrollDT_wrapper').find('td.' + column + ', th.' + column).css('display', 'table-cell');
+            });
+            $('#showpayrollDT_wrapper').find('td.bulk-checkbox, th:first-child').css('display', 'table-cell');
+        },
+        columns: [
+            {
+                title: `<input type="checkbox" class="select-all-checkbox">`, data: null, className: "bulk-checkbox",
+                render: row => `<div><input type="checkbox" class="row-checkbox" data-id="${row.id}" data-emp_id="${row.emp_id}" data-payroll_id="${row.payroll_id}"></div>`
+            },
+            { title: "Staff No.", data: "staff_no", className: "staff_no" },
+            { title: "Full name", data: "full_name", className: "full_name" },
+            { title: "Email", data: "email", className: "email" },
+            { title: "Contract type", data: "contract_type", className: "contract_type" },
+            { title: "Job title", data: "job_title", className: "job_title" },
+            { title: "Month", data: "month", className: "month" },
+            { title: "Required days", data: "required_days", className: "required_days" },
+            { title: "Days worked", data: "days_worked", className: "days_worked" },
+            { title: "Unpaid days", data: "unpaid_days", className: "unpaid_days" },
+            { title: "Unpaid hours", data: "unpaid_hours", className: "unpaid_hours" },
+            { title: "Gross salary", data: "base_salary", className: "gross_salary", render: d => formatMoney(d) },
+            { title: "Earnings", data: "earnings", className: "earnings", render: d => formatMoney(d) },
+            { title: "Deductions", data: "total_deductions", className: "total_deductions", render: d => formatMoney(d) },
+            { title: "Tax", data: null, className: "tax", render: row => `${formatMoney(row.tax)} - (${row.taxRate}%)` },
+            { title: "Net salary", data: "net_salary", className: "net_salary", render: d => formatMoney(d) },
+            { title: "Status", data: "txtStatus", className: "status" },
+            { title: "Bank name", data: "bank_name", className: "bank_name" },
+            { title: "Account number", data: "bank_number", className: "bank_number" },
+            { title: "Action", data: null, className: "action", render: row => `<div class="sflex scenter-items">${set_actions(row)}</div>` }
+        ]
+    });
+
+    // Bulk select
+    $(document).on('change', '.select-all-checkbox', function () {
+        const isChecked = $(this).prop('checked');
+        $('.row-checkbox').prop('checked', isChecked);
+    });
+
+    // Helper to hide irrelevant options
+    function updateFilterVisibility(selector, validIDs) {
+        const $select = $(selector);
+        $select.find('option').each(function () {
+            const val = $(this).val();
+            if (val === "" || validIDs.includes(parseInt(val))) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    }
+
+    // Auto reload when any filter changes
+    $('#slcDepartment, #slcDutyLocation, #slcState, #slcProject, #slcBudgetCode').off('change').on('change', function () {
+        $('#showpayrollDT').DataTable().page(0).draw(false);
+    });
+}
+
 
 
 function handlePayroll() {

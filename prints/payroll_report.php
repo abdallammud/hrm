@@ -87,6 +87,8 @@ $sql = "SELECT
     (pd.allowance + pd.bonus + pd.commission) AS earnings,
     (pd.loan + pd.advance + pd.deductions) AS deductions,
     pd.tax,
+    pd.remarks,
+    pd.out_of_contract,
     (pd.base_salary + (pd.allowance + pd.bonus + pd.commission) - (pd.loan + pd.advance + pd.deductions) - pd.tax) AS net_salary,
     COALESCE(e.payment_bank, pd.bank_name) AS bank_name,
     COALESCE(e.payment_account, pd.bank_number) AS bank_number,
@@ -194,9 +196,15 @@ $dynamicWidth = count($remainingColumns) > 0 ? floor($remainingWidth / count($re
 
 foreach ($showColumns as $col) {
     // echo $col;
+    // Set fill color if out of contract
+    $fillColor = false;
+    if ($col == 'out_of_contract') {
+        $pdf->SetFillColor(23, 55, 103);
+        $fillColor = true;
+    }
     $width = ($col == 'full_name') ? $fullNameWidth : $dynamicWidth;
     $label = isset($allColumns[$col]) ? $allColumns[$col] : $col;
-    $pdf->Cell($width, 8, $label, 1, 0, 'L', true);
+    $pdf->Cell($width, 8, $label, 1, 0, 'L', $fillColor);
 }
 $pdf->Ln();
 

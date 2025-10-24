@@ -172,6 +172,95 @@ $lastUserNotifiedRole = $lastUserNotified ? $GLOBALS['userClass']->get_roleName(
                 
             </div>
 
+            <!-- Filters -->
+            <div class="row d-md-none d-none d-sm-none d-lg-flex">
+                <p class="bold">Payroll filters</p>
+
+                <!-- Department -->
+                <div class="col-ms-12 col-md-6 col-lg-2">
+                    <div class="form-group">
+                        <label class="label required">Department</label>
+                        <select id="slcDepartment" readonly class="form-control cursor">
+                            <option value="">All</option>
+                            <!-- Select all branches id as value and names as text -->
+                            <?php
+                                $sql = "SELECT * FROM `branches` WHERE `status` = 'Active'";
+                                $result = $GLOBALS['conn']->query($sql);
+                                if($result->num_rows > 0) {
+                                    while($row = $result->fetch_assoc()) {
+                                        echo "<option value='" . $row['id'] . "'>" . $row['name'] . "</option>";
+                                    }
+                                }
+                            ?>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Duty Location -->
+                <div class="col-ms-12 col-md-6 col-lg-2">
+                    <div class="form-group">
+                        <label class="label required">Duty Location</label>
+                        <select id="slcDutyLocation" readonly class="form-control cursor">
+                            <option value="">All</option>
+                            <!-- Select all branches id as value and names as text -->
+                            <?php
+                                $sql = "SELECT * FROM `locations` WHERE `status` = 'Active'";
+                                $result = $GLOBALS['conn']->query($sql);
+                                if($result->num_rows > 0) {
+                                    while($row = $result->fetch_assoc()) {
+                                        echo "<option value='" . $row['id'] . "'>" . $row['name'] . "</option>";
+                                    }
+                                }
+                            ?>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- State -->
+                <div class="col-ms-12 col-md-6 col-lg-2">
+                    <div class="form-group">
+                        <label class="label required">State</label>
+                        <select id="slcState" readonly class="form-control cursor">
+                            <option value="">All</option>
+                            <!-- Select all branches id as value and names as text -->
+                            <?php
+                                $sql = "SELECT * FROM `states` WHERE `status` = 'Active'";
+                                $result = $GLOBALS['conn']->query($sql);
+                                if($result->num_rows > 0) {
+                                    while($row = $result->fetch_assoc()) {
+                                        echo "<option value='" . $row['id'] . "'>" . $row['name'] . "</option>";
+                                    }
+                                }
+                            ?>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Budget Code -->
+                <div class="col-ms-12 col-md-6 col-lg-3">
+                    <div class="form-group">
+                        <label class="label required">Budget Code</label>
+                        <select id="slcBudgetCode" readonly class="form-control cursor">
+                            <option value="">All</option>
+                            <!-- Select all branches id as value and names as text -->
+                            <?php
+                                $sql = "SELECT * FROM `budget_codes` WHERE `status` = 'Active'";
+                                $result = $GLOBALS['conn']->query($sql);
+                                if($result->num_rows > 0) {
+                                    while($row = $result->fetch_assoc()) {
+                                        $grant_code_id  = $row['grant_code_id'];
+                                        $grant_code = get_data('grant_codes', ['id' => $grant_code_id]);
+                                        $grant_code = $grant_code[0]['name'];
+                                        echo "<option value='" . $row['id'] . "'>" . $row['name'] . " - " . $grant_code . "</option>";
+                                    }
+                                }
+                            ?>
+                        </select>
+                    </div>
+                </div>
+                
+            </div>
+
             <!-- Workflow -->
             <div class="row">
                 <p class="bold">Payroll workflow</p>

@@ -118,8 +118,11 @@
                     <div class="row">
                         <div class="col col-xs-12">
                             <div class="form-group">
-                                <label class="label required" for="budgetCode">Budget code</label>
-                                <input type="text"  class="form-control validate" data-msg="budgetCode name is required" id="budgetCode" name="budgetCode">
+                                <label class="label required" for="slcGrantCode">Grant code</label>
+                                <select type="text"  class="form-control validate" data-msg="Grant code is required" id="slcGrantCode" name="slcGrantCode">
+                                    <option value="">Select grant code</option>
+                                    <?php select_active('grant_codes'); ?>
+                                </select>
                                 <span class="form-error text-danger">This is error</span>
                             </div>
                         </div>
@@ -127,8 +130,50 @@
                     <div class="row">
                         <div class="col col-xs-12">
                             <div class="form-group">
+                                <label class="label required" for="budgetCode">Budget code</label>
+                                <input type="text"  class="form-control validate" data-msg="Budget code is required" id="budgetCode" name="budgetCode">
+                                <span class="form-error text-danger">This is error</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col col-xs-12">
+                            <div class="form-group">
                                 <label class="label required" for="comments">Comments</label>
                                 <textarea  class="form-control " id="comments" name="comments"></textarea>
+                                <span class="form-error text-danger">This is error</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary cursor " data-bs-dismiss="modal" aria-label="Close" style="min-width: 100px;">Cancel</button>
+                <button type="submit" class="btn btn-primary cursor" style="min-width: 100px;">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add grant code -->
+<div class="modal  fade"  data-bs-focus="false" id="add_grantCode" tabindex="-1" role="dialog" aria-labelledby="add_grantCodeLabel" aria-hidden="true">
+    <div class="modal-dialog" role="grantCode" style="width:500px;">
+        <form class="modal-content" id="addGrantCodeForm" style="border-radius: 14px 14px 0px 0px; margin-top: -15px;">
+            <div class="modal-header">
+                <h5 class="modal-title">Add grant code</h5>
+                <button type="button" class="close modal-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <div class="row">
+                        <div class="col col-xs-12">
+                            <div class="form-group">
+                                <label class="label required" for="grantCode">Grant Code </label>
+                                <input type="text"  class="form-control validate" data-msg="grantCode name is required" id="grantCode" name="grantCode">
                                 <span class="form-error text-danger">This is error</span>
                             </div>
                         </div>

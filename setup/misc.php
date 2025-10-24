@@ -20,7 +20,7 @@
 				<?php } ?>
 				<?php if(check_session('manage_budget_codes')) { if(!$active) $active = 'budgetCodes';  ?>
 					<li class="nav-item" role="presentation">
-						<button class="nav-link <?php if($active == 'budgetCodes') echo 'active';?>" id="budgetCodes-tab" data-bs-toggle="tab" data-bs-target="#budgetCodes" type="button" role="tab" aria-controls="budgetCodes" aria-selected="false">Budget Codes</button>
+						<button class="nav-link <?php if($active == 'budgetCodes') echo 'active';?>" id="budgetCodes-tab" data-bs-toggle="tab" data-bs-target="#budgetCodes" type="button" role="tab" aria-controls="budgetCodes" aria-selected="false">Budget & Grant Codes</button>
 					</li>
 				<?php } ?>
 				<?php if(check_session('manage_bank_accounts')) { if(!$active) $active = 'banks';  ?>
@@ -124,25 +124,51 @@
 				<?php } ?>
 				<?php if(check_session('manage_budget_codes')) { ?>
 					<div class="tab-pane fade <?php if($active == 'budgetCodes') echo 'active show';?> " id="budgetCodes" role="tabpanel" aria-labelledby="budgetCodes-tab">
-						<div class="page-breadcrumb mt-3 d-sm-flex align-items-center mb-3">
-							<h5 class="">Budget codes</h5>
-							<div class="ms-auto d-sm-flex">
-								<div class="btn-group smr-10">
-									<button type="button" data-bs-toggle="modal" data-bs-target="#add_budgetCode"  class="btn btn-primary">Add Budget Code</button>
+						<div class="row">
+							<div class="col-md-12 col-lg-4">
+								<div class="page-breadcrumb mt-3 d-sm-flex align-items-center mb-3">
+									<h5 class="">Grant codes</h5>
+									<div class="ms-auto d-sm-flex">
+										<div class="btn-group smr-10">
+											<button type="button" data-bs-toggle="modal" data-bs-target="#add_grantCode"  class="btn btn-primary">Add Grant Code</button>
+										</div>
+									</div>
+								</div>
+								<hr>
+								
+								<div class="card">
+									<div class="card-body">
+										<div class="table-responsive">
+											<table id="grantCodesDT" class="table table-striped table-bordered" style="width:100%">
+												
+											</table> 
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-12 col-lg-8">
+								<div class="page-breadcrumb mt-3 d-sm-flex align-items-center mb-3">
+									<h5 class="">Budget codes</h5>
+									<div class="ms-auto d-sm-flex">
+										<div class="btn-group smr-10">
+											<button type="button" data-bs-toggle="modal" data-bs-target="#add_budgetCode"  class="btn btn-primary">Add Budget Code</button>
+										</div>
+									</div>
+								</div>
+								<hr>
+								
+								<div class="card">
+									<div class="card-body">
+										<div class="table-responsive">
+											<table id="budgetCodesDT" class="table table-striped table-bordered" style="width:100%">
+												
+											</table> 
+										</div>
+									</div>
 								</div>
 							</div>
 						</div>
-						<hr>
 						
-						<div class="card">
-							<div class="card-body">
-								<div class="table-responsive">
-									<table id="budgetCodesDT" class="table table-striped table-bordered" style="width:100%">
-										
-									</table> 
-								</div>
-							</div>
-						</div>
 					</div>
 				<?php } ?>
 				<?php if(check_session('manage_bank_accounts')) { ?>

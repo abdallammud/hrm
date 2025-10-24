@@ -158,6 +158,18 @@
                     <div class="row">
                         <div class="col col-xs-12">
                             <div class="form-group">
+                                <label class="label required" for="slcGrantCode4Edit">Grant code</label>
+                                <select type="text"  class="form-control validate" data-msg="Grant code is required" id="slcGrantCode4Edit" name="slcGrantCode4Edit">
+                                    <option value="">Select grant code</option>
+                                    <?php select_active('grant_codes'); ?>
+                                </select>
+                                <span class="form-error text-danger">This is error</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col col-xs-12">
+                            <div class="form-group">
                                 <label class="label required" for="budgetCode4Edit">Budget code</label>
                                 <input type="hidden" id="budget_codeID" name="">
                                 <input type="text"  class="form-control validate" data-msg="budgetCode name is required" id="budgetCode4Edit" name="budgetCode4Edit">
@@ -193,6 +205,51 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary cursor " data-bs-dismiss="modal" aria-label="Close" style="min-width: 100px;">Cancel</button>
                 <button type="submit" class="btn btn-primary cursor" style="min-width: 100px;">Apply</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit grant code -->
+<div class="modal  fade"  data-bs-focus="false" id="edit_grantCode" tabindex="-1" role="dialog" aria-labelledby="edit_grantCodeLabel" aria-hidden="true">
+    <div class="modal-dialog" role="grantCode" style="width:500px;">
+        <form class="modal-content" id="editGrantCodeForm" style="border-radius: 14px 14px 0px 0px; margin-top: -15px;">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit grant code</h5>
+                <button type="button" class="close modal-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <div class="row">
+                        <div class="col col-xs-12">
+                            <div class="form-group">
+                                <label class="label required" for="grantCode4Edit">Grant Code </label>
+                                <input type="hidden" id="grantCode_id" name="">
+                                <input type="text"  class="form-control validate" data-msg="grantCode name is required" id="grantCode4Edit" name="grantCode4Edit">
+                                <span class="form-error text-danger">This is error</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col col-xs-12">
+                            <div class="form-group">
+                                <label class="label required" for="slcStatus">Status</label>
+                                <select  class="form-control " id="slcStatus" name="slcStatus">
+                                    <option value="Active">Active</option>
+                                    <option value="Suspended">Suspended</option>
+                                </select>
+                                <span class="form-error text-danger">This is error</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary cursor " data-bs-dismiss="modal" aria-label="Close" style="min-width: 100px;">Cancel</button>
+                <button type="submit" class="btn btn-primary cursor" style="min-width: 100px;">Save</button>
             </div>
         </form>
     </div>
