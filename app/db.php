@@ -14,7 +14,7 @@ $db = "u138037914_hrm";
 
 
 $servername = "localhost";
-$username   = "u138037914_ward";
+$username   = "u138037914_wardi";
 $password   = "wArdi4wxfhn";
 $db = "u138037914_wardi";
 
