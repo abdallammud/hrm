@@ -12,6 +12,12 @@ $username   = "u138037914_hrm";
 $password   = "|8nJaj9eU";
 $db = "u138037914_hrm";
 
+
+$servername = "localhost";
+$username   = "u138037914_ward";
+$password   = "wArdi4wxfhn";
+$db = "u138037914_wardi";
+
 $GLOBALS['conn'] = $conn = new mysqli($servername, $username, $password, $db);
 
 if($conn->connect_error) {
